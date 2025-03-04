@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.github.zomb_676.hologrampanel.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "hologrampanel.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+    "GameRenderMixin",
+    "LevelRenderMixin",
+    "LocalPlayerMixin",
+    "MinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
