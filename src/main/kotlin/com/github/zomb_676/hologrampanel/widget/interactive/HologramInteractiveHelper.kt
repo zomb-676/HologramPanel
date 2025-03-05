@@ -2,7 +2,7 @@ package com.github.zomb_676.hologrampanel.widget.interactive
 
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
-import com.github.zomb_676.hologrampanel.sync.HologramCreatePayload
+import com.github.zomb_676.hologrampanel.payload.HologramCreatePayload
 import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import io.netty.buffer.Unpooled

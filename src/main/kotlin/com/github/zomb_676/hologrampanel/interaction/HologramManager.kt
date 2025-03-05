@@ -6,6 +6,7 @@ import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.mainCamera
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
@@ -30,6 +31,11 @@ object HologramManager {
             widgets[traceSource] = widget
             states[widget] = HologramState(widget, traceSource)
             this.needArrange = true
+
+            widget.onAdd()
+            if (widget is HologramComponentWidget<*>) {
+                widget.collectServerDataRequired()
+            }
         }
     }
 

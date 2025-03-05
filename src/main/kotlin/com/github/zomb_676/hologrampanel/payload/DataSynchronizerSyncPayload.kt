@@ -1,6 +1,7 @@
-package com.github.zomb_676.hologrampanel.sync
+package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
 import com.github.zomb_676.hologrampanel.widget.interactive.DistType
 import io.netty.buffer.Unpooled
 import net.minecraft.core.UUIDUtil

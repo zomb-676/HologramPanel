@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
+import com.github.zomb_676.hologrampanel.api.IServerDataRequester
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.SelectedPath
@@ -73,12 +74,12 @@ sealed interface HologramWidgetComponent<T : Any> {
             if (!this.collapse) {
                 for (child in children) {
                     when (child) {
-                        is Single<*, *> -> {
+                        is Single<T, *> -> {
                             child.contentSize = child.measureSize(target, displayType, hologramStyle)
                             child.visualSize = hologramStyle.mergeOutlineSizeForSingle(child.contentSize)
                         }
 
-                        is Group<*> -> {
+                        is Group<T> -> {
                             child.measureSize(target, displayType, hologramStyle)
                         }
                     }
@@ -114,7 +115,7 @@ sealed interface HologramWidgetComponent<T : Any> {
                     hologramStyle.moveAfterDrawGroupOutline(this.descriptionSize(hologramStyle))
                     this.children.forEach { component ->
                         when (component) {
-                            is Single<*, *> -> {
+                            is Single<T, *> -> {
                                 hologramStyle.drawSingleOutline(
                                     component.visualSize,
                                     selectedPath.forTerminal(component)
@@ -125,7 +126,7 @@ sealed interface HologramWidgetComponent<T : Any> {
                                 }
                             }
 
-                            is Group<*> -> {
+                            is Group<T> -> {
                                 component.render(hologramStyle, selectedPath, partialTicks)
                             }
                         }
@@ -142,5 +143,30 @@ sealed interface HologramWidgetComponent<T : Any> {
         abstract fun descriptionSize(hologramStyle: HologramStyle): Size
 
         abstract fun renderGroupDescription(hologramStyle: HologramStyle, selectedType: SelectPathType)
+
+        fun traverseRecursively(code: (HologramWidgetComponent<T>) -> Unit) {
+            code.invoke(this)
+            for (child in this.children) {
+                when (child) {
+                    is Group<T> -> traverseRecursively(code)
+                    is Single<T, *> -> code.invoke(child)
+                }
+            }
+        }
+
+        fun isRequestServerData(): Boolean {
+            fun check(group: Group<T>): Boolean {
+                if (group is IServerDataRequester) return true
+                for (child in group.children) {
+                    when (child) {
+                        is Single<T, *> -> return child is IServerDataRequester
+                        is Group<T> -> check(child)
+                    }
+                }
+                return false
+            }
+
+            return check(this)
+        }
     }
 }

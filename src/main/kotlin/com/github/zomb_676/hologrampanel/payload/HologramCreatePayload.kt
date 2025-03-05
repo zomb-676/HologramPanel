@@ -1,7 +1,8 @@
-package com.github.zomb_676.hologrampanel.sync
+package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
 import com.github.zomb_676.hologrampanel.widget.interactive.DistType
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveHelper
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
@@ -26,7 +27,7 @@ class HologramCreatePayload<T : HologramInteractiveTarget>(
             object : StreamCodec<RegistryFriendlyByteBuf, HologramCreatePayload<*>> {
                 override fun decode(buffer: RegistryFriendlyByteBuf): HologramCreatePayload<*> {
                     val uuid = UUIDUtil.STREAM_CODEC.decode(buffer)
-                    val creator = AllRegisters.InteractiveHologramRegistry.CODEC.decode(buffer)
+                    val creator = AllRegisters.InteractiveHologramRegistry.STREAM_CODEC.decode(buffer)
                     val additionData = NeoForgeStreamCodecs.UNBOUNDED_BYTE_ARRAY.decode(buffer)
                     return HologramCreatePayload(uuid, creator, additionData)
                 }
@@ -35,7 +36,7 @@ class HologramCreatePayload<T : HologramInteractiveTarget>(
                     buffer: RegistryFriendlyByteBuf, value: HologramCreatePayload<*>
                 ) {
                     UUIDUtil.STREAM_CODEC.encode(buffer, value.syncerUUID)
-                    AllRegisters.InteractiveHologramRegistry.CODEC.encode(buffer, value.creator)
+                    AllRegisters.InteractiveHologramRegistry.STREAM_CODEC.encode(buffer, value.creator)
                     NeoForgeStreamCodecs.UNBOUNDED_BYTE_ARRAY.encode(buffer, value.additionData)
                 }
             }

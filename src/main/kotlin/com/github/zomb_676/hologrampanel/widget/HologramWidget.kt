@@ -25,4 +25,5 @@ abstract class HologramWidget {
     }
 
     open fun onRemove() {}
+    open fun onAdd() {}
 }

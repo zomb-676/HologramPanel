@@ -1,9 +1,10 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
-import com.github.zomb_676.hologrampanel.interaction.HologramManager
+import com.github.zomb_676.hologrampanel.api.IServerDataRequester
 import com.github.zomb_676.hologrampanel.interaction.HologramState
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact.SelectComponent
+import com.github.zomb_676.hologrampanel.payload.CloseRequestWidgetPayload
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
@@ -84,6 +85,7 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget(
     protected var component: HologramWidgetComponent.Group<T> = initialComponent()
     private var selectedPath: SelectTree<T> = SelectTree(this)
     private var mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty<T>(this.component)
+    private val requestServerData : Boolean = this.component.isRequestServerData()
 
     override fun render(state: HologramState, style: HologramStyle, partialTicks: Float) {
         val path: SelectedPath<HologramWidgetComponent<T>> =
@@ -119,6 +121,29 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget(
                     selected.switchCollapse()
                 }
             }
+        }
+    }
+
+    fun collectServerDataRequired() {
+        if (!this.requestServerData) return
+        val components = mutableListOf<IServerDataRequester>()
+        this.component.traverseRecursively { component ->
+            if (component is IServerDataRequester) {
+                components.add(component)
+            }
+        }
+        require(components.isNotEmpty())
+        val contextHolder = ContextHolder()
+        for (component in components) {
+            component.appendContext(contextHolder)
+        }
+        HologramComponentWidgetRequesterManager.Client.createRequest(contextHolder, components, this)
+    }
+
+    override fun onRemove() {
+        super.onRemove()
+        if (this.requestServerData) {
+            HologramComponentWidgetRequesterManager.Client.closeWidget(this)
         }
     }
 }

@@ -4,12 +4,16 @@ import com.github.zomb_676.hologrampanel.interaction.CycleSelector
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
+import com.github.zomb_676.hologrampanel.payload.CloseRequestWidgetPayload
+import com.github.zomb_676.hologrampanel.payload.ComponentWidgetQueryPayload
+import com.github.zomb_676.hologrampanel.payload.ComponentWidgetResponsePayload
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
-import com.github.zomb_676.hologrampanel.sync.DataSynchronizerSyncPayload
-import com.github.zomb_676.hologrampanel.sync.HologramCreatePayload
+import com.github.zomb_676.hologrampanel.payload.DataSynchronizerSyncPayload
+import com.github.zomb_676.hologrampanel.payload.HologramCreatePayload
 import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
+import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidgetRequesterManager
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveHelper
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
 import com.mojang.blaze3d.platform.InputConstants
@@ -147,6 +151,18 @@ object EventHandler {
             DataSynchronizerSyncPayload.TYPE,
             DataSynchronizerSyncPayload.STREAM_CODEC,
             DataSynchronizerSyncPayload.HANDLE
+        ).playToServer<ComponentWidgetQueryPayload>(
+            ComponentWidgetQueryPayload.TYPE,
+            ComponentWidgetQueryPayload.STREAM_CODEC,
+            ComponentWidgetQueryPayload.HANDLE
+        ).playToClient<ComponentWidgetResponsePayload>(
+            ComponentWidgetResponsePayload.TYPE,
+            ComponentWidgetResponsePayload.STREAM_CODEC,
+            ComponentWidgetResponsePayload.HANDLE
+        ).playToServer<CloseRequestWidgetPayload>(
+            CloseRequestWidgetPayload.TYPE,
+            CloseRequestWidgetPayload.STREAM_CODEC,
+            CloseRequestWidgetPayload.HANDLE
         )
     }
 
@@ -178,24 +194,29 @@ object EventHandler {
             HologramManager.clearHologram()
             InteractionModeManager.clearState()
             SynchronizerManager.Client.syncers.clear()
+            HologramComponentWidgetRequesterManager.Client.closeForPlayer()
         } else {
             SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
+            HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
         }
     }
 
     private fun onPlayerChangeDimension(event: PlayerEvent.PlayerChangedDimensionEvent) {
         val player = event.entity
         if (player.level().isClientSide) {
-            SynchronizerManager.Client.syncers.clear()
             HologramManager.clearHologram()
             InteractionModeManager.clearState()
+            SynchronizerManager.Client.syncers.clear()
+            HologramComponentWidgetRequesterManager.Client.closeForPlayer()
         } else {
             SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
+            HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
         }
     }
 
     private fun tickServerPostEvent(event: ServerTickEvent.Post) {
         SynchronizerManager.Server.syncers.values.forEach(DataSynchronizer::tick)
+        HologramComponentWidgetRequesterManager.Server.tick(event)
     }
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {
