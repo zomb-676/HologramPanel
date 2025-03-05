@@ -1,13 +1,20 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
+import com.github.zomb_676.hologrampanel.api.IContextType
+import com.github.zomb_676.hologrampanel.api.IServerDataProcessor
+import com.github.zomb_676.hologrampanel.api.IServerDataRequester
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.world.item.DyeColor
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity
 
 class HologramComponentWidgetBuilder<T : Any> {
 
@@ -77,7 +84,53 @@ class HologramComponentWidgetBuilder<T : Any> {
                             }
                         }
                     val child = initial.map { it.invoke(target) }.toMutableList()
-                    val g2 = object : HologramWidgetComponent.Group<T>(child.toMutableList().apply { add(g) }) {
+                    child.add(g)
+                    val t = object : HologramWidgetComponent.Single<FurnaceBlockEntity, FurnaceBlockEntity>(),
+                        IServerDataRequester<FurnaceBlockEntity> {
+                        override fun extract(source: FurnaceBlockEntity): FurnaceBlockEntity {
+                            return source
+                        }
+
+                        var item0: ItemStack = ItemStack.EMPTY
+                        var item1: ItemStack = ItemStack.EMPTY
+                        var item2: ItemStack = ItemStack.EMPTY
+
+                        override fun measureContentSize(
+                            target: FurnaceBlockEntity,
+                            displayType: DisplayType,
+                            hologramStyle: HologramStyle
+                        ): Size {
+                            return Size.of(16 * 3 + 4 * 2, 16)
+                        }
+
+                        override fun render(
+                            hologramStyle: HologramStyle,
+                            selectedPath: SelectedPath<HologramWidgetComponent<FurnaceBlockEntity>>,
+                            partialTicks: Float
+                        ) {
+                            val font = Minecraft.getInstance().font
+                            hologramStyle.guiGraphics.renderItem(item0, 0, 0)
+                            hologramStyle.guiGraphics.renderItemDecorations(font, item0,0,0)
+                            hologramStyle.guiGraphics.renderItem(item1, 20, 0)
+                            hologramStyle.guiGraphics.renderItemDecorations(font, item1,20,0)
+                            hologramStyle.guiGraphics.renderItem(item2, 40, 0)
+                            hologramStyle.guiGraphics.renderItemDecorations(font, item2,40,0)
+                        }
+
+                        override fun getProcessor(): IServerDataProcessor = IServerDataProcessor.Companion.FurnaceData
+
+                        override fun onServerDataReceived(buf: RegistryFriendlyByteBuf) {
+                            item0 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf)
+                            item1 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf)
+                            item2 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf)
+                        }
+
+                        override fun appendContext(context: ContextHolder, target: FurnaceBlockEntity) {
+                            context.append(IContextType.BLOCK_POS, target.blockPos)
+                        }
+                    }
+                    child.add(t as HologramWidgetComponent<T>)
+                    val g2 = object : HologramWidgetComponent.Group<T>(child) {
 
                         var desc: String = ""
 

@@ -94,7 +94,7 @@ interface HologramStyle {
         }
 
         override fun drawSingleOutline(size: Size, selected: SelectPathType, color: Int) {
-            this.drawHorizontalLine(2, size.width - 2, font.lineHeight + 2, brightColorBySelectedType(color, selected))
+            this.drawHorizontalLine(2, size.width - 2, size.height - 3, brightColorBySelectedType(color, selected))
         }
 
         fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when (selected) {

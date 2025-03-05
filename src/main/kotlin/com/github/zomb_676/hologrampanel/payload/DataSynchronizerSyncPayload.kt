@@ -12,7 +12,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
-import java.util.UUID
+import java.util.*
 
 class DataSynchronizerSyncPayload(val syncerUUID: UUID, val data: ByteArray) : CustomPacketPayload {
 

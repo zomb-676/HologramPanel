@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.api.IContextType
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
+import javax.swing.Icon
 
 class ContextHolder(val map: MutableMap<IContextType<*>, Any> = mutableMapOf()) {
     companion object {
@@ -27,9 +28,12 @@ class ContextHolder(val map: MutableMap<IContextType<*>, Any> = mutableMapOf()) 
                 ) {
                     val map = value.map
                     buffer.writeVarInt(map.size)
+                    fun <T : Any> encode(type : IContextType<T>, data : Any) {
+                        type.encode(buffer, data.unsafeCast())
+                    }
                     map.forEach { (type, data) ->
                         AllRegisters.ContextTypeRegistry.STREAM_CODEC.encode(buffer, type)
-                        type.encode(buffer, data.unsafeCast())
+                        encode(type, data)
                     }
                 }
             }

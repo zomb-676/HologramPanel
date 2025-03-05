@@ -7,19 +7,20 @@ import com.github.zomb_676.hologrampanel.payload.ComponentWidgetResponsePayload
 import io.netty.buffer.Unpooled
 import net.minecraft.client.Minecraft
 import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.handling.IPayloadContext
-import java.util.UUID
+import java.util.*
 
 object HologramComponentWidgetRequesterManager {
     object Client {
         val widgetUUID: MutableMap<HologramComponentWidget<*>, UUID> = mutableMapOf()
-        val UUIDComponent: MutableMap<UUID, List<IServerDataRequester>> = mutableMapOf()
+        val UUIDComponent: MutableMap<UUID, List<IServerDataRequester<*>>> = mutableMapOf()
 
         fun createRequest(
             context: ContextHolder,
-            requesters: List<IServerDataRequester>,
+            requesters: List<IServerDataRequester<*>>,
             widget: HologramComponentWidget<*>
         ) {
             val player = Minecraft.getInstance().player ?: return
@@ -28,7 +29,7 @@ object HologramComponentWidgetRequesterManager {
             widgetUUID[widget] = uuid
             UUIDComponent[uuid] = requesters
 
-            val payload = ComponentWidgetQueryPayload(uuid, context, requesters.map(IServerDataRequester::getProcessor))
+            val payload = ComponentWidgetQueryPayload(uuid, context, requesters.map(IServerDataRequester<*>::getProcessor))
             player.connection.send(payload)
         }
 
@@ -67,16 +68,17 @@ object HologramComponentWidgetRequesterManager {
             if (--nextUpdate != 0) {
                 return
             } else {
-                nextUpdate = 0
+                nextUpdate = 5
             }
             requesters.forEach { (player, payloads) ->
-                val buffer = RegistryFriendlyByteBuf(
-                    Unpooled.buffer(),
-                    player.registryAccess(),
-                    player.connection.connectionType
-                )
+                val level: ServerLevel = player.serverLevel()
                 payloads.values.forEach { payload ->
-                    payload.requester.forEach { it.appendServerData(payload.context, buffer) }
+                    val buffer = RegistryFriendlyByteBuf(
+                        Unpooled.buffer(),
+                        player.registryAccess(),
+                        player.connection.connectionType
+                    )
+                    payload.requester.forEach { it.appendServerData(payload.context, buffer, level) }
                     ComponentWidgetResponsePayload.response(player, buffer, payload.widgetUUID)
                     buffer.clear()
                 }

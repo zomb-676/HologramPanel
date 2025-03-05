@@ -3,7 +3,7 @@ package com.github.zomb_676.hologrampanel.api
 import com.github.zomb_676.hologrampanel.widget.component.ContextHolder
 import net.minecraft.network.RegistryFriendlyByteBuf
 
-interface IServerDataRequester {
+interface IServerDataRequester<T> {
     fun getProcessor(): IServerDataProcessor
 
     /**
@@ -11,5 +11,5 @@ interface IServerDataRequester {
      */
     fun onServerDataReceived(buf: RegistryFriendlyByteBuf)
 
-    fun appendContext(context: ContextHolder)
+    fun appendContext(context: ContextHolder, target: T)
 }

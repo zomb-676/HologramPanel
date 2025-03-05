@@ -19,11 +19,14 @@ object AllRegisters {
     fun initEvents(dist: Dist, modBus: IEventBus) {
         modBus.addListener(::addNewRegistry)
         BuildInInteractiveHologram.REGISTRY.register(modBus)
+        BuildInIServerDataProcessor.REGISTRY.register(modBus)
         BuildInContextType.REGISTRY.register(modBus)
     }
 
     private fun addNewRegistry(event: NewRegistryEvent) {
         event.register(InteractiveHologramRegistry.INTERACTIVE_HOLOGRAM_REGISTRY)
+        event.register(IServerDataProcessorRegistry.SERVER_DATA_PROCESSOR_REGISTRY)
+        event.register(ContextTypeRegistry.SERVER_DATA_PROCESSOR_REGISTRY)
     }
 
     object InteractiveHologramRegistry {
@@ -75,6 +78,19 @@ object AllRegisters {
                     value.forEach { STREAM_CODEC.encode(buffer, it) }
                 }
             }
+
+    }
+
+    object BuildInIServerDataProcessor {
+        internal val REGISTRY = DeferredRegister.create(
+            IServerDataProcessorRegistry.SERVER_DATA_PROCESSOR_REGISTRY,
+            HologramPanel.MOD_ID
+        )
+
+        val FURNACE_DATA_PROCESSOR = REGISTRY.register("furnace_data") { rl ->
+            IServerDataProcessor.Companion.FurnaceData
+        }
+
     }
 
     object ContextTypeRegistry {
@@ -95,8 +111,8 @@ object AllRegisters {
             HologramPanel.MOD_ID
         )
 
-        val blockPos = REGISTRY.register("block_pos") { rl ->
-            IContextType.fromStreamCodec(BlockPos.STREAM_CODEC)
+        val BLOCK_POS = REGISTRY.register("block_pos") { rl ->
+            IContextType.BLOCK_POS
         }
     }
 }

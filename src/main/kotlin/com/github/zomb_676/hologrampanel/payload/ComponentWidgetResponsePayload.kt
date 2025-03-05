@@ -16,7 +16,7 @@ import java.util.*
 
 class ComponentWidgetResponsePayload(val widgetUUID: UUID, val buffer: ByteArray) : CustomPacketPayload {
     companion object {
-        val TYPE = CustomPacketPayload.Type<ComponentWidgetResponsePayload>(HologramPanel.rl("synchronizer_sync"))
+        val TYPE = CustomPacketPayload.Type<ComponentWidgetResponsePayload>(HologramPanel.rl("component_widget_response"))
 
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentWidgetResponsePayload> = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, ComponentWidgetResponsePayload::widgetUUID,

@@ -4,12 +4,8 @@ import com.github.zomb_676.hologrampanel.interaction.CycleSelector
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
-import com.github.zomb_676.hologrampanel.payload.CloseRequestWidgetPayload
-import com.github.zomb_676.hologrampanel.payload.ComponentWidgetQueryPayload
-import com.github.zomb_676.hologrampanel.payload.ComponentWidgetResponsePayload
+import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
-import com.github.zomb_676.hologrampanel.payload.DataSynchronizerSyncPayload
-import com.github.zomb_676.hologrampanel.payload.HologramCreatePayload
 import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
@@ -29,6 +25,7 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
+import net.neoforged.neoforge.event.level.LevelEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import org.lwjgl.glfw.GLFW
@@ -37,13 +34,13 @@ object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
 
         val forgeBus = NeoForge.EVENT_BUS
-        forgeBus.addListener(::onSwitchLevel)
         modBus.addListener(::registerPayload)
         forgeBus.addListener(::registerCommand)
         forgeBus.addListener(::tickClientPostEvent)
         forgeBus.addListener(::tickServerPostEvent)
         forgeBus.addListener(::onPlayerChangeDimension)
         forgeBus.addListener(::onPlayerLogout)
+        forgeBus.addListener(::levelUnload)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
         }
@@ -90,10 +87,7 @@ object EventHandler {
         private fun onRenderGUI(event: RenderGuiEvent.Post) {
             val font = Minecraft.getInstance().font
             InteractionLayer.renderCommand(
-                10,
-                10,
-                event.guiGraphics,
-                event.partialTick.getGameTimeDeltaPartialTick(false)
+                10, 10, event.guiGraphics, event.partialTick.getGameTimeDeltaPartialTick(false)
             )
             event.guiGraphics.drawString(font, InteractionModeManager.mode.toString(), 10, 20, -1)
         }
@@ -142,8 +136,6 @@ object EventHandler {
         }
     }
 
-    private fun onSwitchLevel(event: PlayerEvent.PlayerChangedDimensionEvent) {}
-
     private fun registerPayload(event: RegisterPayloadHandlersEvent) {
         event.registrar("1.0").playToClient<HologramCreatePayload<*>>(
             HologramCreatePayload.TYPE, HologramCreatePayload.STREAM_CODEC, HologramCreatePayload.HANDLE
@@ -160,9 +152,7 @@ object EventHandler {
             ComponentWidgetResponsePayload.STREAM_CODEC,
             ComponentWidgetResponsePayload.HANDLE
         ).playToServer<CloseRequestWidgetPayload>(
-            CloseRequestWidgetPayload.TYPE,
-            CloseRequestWidgetPayload.STREAM_CODEC,
-            CloseRequestWidgetPayload.HANDLE
+            CloseRequestWidgetPayload.TYPE, CloseRequestWidgetPayload.STREAM_CODEC, CloseRequestWidgetPayload.HANDLE
         )
     }
 
@@ -176,8 +166,7 @@ object EventHandler {
                             val pos = this.getArgument("pos", WorldCoordinates::class.java)
 
                             HologramInteractiveHelper.openOnServer(
-                                player,
-                                HologramInteractiveTarget.Companion.Furnace
+                                player, HologramInteractiveTarget.Companion.Furnace
                             ) {
                                 it.writeBlockPos(pos.getBlockPos(this.source))
                             }
@@ -190,28 +179,18 @@ object EventHandler {
 
     private fun onPlayerLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
         val player = event.entity
-        if (player.level().isClientSide) {
-            HologramManager.clearHologram()
-            InteractionModeManager.clearState()
-            SynchronizerManager.Client.syncers.clear()
-            HologramComponentWidgetRequesterManager.Client.closeForPlayer()
-        } else {
-            SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
-            HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
-        }
+        require(!player.level().isClientSide)
+
+        SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
+        HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
     }
 
     private fun onPlayerChangeDimension(event: PlayerEvent.PlayerChangedDimensionEvent) {
         val player = event.entity
-        if (player.level().isClientSide) {
-            HologramManager.clearHologram()
-            InteractionModeManager.clearState()
-            SynchronizerManager.Client.syncers.clear()
-            HologramComponentWidgetRequesterManager.Client.closeForPlayer()
-        } else {
-            SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
-            HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
-        }
+        require(!player.level().isClientSide)
+
+        SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
+        HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
     }
 
     private fun tickServerPostEvent(event: ServerTickEvent.Post) {
@@ -221,5 +200,14 @@ object EventHandler {
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {
         SynchronizerManager.Client.syncers.values.forEach(DataSynchronizer::tick)
+    }
+
+    private fun levelUnload(event: LevelEvent.Unload) {
+        if (event.level.isClientSide) {
+            HologramManager.clearHologram()
+            InteractionModeManager.clearState()
+            SynchronizerManager.Client.syncers.clear()
+            HologramComponentWidgetRequesterManager.Client.closeForPlayer()
+        }
     }
 }

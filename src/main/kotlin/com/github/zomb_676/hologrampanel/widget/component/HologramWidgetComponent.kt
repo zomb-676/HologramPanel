@@ -18,9 +18,7 @@ sealed interface HologramWidgetComponent<T : Any> {
     val visualSize: Size
 
     fun render(
-        hologramStyle: HologramStyle,
-        selectedPath: SelectedPath<HologramWidgetComponent<T>>,
-        partialTicks: Float
+        hologramStyle: HologramStyle, selectedPath: SelectedPath<HologramWidgetComponent<T>>, partialTicks: Float
     )
 
     /**
@@ -28,31 +26,24 @@ sealed interface HologramWidgetComponent<T : Any> {
      */
     fun measureSize(target: T, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle): Size
 
-    abstract class Single<T : Any, R : Any> :
-        HologramWidgetComponent<T> {
+    abstract class Single<T : Any, R : Any> : HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             internal set
         final override var visualSize: Size = contentSize
             internal set
 
         final override fun measureSize(
-            target: T,
-            displayType: HologramWidget.DisplayType,
-            hologramStyle: HologramStyle
-        ): Size =
-            measureContentSize(extract(target), displayType, hologramStyle)
+            target: T, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle
+        ): Size = measureContentSize(extract(target), displayType, hologramStyle)
 
         abstract fun extract(source: T): R
 
         abstract fun measureContentSize(
-            target: R,
-            displayType: HologramWidget.DisplayType,
-            hologramStyle: HologramStyle
+            target: R, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle
         ): Size
     }
 
-    abstract class Group<T : Any>(val children: List<HologramWidgetComponent<T>>) :
-        HologramWidgetComponent<T> {
+    abstract class Group<T : Any>(val children: List<HologramWidgetComponent<T>>) : HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             private set
         final override var visualSize: Size = contentSize
@@ -65,9 +56,7 @@ sealed interface HologramWidgetComponent<T : Any> {
         }
 
         final override fun measureSize(
-            target: T,
-            displayType: HologramWidget.DisplayType,
-            hologramStyle: HologramStyle
+            target: T, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle
         ): Size {
             var width = 0
             var height = 0
@@ -89,19 +78,14 @@ sealed interface HologramWidgetComponent<T : Any> {
                 }
             }
             this.contentSize = Size.of(width, height)
-            this.visualSize =
-                hologramStyle.mergeOutlineSizeForGroup(
-                    this.contentSize,
-                    this.descriptionSize(hologramStyle),
-                    this.collapse
-                )
+            this.visualSize = hologramStyle.mergeOutlineSizeForGroup(
+                this.contentSize, this.descriptionSize(hologramStyle), this.collapse
+            )
             return this.contentSize
         }
 
         final override fun render(
-            hologramStyle: HologramStyle,
-            selectedPath: SelectedPath<HologramWidgetComponent<T>>,
-            partialTicks: Float
+            hologramStyle: HologramStyle, selectedPath: SelectedPath<HologramWidgetComponent<T>>, partialTicks: Float
         ) {
             val selectedType = selectedPath.forAny(this)
             hologramStyle.drawGroupOutline(this.visualSize, selectedType)
@@ -117,8 +101,7 @@ sealed interface HologramWidgetComponent<T : Any> {
                         when (component) {
                             is Single<T, *> -> {
                                 hologramStyle.drawSingleOutline(
-                                    component.visualSize,
-                                    selectedPath.forTerminal(component)
+                                    component.visualSize, selectedPath.forTerminal(component)
                                 )
                                 hologramStyle.stack {
                                     hologramStyle.moveAfterDrawSingleOutline()
@@ -148,7 +131,7 @@ sealed interface HologramWidgetComponent<T : Any> {
             code.invoke(this)
             for (child in this.children) {
                 when (child) {
-                    is Group<T> -> traverseRecursively(code)
+                    is Group<T> -> child.traverseRecursively(code)
                     is Single<T, *> -> code.invoke(child)
                 }
             }
@@ -156,10 +139,14 @@ sealed interface HologramWidgetComponent<T : Any> {
 
         fun isRequestServerData(): Boolean {
             fun check(group: Group<T>): Boolean {
-                if (group is IServerDataRequester) return true
+                if (group is IServerDataRequester<*>) return true
                 for (child in group.children) {
                     when (child) {
-                        is Single<T, *> -> return child is IServerDataRequester
+                        is Single<T, *> -> {
+                            if (child is IServerDataRequester<*>) {
+                                return true
+                            }
+                        }
                         is Group<T> -> check(child)
                     }
                 }

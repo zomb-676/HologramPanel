@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.api
 
+import net.minecraft.core.BlockPos
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 
@@ -35,5 +36,7 @@ interface IContextType<T : Any> : StreamCodec<RegistryFriendlyByteBuf, T> {
                 }
             }
         }
+
+        val BLOCK_POS = fromStreamCodec(BlockPos.STREAM_CODEC)
     }
 }
