@@ -30,11 +30,29 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
         fun rl(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
 
-        var serverInstalled : Boolean = false
+        var serverInstalled: Boolean = false
             internal set
     }
 
+
     init {
+        val plugins =  run {
+            ModList.get().allScanData.asSequence()
+                .flatMap { it.getAnnotatedBy(HologramPlugin::class.java, ElementType.TYPE).asSequence() }.map {
+                    var plugin: IHologramPlugin? = null
+                    try {
+                        plugin = getClassOf<IHologramPlugin>(it.clazz().className).getDeclaredConstructor()
+                            .apply { require(trySetAccessible()) }.newInstance()
+                        LOGGER.debug("success loaded plugin: {}", plugin.location())
+                    } catch (e: Exception) {
+                        LOGGER.error("failed to load plugin class:{}", it.clazz.className)
+                        LOGGER.traceExit(e)
+                    }
+                    plugin
+                }.filterNotNull().toList()
+        }
+        PluginManager.init(plugins)
+
         if (dist == Dist.DEDICATED_SERVER) {
             serverInstalled = true
         }
@@ -42,23 +60,8 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
         EventHandler.initEvents(dist, modBus)
         AllRegisters.initEvents(dist, modBus)
 
-        ModList.get().allScanData.asSequence()
-            .flatMap { it.getAnnotatedBy(HologramPlugin::class.java, ElementType.TYPE).asSequence() }
-            .forEach {
-                try {
-                    val plugin = getClassOf<IHologramPlugin>(it.clazz().className)
-                        .getDeclaredConstructor()
-                        .apply { require(trySetAccessible()) }
-                        .newInstance()
-                    //todo process plugin
-                } catch (e: Exception) {
-
-                }
-            }
-
         HologramInteractiveHelper.register(
-            HologramInteractiveTarget.Companion.Furnace,
-            HologramInteractiveTarget::FurnaceWidget
+            HologramInteractiveTarget.Companion.Furnace, HologramInteractiveTarget::FurnaceWidget
         )
     }
 }

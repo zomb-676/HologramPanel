@@ -54,7 +54,7 @@ object RayTraceHelper {
         val res = map[target]
         if (res != null) return res
 
-        val maps = AllRegisters.ComponentHologramProviderRegistry.COMPONENT_HOLOGRAM_PROVIDER_REGISTRY
+        val maps = AllRegisters.ComponentHologramProviderRegistry.REGISTRY
             .associateBy { it.targetClass() }
         val list = mutableListOf<ComponentProvider<*>>()
         find(target, maps, list)

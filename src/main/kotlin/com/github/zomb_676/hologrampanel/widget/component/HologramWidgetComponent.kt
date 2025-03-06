@@ -148,7 +148,8 @@ sealed interface HologramWidgetComponent<T : Any> {
         }
 
         fun isRequestServerData(): Boolean {
-            TODO()
+            //todo
+            return false
         }
     }
 }

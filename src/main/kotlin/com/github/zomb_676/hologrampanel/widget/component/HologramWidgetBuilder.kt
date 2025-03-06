@@ -6,6 +6,7 @@ import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.google.common.collect.MultimapBuilder
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.Item
@@ -17,6 +18,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     private val stack: Stack<MutableList<HologramWidgetComponent<T>>> = Stack()
     private val helper = this.Helper()
     private var currentInSingle = false
+
+    init {
+        stack.add(mutableListOf())
+    }
 
     fun add(component: HologramWidgetComponent<T>) {
         require(!currentInSingle)

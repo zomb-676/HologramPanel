@@ -21,6 +21,7 @@ object AllRegisters {
 
     private fun addNewRegistry(event: NewRegistryEvent) {
         event.register(InteractiveHologramRegistry.INTERACTIVE_HOLOGRAM_REGISTRY)
+        event.register(ComponentHologramProviderRegistry.REGISTRY)
     }
 
     object InteractiveHologramRegistry {
@@ -35,7 +36,7 @@ object AllRegisters {
     }
 
     object BuildInInteractiveHologram {
-        internal val REGISTRY = DeferredRegister.create(
+        internal val REGISTRY: DeferredRegister<HologramInteractiveTarget.Provider<*>> = DeferredRegister.create(
             InteractiveHologramRegistry.INTERACTIVE_HOLOGRAM_REGISTRY,
             HologramPanel.MOD_ID
         )
@@ -46,13 +47,13 @@ object AllRegisters {
     }
 
     object ComponentHologramProviderRegistry {
-        val COMPONENT_HOLOGRAM_PROVIDER_KEY: ResourceKey<Registry<ComponentProvider<*>>> = ResourceKey
-            .createRegistryKey(HologramPanel.rl("interactive_hologram"))
-        val COMPONENT_HOLOGRAM_PROVIDER_REGISTRY: Registry<ComponentProvider<*>> =
-            RegistryBuilder(COMPONENT_HOLOGRAM_PROVIDER_KEY)
+        val RESOURCE_KEY: ResourceKey<Registry<ComponentProvider<*>>> = ResourceKey
+            .createRegistryKey(HologramPanel.rl("component_hologram_provider"))
+        val REGISTRY: Registry<ComponentProvider<*>> =
+            RegistryBuilder(RESOURCE_KEY)
                 .sync(true)
                 .create()
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*>> =
-            ByteBufCodecs.registry(COMPONENT_HOLOGRAM_PROVIDER_KEY)
+            ByteBufCodecs.registry(RESOURCE_KEY)
     }
 }

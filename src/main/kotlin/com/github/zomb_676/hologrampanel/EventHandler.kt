@@ -4,7 +4,9 @@ import com.github.zomb_676.hologrampanel.interaction.CycleSelector
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
-import com.github.zomb_676.hologrampanel.payload.*
+import com.github.zomb_676.hologrampanel.payload.DataSynchronizerSyncPayload
+import com.github.zomb_676.hologrampanel.payload.HologramCreatePayload
+import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
 import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
 import com.github.zomb_676.hologrampanel.util.CommandDSL
@@ -27,6 +29,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.neoforged.neoforge.event.level.LevelEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
+import net.neoforged.neoforge.registries.RegisterEvent
 import org.lwjgl.glfw.GLFW
 
 object EventHandler {
@@ -41,6 +44,7 @@ object EventHandler {
         forgeBus.addListener(::onPlayerLogin)
         forgeBus.addListener(::onPlayerLogout)
         forgeBus.addListener(::levelUnload)
+        modBus.addListener(::onRegistryEvent)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
         }
@@ -207,6 +211,19 @@ object EventHandler {
             HologramManager.clearHologram()
             InteractionModeManager.clearState()
             SynchronizerManager.Client.syncers.clear()
+        }
+    }
+
+    private fun onRegistryEvent(event: RegisterEvent) {
+        if (event.registryKey == AllRegisters.ComponentHologramProviderRegistry.RESOURCE_KEY) {
+            PluginManager.getInstance().commonRegistration.forEach { (plugin, reg) ->
+                plugin.registerCommon(reg)
+                event.register(AllRegisters.ComponentHologramProviderRegistry.RESOURCE_KEY) { helper ->
+                    reg.blockProviders.forEach { provider ->
+                        helper.register(provider.location(), provider)
+                    }
+                }
+            }
         }
     }
 }
