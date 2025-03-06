@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.RenderType
+import net.minecraft.network.chat.Component
 import net.minecraft.util.ARGB
 import net.minecraft.world.item.DyeColor
 import kotlin.math.max
@@ -24,11 +25,18 @@ interface HologramStyle {
     fun moveToGroupDescription()
     fun moveAfterDrawGroupOutline(descriptionSize: Size)
     fun moveAfterDrawSingleOutline()
+    fun mergeOutlineSizeForSlot(contentSize: Size): Size
+    fun drawSlotOutline(sizeIncludingOutline: Size)
+    fun moveAfterDrawSlotOutline()
+
 
     fun drawString(string: String, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
         guiGraphics.drawString(font, string, x, y, color, false)
     }
 
+    fun drawString(string: Component, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
+        guiGraphics.drawString(font, string, x, y, color, false)
+    }
     fun drawHorizontalLine(left: Int, right: Int, y: Int, color: Int = contextColor) {
         guiGraphics.hLine(left, right, y, color)
     }
@@ -49,6 +57,10 @@ interface HologramStyle {
         guiGraphics.pose().translate(x, y, 1.0)
     }
 
+    fun fill(size: Size, color: Int = contextColor) {
+        fill(0, 0, size.width, size.height, contextColor)
+    }
+
     fun fill(minX: Int, minY: Int, maxX: Int, maxY: Int, color: Int = contextColor) {
         guiGraphics.fill(minX, minY, maxX, maxY, color)
     }
@@ -63,6 +75,17 @@ interface HologramStyle {
 
     val font: Font get() = Minecraft.getInstance().font
 
+    fun measureString(string: String): Size {
+        return Size.of(font.width(string), font.lineHeight)
+    }
+
+    fun measureString(string: Component): Size {
+        return Size.of(font.width(string), font.lineHeight)
+    }
+
+    fun itemStackSize(): Size = ITEM_STACK_SIZE
+
+
     companion object {
         inline fun HologramStyle.poseStore(pose: PoseStack, code: () -> Unit) {
             val back = guiGraphics.pose
@@ -71,7 +94,8 @@ interface HologramStyle {
             guiGraphics.pose = back
         }
 
-        const val ITEM_STACK_SIZE = 16
+        const val ITEM_STACK_LENGTH = 16
+        val ITEM_STACK_SIZE = Size.of(ITEM_STACK_LENGTH, ITEM_STACK_LENGTH)
     }
 
     class DefaultStyle(override val guiGraphics: GuiGraphics) : HologramStyle {
@@ -94,7 +118,7 @@ interface HologramStyle {
         }
 
         override fun drawSingleOutline(size: Size, selected: SelectPathType, color: Int) {
-            this.drawHorizontalLine(2, size.width - 2, size.height - 3, brightColorBySelectedType(color, selected))
+
         }
 
         fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when (selected) {
@@ -146,6 +170,18 @@ interface HologramStyle {
         }
 
         override fun moveAfterDrawSingleOutline() {
+            move(2, 2)
+        }
+
+        override fun mergeOutlineSizeForSlot(contentSize: Size): Size {
+            return contentSize.expandWidth(4).expandHeight(4)
+        }
+
+        override fun drawSlotOutline(sizeIncludingOutline: Size) {
+            guiGraphics.renderOutline(0, 0, sizeIncludingOutline.width, sizeIncludingOutline.height, contextColor)
+        }
+
+        override fun moveAfterDrawSlotOutline() {
             move(2, 2)
         }
     }

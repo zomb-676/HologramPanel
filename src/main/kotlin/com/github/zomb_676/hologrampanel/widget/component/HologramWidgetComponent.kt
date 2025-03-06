@@ -1,12 +1,10 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
-import com.github.zomb_676.hologrampanel.api.IServerDataRequester
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
-import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import kotlin.math.max
 
 sealed interface HologramWidgetComponent<T : Any> {
@@ -17,30 +15,28 @@ sealed interface HologramWidgetComponent<T : Any> {
      */
     val visualSize: Size
 
-    fun render(
-        hologramStyle: HologramStyle, selectedPath: SelectedPath<HologramWidgetComponent<T>>, partialTicks: Float
-    )
-
     /**
      * @return [contentSize]
      */
-    fun measureSize(target: T, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle): Size
+    fun measureSize(
+        target: T,
+        style: HologramStyle,
+        displayType: DisplayType
+    ): Size
 
-    abstract class Single<T : Any, R : Any> : HologramWidgetComponent<T> {
+    fun render(
+        target: T,
+        style: HologramStyle,
+        path: SelectedPath<HologramWidgetComponent<T>>,
+        displayType: DisplayType,
+        partialTicks: Float
+    )
+
+    abstract class Single<T : Any> : HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             internal set
         final override var visualSize: Size = contentSize
             internal set
-
-        final override fun measureSize(
-            target: T, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle
-        ): Size = measureContentSize(extract(target), displayType, hologramStyle)
-
-        abstract fun extract(source: T): R
-
-        abstract fun measureContentSize(
-            target: R, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle
-        ): Size
     }
 
     abstract class Group<T : Any>(val children: List<HologramWidgetComponent<T>>) : HologramWidgetComponent<T> {
@@ -56,20 +52,20 @@ sealed interface HologramWidgetComponent<T : Any> {
         }
 
         final override fun measureSize(
-            target: T, displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle
+            target: T, style: HologramStyle, displayType: DisplayType
         ): Size {
             var width = 0
             var height = 0
             if (!this.collapse) {
                 for (child in children) {
                     when (child) {
-                        is Single<T, *> -> {
-                            child.contentSize = child.measureSize(target, displayType, hologramStyle)
-                            child.visualSize = hologramStyle.mergeOutlineSizeForSingle(child.contentSize)
+                        is Single<T> -> {
+                            child.contentSize = child.measureSize(target, style, displayType)
+                            child.visualSize = style.mergeOutlineSizeForSingle(child.contentSize)
                         }
 
                         is Group<T> -> {
-                            child.measureSize(target, displayType, hologramStyle)
+                            child.measureSize(target, style, displayType)
                         }
                     }
                     val childSize = child.visualSize
@@ -78,42 +74,46 @@ sealed interface HologramWidgetComponent<T : Any> {
                 }
             }
             this.contentSize = Size.of(width, height)
-            this.visualSize = hologramStyle.mergeOutlineSizeForGroup(
-                this.contentSize, this.descriptionSize(hologramStyle), this.collapse
+            this.visualSize = style.mergeOutlineSizeForGroup(
+                this.contentSize, this.descriptionSize(target, style, displayType), this.collapse
             )
             return this.contentSize
         }
 
-        final override fun render(
-            hologramStyle: HologramStyle, selectedPath: SelectedPath<HologramWidgetComponent<T>>, partialTicks: Float
+        override fun render(
+            target: T,
+            style: HologramStyle,
+            path: SelectedPath<HologramWidgetComponent<T>>,
+            displayType: DisplayType,
+            partialTicks: Float
         ) {
-            val selectedType = selectedPath.forAny(this)
-            hologramStyle.drawGroupOutline(this.visualSize, selectedType)
-            hologramStyle.stack {
-                hologramStyle.moveToGroupDescription()
-                this.renderGroupDescription(hologramStyle, selectedType)
+            val selectedType = path.forAny(this)
+            style.drawGroupOutline(this.visualSize, selectedType)
+            style.stack {
+                style.moveToGroupDescription()
+                this.renderGroupDescription(target, style, path, displayType, partialTicks)
             }
 
             if (!this.collapse) {
-                hologramStyle.stack {
-                    hologramStyle.moveAfterDrawGroupOutline(this.descriptionSize(hologramStyle))
+                style.stack {
+                    style.moveAfterDrawGroupOutline(this.descriptionSize(target, style, displayType))
                     this.children.forEach { component ->
                         when (component) {
-                            is Single<T, *> -> {
-                                hologramStyle.drawSingleOutline(
-                                    component.visualSize, selectedPath.forTerminal(component)
+                            is Single<T> -> {
+                                style.drawSingleOutline(
+                                    component.visualSize, path.forTerminal(component)
                                 )
-                                hologramStyle.stack {
-                                    hologramStyle.moveAfterDrawSingleOutline()
-                                    component.render(hologramStyle, selectedPath, partialTicks)
+                                style.stack {
+                                    style.moveAfterDrawSingleOutline()
+                                    component.render(target, style, path, displayType, partialTicks)
                                 }
                             }
 
                             is Group<T> -> {
-                                component.render(hologramStyle, selectedPath, partialTicks)
+                                component.render(target, style, path, displayType, partialTicks)
                             }
                         }
-                        hologramStyle.move(0, component.visualSize.height)
+                        style.move(0, component.visualSize.height)
                     }
                 }
             }
@@ -123,37 +123,32 @@ sealed interface HologramWidgetComponent<T : Any> {
             this.collapse = !this.collapse
         }
 
-        abstract fun descriptionSize(hologramStyle: HologramStyle): Size
+        abstract fun descriptionSize(
+            target: T,
+            style: HologramStyle,
+            displayType: DisplayType
+        ): Size
 
-        abstract fun renderGroupDescription(hologramStyle: HologramStyle, selectedType: SelectPathType)
+        abstract fun renderGroupDescription(
+            target: T,
+            style: HologramStyle,
+            path: SelectedPath<HologramWidgetComponent<T>>,
+            displayType: DisplayType,
+            partialTicks: Float
+        )
 
         fun traverseRecursively(code: (HologramWidgetComponent<T>) -> Unit) {
             code.invoke(this)
             for (child in this.children) {
                 when (child) {
                     is Group<T> -> child.traverseRecursively(code)
-                    is Single<T, *> -> code.invoke(child)
+                    is Single<T> -> code.invoke(child)
                 }
             }
         }
 
         fun isRequestServerData(): Boolean {
-            fun check(group: Group<T>): Boolean {
-                if (group is IServerDataRequester<*>) return true
-                for (child in group.children) {
-                    when (child) {
-                        is Single<T, *> -> {
-                            if (child is IServerDataRequester<*>) {
-                                return true
-                            }
-                        }
-                        is Group<T> -> check(child)
-                    }
-                }
-                return false
-            }
-
-            return check(this)
+            TODO()
         }
     }
 }

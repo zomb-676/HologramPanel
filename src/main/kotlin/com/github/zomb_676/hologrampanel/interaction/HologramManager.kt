@@ -1,17 +1,16 @@
 package com.github.zomb_676.hologrampanel.interaction
 
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.JomlMath
-import com.github.zomb_676.hologrampanel.util.mainCamera
 import com.github.zomb_676.hologrampanel.util.stack
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.core.BlockPos
-import kotlin.math.sqrt
 
 object HologramManager {
     private val widgets = mutableMapOf<Any, HologramWidget>()
@@ -26,10 +25,10 @@ object HologramManager {
 
     private var needArrange = false
 
-    fun tryAddWidget(widget: HologramWidget, traceSource: BlockPos) {
-        if (!widgets.containsKey(traceSource)) {
-            widgets[traceSource] = widget
-            states[widget] = HologramState(widget, traceSource)
+    fun tryAddWidget(widget: HologramWidget, context: HologramContext) {
+        if (!widgets.containsKey(context.getIdentityObject())) {
+            widgets[context.getIdentityObject()] = widget
+            states[widget] = HologramState(widget, context)
             this.needArrange = true
 
             widget.onAdd()
@@ -40,10 +39,10 @@ object HologramManager {
     }
 
     internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) {
-        val res = RayTraceHelper.findTarget(32, partialTicks)
-        if (res != null && !widgets.containsKey(res.first)) {
-            val widget = RayTraceHelper.createHologramWidget(res.second)
-            this.tryAddWidget(widget, res.first)
+        val context = RayTraceHelper.findTarget(32, partialTicks)
+        if (context != null && !widgets.containsKey(context.getIdentityObject())) {
+            val widget = RayTraceHelper.createHologramWidget(context)
+            this.tryAddWidget(widget, context)
         }
 
         if (needArrange) {
@@ -52,16 +51,15 @@ object HologramManager {
         }
 
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
-        states.values.forEach { state ->
-            val (widget, pos) = state
-            val widgetSize = state.measure(HologramWidget.DisplayType.FOCUSED, style)
+        states.forEach { (widget, state) ->
+            val widgetSize = state.measure(DisplayType.NORMAL, style)
 
             style.stack {
                 if (!state.viewVectorDegreeCheckPass()) return@stack
 
                 val screenPos = state.updateScreenPosition().equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
-                val distance = sqrt(mainCamera().position.distanceToSqr(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5))
+                val distance = state.distanceToCamera()
 
                 fun calculateScale(distance: Double, start: Double, end: Double): Double = when {
                     distance <= start -> 1.0
@@ -83,7 +81,7 @@ object HologramManager {
                 style.scale(scale, scale)
                 style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
                 style.fill(0, 0, widgetSize.width, widgetSize.height, 0x7fffffff)
-                widget.render(state, style, partialTicks)
+                widget.render(state, style, DisplayType.NORMAL, partialTicks)
             }
         }
         this.updateLookingAt()

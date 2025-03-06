@@ -36,6 +36,6 @@ value class ScreenPosition private constructor(@PublishedApi internal val positi
 
     companion object {
         fun of(x: Int, y: Int) = ScreenPosition((x.toLong() shl Int.SIZE_BITS) or (y.toLong()))
-        val ZERO = Size.of(0, 0)
+        val ZERO = of(0, 0)
     }
 }

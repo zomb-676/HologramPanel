@@ -1,6 +1,8 @@
 package com.github.zomb_676.hologrampanel.widget.interactive
 
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.HologramCreatePayload
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
 import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
@@ -35,10 +37,10 @@ object HologramInteractiveHelper {
         return ins.unsafeCast<Ins<T>>().factory.invoke(target)
     }
 
-    fun <T : HologramInteractiveTarget> addClientWidget(widget: HologramInteractiveWidget<T>) {
+    fun <T : HologramInteractiveTarget> addClientWidget(widget: HologramInteractiveWidget<T>, context: HologramContext) {
         val synchronizer = widget.target.synchronizer
         SynchronizerManager.Client.syncers.put(synchronizer.uuid, synchronizer)
-        HologramManager.tryAddWidget(widget, widget.traceSource as BlockPos)
+        HologramManager.tryAddWidget(widget, context)
     }
 
     fun <T : HologramInteractiveTarget> addServer(player: ServerPlayer, target: T) {

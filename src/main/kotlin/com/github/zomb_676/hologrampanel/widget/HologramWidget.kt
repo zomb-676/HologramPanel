@@ -4,26 +4,30 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramState
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.widget.interactive.DistType
+import org.jetbrains.annotations.ApiStatus
 
-abstract class HologramWidget {
-    enum class DisplayType {
-        FOCUSED, MAXIMUM, NORMAL, MINIMAL, SCREEN_EDGE
-    }
+interface HologramWidget {
 
-    var locateType: LocateType = LocateType.Screen.Free
-    var displayType: DisplayType = DisplayType.NORMAL
+    /**
+     * measure widget size
+     */
+    fun measure(style: HologramStyle, displayType: DisplayType): Size
 
-    abstract fun render(state: HologramState, style: HologramStyle, partialTicks: Float)
-    abstract fun measure(displayType: DisplayType, style: HologramStyle): Size
+    /**
+     * do render
+     */
+    fun render(state: HologramState, style: HologramStyle, displayType: DisplayType, partialTicks: Float)
 
-    open fun onSelected() {}
-    open fun onDisSelected() {}
+    fun onSelected() {}
+    fun onDisSelected() {}
 
+    @ApiStatus.NonExtendable
     fun closeWidget() {
         HologramManager.remove(this)
         this.onRemove()
     }
 
-    open fun onRemove() {}
-    open fun onAdd() {}
+    fun onRemove() {}
+    fun onAdd() {}
 }

@@ -1,58 +1,78 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.AllRegisters
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.HologramWidgetAdapter
+import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
-import net.minecraft.core.BlockPos
-import net.minecraft.world.entity.player.Player
-import net.minecraft.world.level.BlockGetter
-import net.minecraft.world.phys.Vec3
+import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.world.phys.EntityHitResult
+import net.minecraft.world.phys.HitResult
 
 object RayTraceHelper {
-    private data class InteractionTargetContext(val from: Vec3, val to: Vec3) {
-        companion object {
-            fun of(player: Player, radius: Int, partialTicks: Float): InteractionTargetContext {
-                val eyePosition: Vec3 = player.getEyePosition(partialTicks)
-                val viewVector = player.getViewVector(partialTicks)
-                val target = eyePosition.add(viewVector.normalize().scale(radius.toDouble()))
-                return InteractionTargetContext(eyePosition, target)
-            }
+    fun findTarget(radius: Int, partialTicks: Float): HologramContext? {
+        val player = Minecraft.getInstance().player!!
+        val result: HitResult = player.pick(20.0, partialTicks, true)
+        if (result.type == HitResult.Type.MISS) return null
+        return when (result) {
+            is BlockHitResult -> BlockHologramContext.of(result, player)
+            is EntityHitResult -> EntityHologramContext.of(result, player)
+            else -> throw RuntimeException("unknown hit result:$result")
         }
     }
 
-    fun findTarget(radius: Int, partialTicks: Float): Pair<BlockPos, Any>? {
-        val context = InteractionTargetContext.of(Minecraft.getInstance().player!!, radius, partialTicks)
-        val finder = HologramTargetType.Companion.DEFAULTS
+    fun <T : HologramContext> createHologramWidget(source: T): HologramWidget = when (source) {
+        is EntityHologramContext -> {
+            val builder = HologramWidgetBuilder(source)
+            apply(source.entity, builder)
+            builder.build { component(source.entity.name) }
+        }
 
-        val level = Minecraft.getInstance().level!!
-
-        var finalPos: BlockPos = BlockPos.ZERO
-        val target: Any? = BlockGetter.traverseBlocks(context.from, context.to, context, { context, pos ->
-            //todo return a list
-            finalPos = pos
-            finder.firstNotNullOfOrNull { type -> type.extract(pos, level) }
-        }, { null })
-        return when (target) {
-            null -> null
-            else -> finalPos to target
+        is BlockHologramContext -> {
+            val builder = HologramWidgetBuilder(source)
+            apply(source.getBlockState().block, builder)
+            apply(source.getFluidState().type, builder)
+            apply(source.getBlockEntity(), builder)
+            builder.build { component { source.getBlockState().block.name } }
         }
     }
 
-    fun <T : Any> createHologramWidget(source: T): HologramWidget {
-        val adapters = HologramWidgetAdapter.Companion.defaults
-        tailrec fun find(type: Class<*>): HologramWidgetAdapter<*, *> = if (adapters.containsKey(type)) {
-            adapters[type]!!
-        } else {
-            val superClass = type.superclass
-            if (superClass == null) {
-                HologramWidgetAdapter.Companion.default
-            } else {
-                find(superClass)
-            }
-        }
+    private val map: MutableMap<Class<*>, List<ComponentProvider<*>>> = mutableMapOf()
 
-        val adapter = find(source.javaClass).unsafeCast<HologramWidgetAdapter<T, HologramWidget>>()
-        return adapter.convert(source)
+    private fun <T : HologramContext> apply(target: Any?, builder: HologramWidgetBuilder<T>) {
+        if (target == null) return
+        query(target::class.java).forEach { provider ->
+            provider.unsafeCast<ComponentProvider<T>>().appendComponent(builder)
+        }
+    }
+
+    private fun query(target: Class<*>): List<ComponentProvider<*>> {
+        val res = map[target]
+        if (res != null) return res
+
+        val maps = AllRegisters.ComponentHologramProviderRegistry.COMPONENT_HOLOGRAM_PROVIDER_REGISTRY
+            .associateBy { it.targetClass() }
+        val list = mutableListOf<ComponentProvider<*>>()
+        find(target, maps, list)
+        map[target] = list
+        return list
+    }
+
+    private fun <V> find(c: Class<*>, map: Map<Class<*>, V>, list: MutableList<V>) {
+        val target = map[c]
+        if (target != null) {
+            list.add(target)
+        }
+        c.interfaces.forEach {
+            find(it, map, list)
+        }
+        val sup = c.superclass
+        if (sup != null) {
+            find(sup, map, list)
+        }
     }
 }

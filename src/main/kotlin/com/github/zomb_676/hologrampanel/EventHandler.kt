@@ -9,7 +9,6 @@ import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
 import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
-import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidgetRequesterManager
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveHelper
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
 import com.mojang.blaze3d.platform.InputConstants
@@ -39,6 +38,7 @@ object EventHandler {
         forgeBus.addListener(::tickClientPostEvent)
         forgeBus.addListener(::tickServerPostEvent)
         forgeBus.addListener(::onPlayerChangeDimension)
+        forgeBus.addListener(::onPlayerLogin)
         forgeBus.addListener(::onPlayerLogout)
         forgeBus.addListener(::levelUnload)
         if (dist == Dist.CLIENT) {
@@ -58,6 +58,7 @@ object EventHandler {
             forgeBus.addListener(::onClientTickPre)
             forgeBus.addListener(::onClientTickPost)
             forgeBus.addListener(::onRenderGUI)
+            forgeBus.addListener(::onPlayerLogout)
         }
 
         val switchModeKey by lazy {
@@ -134,6 +135,10 @@ object EventHandler {
                 CycleSelector.currentInstance()?.render(guiGraphics, deltaTracker)
             }
         }
+
+        private fun onPlayerLogout(event: ClientPlayerNetworkEvent.LoggingOut) {
+            HologramPanel.serverInstalled = false
+        }
     }
 
     private fun registerPayload(event: RegisterPayloadHandlersEvent) {
@@ -143,16 +148,8 @@ object EventHandler {
             DataSynchronizerSyncPayload.TYPE,
             DataSynchronizerSyncPayload.STREAM_CODEC,
             DataSynchronizerSyncPayload.HANDLE
-        ).playToServer<ComponentWidgetQueryPayload>(
-            ComponentWidgetQueryPayload.TYPE,
-            ComponentWidgetQueryPayload.STREAM_CODEC,
-            ComponentWidgetQueryPayload.HANDLE
-        ).playToClient<ComponentWidgetResponsePayload>(
-            ComponentWidgetResponsePayload.TYPE,
-            ComponentWidgetResponsePayload.STREAM_CODEC,
-            ComponentWidgetResponsePayload.HANDLE
-        ).playToServer<CloseRequestWidgetPayload>(
-            CloseRequestWidgetPayload.TYPE, CloseRequestWidgetPayload.STREAM_CODEC, CloseRequestWidgetPayload.HANDLE
+        ).playToClient<ServerHandShakePayload>(
+            ServerHandShakePayload.TYPE, ServerHandShakePayload.STREAM_CODEC, ServerHandShakePayload.HANDLE
         )
     }
 
@@ -177,12 +174,17 @@ object EventHandler {
         }
     }
 
+    private fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
+        val player = event.entity as ServerPlayer
+        val payload = ServerHandShakePayload()
+        player.connection.send(payload)
+    }
+
     private fun onPlayerLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
         val player = event.entity
         require(!player.level().isClientSide)
 
         SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
-        HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
     }
 
     private fun onPlayerChangeDimension(event: PlayerEvent.PlayerChangedDimensionEvent) {
@@ -190,12 +192,10 @@ object EventHandler {
         require(!player.level().isClientSide)
 
         SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
-        HologramComponentWidgetRequesterManager.Server.closeForPlayer(player)
     }
 
     private fun tickServerPostEvent(event: ServerTickEvent.Post) {
         SynchronizerManager.Server.syncers.values.forEach(DataSynchronizer::tick)
-        HologramComponentWidgetRequesterManager.Server.tick(event)
     }
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {
@@ -207,7 +207,6 @@ object EventHandler {
             HologramManager.clearHologram()
             InteractionModeManager.clearState()
             SynchronizerManager.Client.syncers.clear()
-            HologramComponentWidgetRequesterManager.Client.closeForPlayer()
         }
     }
 }

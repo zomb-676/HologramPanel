@@ -1,9 +1,7 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.api.IContextType
-import com.github.zomb_676.hologrampanel.api.IServerDataProcessor
+import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
-import net.minecraft.core.BlockPos
 import net.minecraft.core.Registry
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
@@ -19,14 +17,10 @@ object AllRegisters {
     fun initEvents(dist: Dist, modBus: IEventBus) {
         modBus.addListener(::addNewRegistry)
         BuildInInteractiveHologram.REGISTRY.register(modBus)
-        BuildInIServerDataProcessor.REGISTRY.register(modBus)
-        BuildInContextType.REGISTRY.register(modBus)
     }
 
     private fun addNewRegistry(event: NewRegistryEvent) {
         event.register(InteractiveHologramRegistry.INTERACTIVE_HOLOGRAM_REGISTRY)
-        event.register(IServerDataProcessorRegistry.SERVER_DATA_PROCESSOR_REGISTRY)
-        event.register(ContextTypeRegistry.SERVER_DATA_PROCESSOR_REGISTRY)
     }
 
     object InteractiveHologramRegistry {
@@ -51,68 +45,14 @@ object AllRegisters {
         }
     }
 
-    object IServerDataProcessorRegistry {
-        val SERVER_DATA_PROCESSOR_KEY: ResourceKey<Registry<IServerDataProcessor>> = ResourceKey
-            .createRegistryKey(HologramPanel.rl("server_data_processor"))
-        val SERVER_DATA_PROCESSOR_REGISTRY: Registry<IServerDataProcessor> =
-            RegistryBuilder(SERVER_DATA_PROCESSOR_KEY)
+    object ComponentHologramProviderRegistry {
+        val COMPONENT_HOLOGRAM_PROVIDER_KEY: ResourceKey<Registry<ComponentProvider<*>>> = ResourceKey
+            .createRegistryKey(HologramPanel.rl("interactive_hologram"))
+        val COMPONENT_HOLOGRAM_PROVIDER_REGISTRY: Registry<ComponentProvider<*>> =
+            RegistryBuilder(COMPONENT_HOLOGRAM_PROVIDER_KEY)
                 .sync(true)
                 .create()
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, IServerDataProcessor> =
-            ByteBufCodecs.registry(SERVER_DATA_PROCESSOR_KEY)
-
-        val LIST_STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, List<IServerDataProcessor>> =
-            object : StreamCodec<RegistryFriendlyByteBuf, List<IServerDataProcessor>> {
-                override fun decode(buffer: RegistryFriendlyByteBuf): List<IServerDataProcessor> {
-                    val count = buffer.readVarInt()
-                    return List(count) {
-                        STREAM_CODEC.decode(buffer)
-                    }
-                }
-
-                override fun encode(
-                    buffer: RegistryFriendlyByteBuf,
-                    value: List<IServerDataProcessor>
-                ) {
-                    buffer.writeVarInt(value.size)
-                    value.forEach { STREAM_CODEC.encode(buffer, it) }
-                }
-            }
-
-    }
-
-    object BuildInIServerDataProcessor {
-        internal val REGISTRY = DeferredRegister.create(
-            IServerDataProcessorRegistry.SERVER_DATA_PROCESSOR_REGISTRY,
-            HologramPanel.MOD_ID
-        )
-
-        val FURNACE_DATA_PROCESSOR = REGISTRY.register("furnace_data") { rl ->
-            IServerDataProcessor.Companion.FurnaceData
-        }
-
-    }
-
-    object ContextTypeRegistry {
-        val CONTEXT_TYPE_KEY: ResourceKey<Registry<IContextType<*>>> = ResourceKey
-            .createRegistryKey(HologramPanel.rl("context_type"))
-
-        val SERVER_DATA_PROCESSOR_REGISTRY: Registry<IContextType<*>> =
-            RegistryBuilder(CONTEXT_TYPE_KEY)
-                .sync(true)
-                .create()
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, IContextType<*>> =
-            ByteBufCodecs.registry(CONTEXT_TYPE_KEY)
-    }
-
-    object BuildInContextType {
-        internal val REGISTRY = DeferredRegister.create(
-            ContextTypeRegistry.SERVER_DATA_PROCESSOR_REGISTRY,
-            HologramPanel.MOD_ID
-        )
-
-        val BLOCK_POS = REGISTRY.register("block_pos") { rl ->
-            IContextType.BLOCK_POS
-        }
+        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*>> =
+            ByteBufCodecs.registry(COMPONENT_HOLOGRAM_PROVIDER_KEY)
     }
 }

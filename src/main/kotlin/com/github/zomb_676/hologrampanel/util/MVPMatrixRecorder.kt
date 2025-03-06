@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft
 import net.minecraft.core.Vec3i
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f
+import org.joml.Vector3f
+import org.joml.Vector3fc
 import org.joml.Vector4f
 
 /**
@@ -24,6 +26,9 @@ object MVPMatrixRecorder {
         transform(vec3i.x + 0.5, vec3i.y + 0.5, vec3i.z + 0.5)
 
     fun transform(x: Float, y: Float, z: Float) = transform(x.toDouble(), y.toDouble(), z.toDouble())
+
+    fun transform(f: Vector3fc) =
+        transform(f.x(), f.y(), f.z())
 
     fun transform(f: Vector4f) =
         transform(f.x, f.y, f.z)

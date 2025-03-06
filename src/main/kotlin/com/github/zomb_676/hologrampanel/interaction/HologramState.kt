@@ -1,19 +1,19 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.ScreenCoordinate
 import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import net.minecraft.client.Minecraft
-import net.minecraft.core.BlockPos
 import org.joml.Vector3f
 import kotlin.math.ceil
+import kotlin.math.sqrt
 
-class HologramState(val widget: HologramWidget, val sourcePos: BlockPos) {
-    operator fun component1() = widget
-    operator fun component2() = sourcePos
+class HologramState(val widget: HologramWidget, val context: HologramContext) {
     var displayed: Boolean = false
 
     var size: Size = Size.ZERO
@@ -21,14 +21,17 @@ class HologramState(val widget: HologramWidget, val sourcePos: BlockPos) {
     var centerScreenPos: ScreenCoordinate = ScreenCoordinate.ZERO
     var displayScale: Double = 1.0
 
+    fun sourcePosition() = context.hologramCenterPosition()
+
     fun viewVectorDegreeCheckPass(): Boolean {
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
         val viewVector = camera.lookVector
         val cameraPosition = camera.position
+        val sourcePosition = this.sourcePosition()
         val sourceVector = Vector3f(
-            (sourcePos.x + 0.5 - cameraPosition.x).toFloat(),
-            (sourcePos.y + 0.5 - cameraPosition.y).toFloat(),
-            (sourcePos.z + 0.5 - cameraPosition.z).toFloat()
+            (sourcePosition.x() - cameraPosition.x).toFloat(),
+            (sourcePosition.y() - cameraPosition.y).toFloat(),
+            (sourcePosition.z() - cameraPosition.z).toFloat()
         ).normalize()
 
         val dot = viewVector.dot(sourceVector)
@@ -39,13 +42,13 @@ class HologramState(val widget: HologramWidget, val sourcePos: BlockPos) {
         return pass
     }
 
-    fun measure(displayType: HologramWidget.DisplayType, hologramStyle: HologramStyle): Size {
-        this.size = widget.measure(displayType, hologramStyle)
+    fun measure(displayType: DisplayType, hologramStyle: HologramStyle): Size {
+        this.size = widget.measure(hologramStyle, displayType)
         return this.size
     }
 
     fun updateScreenPosition(): ScreenCoordinate {
-        this.centerScreenPos = MVPMatrixRecorder.transformBlockToOffset(sourcePos)
+        this.centerScreenPos = MVPMatrixRecorder.transform(this.sourcePosition())
         return this.centerScreenPos
     }
 
@@ -61,13 +64,12 @@ class HologramState(val widget: HologramWidget, val sourcePos: BlockPos) {
     fun isLookingAt() = HologramManager.getLookingHologram() == this
     fun isSelected() = InteractionModeManager.getSelectedHologram() == this
 
-    fun translateToLeftUp(hologramStyle: HologramStyle) {
-//        val pos = this.centerScreenPos.equivalentSmooth(hologramStyle)
-//        hologramStyle.move(pos.x, pos.y)
-//
-//
-//        val size = this.displaySize
-//        hologramStyle.scale(this.displayScale, this.displayScale)
-//        hologramStyle.translate(-size.width / 2.0f, -size.height / 2.0f)
+    fun distanceToCamera(): Double {
+        val source = this.sourcePosition()
+        val camera = Minecraft.getInstance().gameRenderer.mainCamera.position
+        val x = source.x() - camera.x
+        val y = source.y() - camera.y
+        val z = source.z() - camera.z
+        return sqrt(x * x + y * y + z * z)
     }
 }

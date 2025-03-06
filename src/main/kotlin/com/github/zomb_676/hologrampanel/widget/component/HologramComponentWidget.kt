@@ -1,16 +1,15 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
-import com.github.zomb_676.hologrampanel.api.IServerDataRequester
 import com.github.zomb_676.hologrampanel.interaction.HologramState
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact.SelectComponent
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
-import com.github.zomb_676.hologrampanel.util.unsafeCast
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 
-abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget() {
+abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget {
 
     private class SelectTree<T : Any>(val widget: HologramComponentWidget<T>) :
         SelectedPath<HologramWidgetComponent<T>> {
@@ -59,13 +58,12 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget(
             }
         }
 
-        override fun atUnTerminusPath(component: HologramWidgetComponent<T>): Boolean =
-            this.stack.contains(component)
+        override fun atUnTerminusPath(component: HologramWidgetComponent<T>): Boolean = this.stack.contains(component)
 
         override fun atTerminus(component: HologramWidgetComponent<T>): Boolean = this.current == component
 
         override fun atWholePath(component: HologramWidgetComponent<T>): Boolean = when (component) {
-            is HologramWidgetComponent.Single<T, *> -> atTerminus(component)
+            is HologramWidgetComponent.Single<T> -> atTerminus(component)
             is HologramWidgetComponent.Group<T> -> atUnTerminusPath(component)
         }
 
@@ -87,15 +85,14 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget(
     private var mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty<T>(this.component)
     private val requestServerData: Boolean = this.component.isRequestServerData()
 
-    override fun render(state: HologramState, style: HologramStyle, partialTicks: Float) {
-        val path: SelectedPath<HologramWidgetComponent<T>> =
-            if (state.isSelected()) this.selectedPath else mimicPath
-        this.component.render(style, path, partialTicks)
+    override fun render(state: HologramState, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
+        val path: SelectedPath<HologramWidgetComponent<T>> = if (state.isSelected()) this.selectedPath else mimicPath
+        this.component.render(target, style, path, displayType, partialTicks)
     }
 
-    override fun measure(displayType: DisplayType, style: HologramStyle): Size {
+    override fun measure(style: HologramStyle, displayType: DisplayType): Size {
         this.component = updateComponent(this.component)
-        this.component.measureSize(this.target, displayType, style)
+        this.component.measureSize(this.target, style, displayType)
         return this.component.visualSize
     }
 
@@ -125,25 +122,17 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget(
     }
 
     fun collectServerDataRequired() {
-        if (!this.requestServerData) return
-        val components = mutableListOf<IServerDataRequester<T>>()
-        this.component.traverseRecursively { component ->
-            if (component is IServerDataRequester<*>) {
-                components.add(component.unsafeCast())
-            }
-        }
-        require(components.isNotEmpty())
-        val contextHolder = ContextHolder()
-        for (component in components) {
-            component.appendContext(contextHolder, target)
-        }
-        HologramComponentWidgetRequesterManager.Client.createRequest(contextHolder, components, this)
-    }
-
-    override fun onRemove() {
-        super.onRemove()
-        if (this.requestServerData) {
-            HologramComponentWidgetRequesterManager.Client.closeWidget(this)
-        }
+//        if (!this.requestServerData) return
+//        val components = mutableListOf<IServerDataRequester<T>>()
+//        this.component.traverseRecursively { component ->
+//            if (component is IServerDataRequester<*>) {
+//                components.add(component.unsafeCast())
+//            }
+//        }
+//        require(components.isNotEmpty())
+//        val contextHolder = ContextHolder()
+//        for (component in components) {
+//            component.appendContext(contextHolder, target)
+//        }
     }
 }

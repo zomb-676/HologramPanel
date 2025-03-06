@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
 import com.github.zomb_676.hologrampanel.widget.interactive.DistType
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveHelper
@@ -65,7 +66,8 @@ class HologramCreatePayload<T : HologramInteractiveTarget>(
                     buffer
                 )
             val widget = HologramInteractiveHelper.create(interactive)
-            HologramInteractiveHelper.addClientWidget(widget)
+            val context = BlockHologramContext(TODO(), player, null)
+            HologramInteractiveHelper.addClientWidget(widget, context)
         }
     }
 

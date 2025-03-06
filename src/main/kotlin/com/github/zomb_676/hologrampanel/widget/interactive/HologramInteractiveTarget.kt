@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramState
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
 import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import net.minecraft.core.BlockPos
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
@@ -26,16 +27,14 @@ abstract class HologramInteractiveTarget(val type: DistType, val synchronizer: D
         override val traceSource: Any
             get() = target.furnace.blockPos
 
-        override fun render(
-            state: HologramState, style: HologramStyle, partialTicks: Float
-        ) {
+        override fun render(state: HologramState, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
             style.drawString(target.recipeUsedName.toString())
             style.guiGraphics.renderItem(target.item0, 0, 10)
             style.guiGraphics.renderItem(target.item1, 0, 20)
         }
 
         override fun measure(
-            displayType: DisplayType, style: HologramStyle
+            style: HologramStyle, displayType: DisplayType
         ): Size {
             return Size.of(10, 20)
         }

@@ -29,11 +29,19 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
         val underDebug = underDevelopment
 
         fun rl(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
+
+        var serverInstalled : Boolean = false
+            internal set
     }
 
     init {
+        if (dist == Dist.DEDICATED_SERVER) {
+            serverInstalled = true
+        }
+
         EventHandler.initEvents(dist, modBus)
         AllRegisters.initEvents(dist, modBus)
+
         ModList.get().allScanData.asSequence()
             .flatMap { it.getAnnotatedBy(HologramPlugin::class.java, ElementType.TYPE).asSequence() }
             .forEach {
@@ -47,6 +55,7 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
                 }
             }
+
         HologramInteractiveHelper.register(
             HologramInteractiveTarget.Companion.Furnace,
             HologramInteractiveTarget::FurnaceWidget
