@@ -2,7 +2,7 @@ package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.EfficientConst
-import com.github.zomb_676.hologrampanel.widget.interactive.DistType
+import com.github.zomb_676.hologrampanel.util.DistType
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level

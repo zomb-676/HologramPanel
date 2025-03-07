@@ -1,4 +1,4 @@
-package com.github.zomb_676.hologrampanel.widget.interactive
+package com.github.zomb_676.hologrampanel.util
 
 import net.minecraft.world.level.Level
 

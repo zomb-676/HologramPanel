@@ -3,8 +3,6 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.api.HologramPlugin
 import com.github.zomb_676.hologrampanel.api.IHologramPlugin
 import com.github.zomb_676.hologrampanel.util.getClassOf
-import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveHelper
-import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
@@ -59,9 +57,5 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
         EventHandler.initEvents(dist, modBus)
         AllRegisters.initEvents(dist, modBus)
-
-        HologramInteractiveHelper.register(
-            HologramInteractiveTarget.Companion.Furnace, HologramInteractiveTarget::FurnaceWidget
-        )
     }
 }

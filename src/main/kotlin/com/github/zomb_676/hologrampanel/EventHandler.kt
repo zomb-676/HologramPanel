@@ -4,19 +4,15 @@ import com.github.zomb_676.hologrampanel.interaction.CycleSelector
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
-import com.github.zomb_676.hologrampanel.payload.*
-import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
-import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
+import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
+import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
+import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveHelper
-import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
 import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument
-import net.minecraft.commands.arguments.coordinates.WorldCoordinates
 import net.minecraft.server.level.ServerPlayer
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
@@ -145,13 +141,7 @@ object EventHandler {
     }
 
     private fun registerPayload(event: RegisterPayloadHandlersEvent) {
-        event.registrar("1.0").playToClient<HologramCreatePayload<*>>(
-            HologramCreatePayload.TYPE, HologramCreatePayload.STREAM_CODEC, HologramCreatePayload.HANDLE
-        ).playBidirectional<DataSynchronizerSyncPayload>(
-            DataSynchronizerSyncPayload.TYPE,
-            DataSynchronizerSyncPayload.STREAM_CODEC,
-            DataSynchronizerSyncPayload.HANDLE
-        ).playToClient<ServerHandShakePayload>(
+        event.registrar("1.0").playToClient<ServerHandShakePayload>(
             ServerHandShakePayload.TYPE, ServerHandShakePayload.STREAM_CODEC, ServerHandShakePayload.HANDLE
         ).playToServer<ComponentRequestDataPayload<*>>(
             ComponentRequestDataPayload.TYPE,
@@ -167,20 +157,7 @@ object EventHandler {
     private fun registerCommand(event: RegisterCommandsEvent) {
         CommandDSL(event.dispatcher).apply {
             HologramPanel.MOD_ID {
-                "test_open" {
-                    "pos"(BlockPosArgument.blockPos()) {
-                        execute {
-                            val player = this.source.player!!
-                            val pos = this.getArgument("pos", WorldCoordinates::class.java)
 
-                            HologramInteractiveHelper.openOnServer(
-                                player, HologramInteractiveTarget.Companion.Furnace
-                            ) {
-                                it.writeBlockPos(pos.getBlockPos(this.source))
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -192,10 +169,8 @@ object EventHandler {
     }
 
     private fun onPlayerLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
-        val player = event.entity
-        require(!player.level().isClientSide)
+        val player = event.entity as ServerPlayer
 
-        SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
         DataQueryManager.Server.clearForPlayer(player)
     }
 
@@ -203,27 +178,23 @@ object EventHandler {
      * always on logic server
      */
     private fun onPlayerChangeDimension(event: PlayerEvent.PlayerChangedDimensionEvent) {
-        val player = event.entity
+        val player = event.entity as ServerPlayer
         require(!player.level().isClientSide)
 
-        SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
         DataQueryManager.Server.clearForPlayer(player)
     }
 
     private fun tickServerPostEvent(event: ServerTickEvent.Post) {
-        SynchronizerManager.Server.syncers.values.forEach(DataSynchronizer::tick)
         DataQueryManager.Server.tick()
     }
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {
-        SynchronizerManager.Client.syncers.values.forEach(DataSynchronizer::tick)
     }
 
     private fun levelUnload(event: LevelEvent.Unload) {
         if (event.level.isClientSide) {
             HologramManager.clearHologram()
             InteractionModeManager.clearState()
-            SynchronizerManager.Client.syncers.clear()
             DataQueryManager.Client.closeAll()
         }
     }
