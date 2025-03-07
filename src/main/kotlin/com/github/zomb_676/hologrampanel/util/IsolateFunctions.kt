@@ -6,6 +6,8 @@ import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.util.profiling.Profiler
+import net.minecraft.util.profiling.ProfilerFiller
 import net.neoforged.neoforge.client.GlStateBackup
 
 @Suppress("UNCHECKED_CAST")
@@ -55,3 +57,5 @@ inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> 
     code.invoke()
     RenderSystem.restoreGlState(state)
 }
+
+inline val profiler: ProfilerFiller get() = Profiler.get()

@@ -29,7 +29,6 @@ interface IRenderElement {
 
     var contentSize: Size
 
-    //todo
     class StaticRenderElement(val warp : IRenderElement) : IRenderElement by warp {
         private var hasUpdate = false
         override fun update() {

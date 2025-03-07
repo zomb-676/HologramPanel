@@ -22,8 +22,7 @@ class BuildInPlugin : IHologramPlugin {
         register.registerBlockComponent<Block>("block") { builder ->
             builder.single { component { getBlockState().block.name } }
         }
-        register.registerBlockComponent(object : ComponentProvider<BlockHologramContext>,
-            ServerDataProvider<BlockHologramContext> {
+        register.registerBlockComponent(object : ServerDataProvider<BlockHologramContext> {
             override fun appendComponent(builder: HologramWidgetBuilder<BlockHologramContext>) {
                 val context = builder.context
                 val registryAccess = context.getPlayer().registryAccess()

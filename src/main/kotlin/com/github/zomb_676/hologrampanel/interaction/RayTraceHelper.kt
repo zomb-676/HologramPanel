@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.util.profiler
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
@@ -29,6 +30,7 @@ object RayTraceHelper {
     }
 
     fun <T : HologramContext> createHologramWidget(source: T): HologramWidget {
+        profiler.push("create_hologram")
         val widget = when (source) {
             is EntityHologramContext -> {
                 val builder = HologramWidgetBuilder(source)
@@ -61,6 +63,7 @@ object RayTraceHelper {
             }
             DataQueryManager.Client.query(widget, tag, providers.toList().unsafeCast(), source)
         }
+        profiler.pop()
         return widget
     }
 

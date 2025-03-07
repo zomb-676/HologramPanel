@@ -3,7 +3,7 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.api.HologramCommonRegistration
 import com.github.zomb_676.hologrampanel.api.IHologramPlugin
 
-class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
+internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
     companion object {
         private var INSTANCE: PluginManager? = null
 

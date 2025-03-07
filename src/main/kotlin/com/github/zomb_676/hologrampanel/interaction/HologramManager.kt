@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.JomlMath
+import com.github.zomb_676.hologrampanel.util.profiler
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
@@ -11,6 +12,7 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidge
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.util.profiling.Profiler
 
 object HologramManager {
     private val widgets = mutableMapOf<Any, HologramWidget>()
@@ -36,17 +38,21 @@ object HologramManager {
     }
 
     internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) {
+        profiler.push("hologram_panel_render")
+        profiler.push("hologram_find_target")
         val context = RayTraceHelper.findTarget(32, partialTicks)
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context)
             this.tryAddWidget(widget, context)
         }
+        profiler.pop()
 
         if (needArrange) {
             needArrange = false
             //todo do arrange here
         }
 
+        profiler.push("render_hologram")
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
             val widgetSize = state.measure(DisplayType.NORMAL, style)
@@ -86,6 +92,8 @@ object HologramManager {
         this.renderHologramStateTip(style, InteractionModeManager.getSelectedHologram(), style.contextColor, 5)
         this.renderHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), 8)
         this.renderHologramStateTip(style, InteractionModeManager.getFindCandidateHologram(), 0xff_efe4b0.toInt(), 11)
+        profiler.pop()
+        profiler.pop()
     }
 
     private fun renderHologramStateTip(style: HologramStyle, target: HologramState?, color: Int, baseOffset: Int) {
@@ -162,10 +170,6 @@ object HologramManager {
         return this.lookingWidget
     }
 
-    fun getInteractionCandidate(): HologramState? {
-        return InteractionModeManager.getSelectedHologram() ?: this.getLookingHologram()
-    }
-
     fun getSubsequentDisplayedCandidate(state: HologramState?, exact: Exact.SelectHologram): HologramState? {
         return when (exact) {
             Exact.SelectHologram.SELECT_HOLOGRAM -> getLookingHologram()
@@ -226,6 +230,7 @@ object HologramManager {
                 this.lookingWidget = null
             }
             InteractionModeManager.onWidgetRemoved(widget)
+            widget.onRemove()
         }
     }
 }
