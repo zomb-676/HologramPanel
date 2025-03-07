@@ -7,8 +7,11 @@ import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetBuilder
+import com.github.zomb_676.hologrampanel.widget.component.ServerDataProvider
 import net.minecraft.client.Minecraft
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
@@ -25,20 +28,40 @@ object RayTraceHelper {
         }
     }
 
-    fun <T : HologramContext> createHologramWidget(source: T): HologramWidget = when (source) {
-        is EntityHologramContext -> {
-            val builder = HologramWidgetBuilder(source)
-            apply(source.entity, builder)
-            builder.build { component(source.entity.name) }
-        }
+    fun <T : HologramContext> createHologramWidget(source: T): HologramWidget {
+        val widget = when (source) {
+            is EntityHologramContext -> {
+                val builder = HologramWidgetBuilder(source)
+                apply(source.entity, builder)
+                builder.build { component(source.entity.name) }
+            }
 
-        is BlockHologramContext -> {
-            val builder = HologramWidgetBuilder(source)
-            apply(source.getBlockState().block, builder)
-            apply(source.getFluidState().type, builder)
-            apply(source.getBlockEntity(), builder)
-            builder.build { component { source.getBlockState().block.name } }
+            is BlockHologramContext -> {
+                val builder = HologramWidgetBuilder(source)
+                apply(source.getBlockState().block, builder)
+                apply(source.getFluidState().type, builder)
+                apply(source.getBlockEntity(), builder)
+                builder.build {
+                    item(source.getBlockState().block.asItem()).setScale(0.75)
+                    component(source.getBlockState().block.name).setScale(1.5)
+                }
+            }
         }
+        val providers: MutableSet<ServerDataProvider<T>> = mutableSetOf()
+        widget.component.traverseRecursively { component ->
+            val provider = component.unsafeCast<HologramWidgetBuilder.ProviderRelated<T>>().provider
+            if (provider is ServerDataProvider<*>) {
+                providers.add(provider.unsafeCast())
+            }
+        }
+        if (providers.isNotEmpty()) {
+            val tag = CompoundTag()
+            providers.forEach { provider ->
+                provider.additionInformationForServer(tag, source)
+            }
+            DataQueryManager.Client.query(widget, tag, providers.toList().unsafeCast(), source)
+        }
+        return widget
     }
 
     private val map: MutableMap<Class<*>, List<ComponentProvider<*>>> = mutableMapOf()
@@ -46,7 +69,9 @@ object RayTraceHelper {
     private fun <T : HologramContext> apply(target: Any?, builder: HologramWidgetBuilder<T>) {
         if (target == null) return
         query(target::class.java).forEach { provider ->
+            builder.currentProvider = provider.unsafeCast<ComponentProvider<T>>()
             provider.unsafeCast<ComponentProvider<T>>().appendComponent(builder)
+            builder.currentProvider = null
         }
     }
 

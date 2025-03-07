@@ -2,11 +2,14 @@ package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
+import io.netty.buffer.ByteBuf
 import net.minecraft.core.Registry
+import net.minecraft.core.registries.Registries
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceKey
+import net.minecraft.world.level.Level
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.registries.DeferredRegister
@@ -55,5 +58,10 @@ object AllRegisters {
                 .create()
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*>> =
             ByteBufCodecs.registry(RESOURCE_KEY)
+    }
+
+    object Codecs {
+        val LEVEL_STREAM_CODE: StreamCodec<ByteBuf, ResourceKey<Level>> =
+            ResourceKey.streamCodec(Registries.DIMENSION)
     }
 }

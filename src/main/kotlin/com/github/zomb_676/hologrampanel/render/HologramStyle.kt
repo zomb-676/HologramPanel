@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.render
 
+import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.Size
 import com.mojang.blaze3d.vertex.PoseStack
@@ -49,6 +50,10 @@ interface HologramStyle {
         this.translate(x.toFloat(), y.toFloat())
     }
 
+    fun move(screenPosition: ScreenPosition) {
+        this.move(screenPosition.x, screenPosition.y)
+    }
+
     fun translate(x: Float, y: Float) {
         this.translate(x.toDouble(), y.toDouble())
     }
@@ -71,6 +76,14 @@ interface HologramStyle {
 
     fun scale(x: Float, y: Float) {
         guiGraphics.pose().scale(x, y, 1.0f)
+    }
+
+    fun scale(scale: Double) {
+        this.scale(scale, scale)
+    }
+
+    fun scale(scale: Float) {
+        this.scale(scale, scale)
     }
 
     val font: Font get() = Minecraft.getInstance().font

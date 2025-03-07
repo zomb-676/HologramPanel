@@ -65,5 +65,7 @@ sealed interface HologramContext {
      * get data query from server here
      * why [CompoundTag]?, data can support check existence and arbitrary sort
      */
-    fun attachedServerData() : CompoundTag
+    fun attachedServerData() : CompoundTag?
+
+    fun setServerUpdateDat(tag: CompoundTag)
 }

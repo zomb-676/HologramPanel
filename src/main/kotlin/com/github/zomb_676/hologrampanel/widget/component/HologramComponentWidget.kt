@@ -80,7 +80,8 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget 
         }
     }
 
-    protected var component: HologramWidgetComponent.Group<T> = initialComponent()
+    var component: HologramWidgetComponent.Group<T> = initialComponent()
+        private set
     private var selectedPath: SelectTree<T> = SelectTree(this)
     private var mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty<T>(this.component)
     private val requestServerData: Boolean = this.component.isRequestServerData()
@@ -119,20 +120,5 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget 
                 }
             }
         }
-    }
-
-    fun collectServerDataRequired() {
-//        if (!this.requestServerData) return
-//        val components = mutableListOf<IServerDataRequester<T>>()
-//        this.component.traverseRecursively { component ->
-//            if (component is IServerDataRequester<*>) {
-//                components.add(component.unsafeCast())
-//            }
-//        }
-//        require(components.isNotEmpty())
-//        val contextHolder = ContextHolder()
-//        for (component in components) {
-//            component.appendContext(contextHolder, target)
-//        }
     }
 }

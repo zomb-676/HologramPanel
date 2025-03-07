@@ -32,9 +32,6 @@ object HologramManager {
             this.needArrange = true
 
             widget.onAdd()
-            if (widget is HologramComponentWidget<*>) {
-                widget.collectServerDataRequired()
-            }
         }
     }
 

@@ -25,6 +25,17 @@ inline fun HologramStyle.stack(code: () -> Unit) {
     this.guiGraphics.stack(code)
 }
 
+inline fun HologramStyle.stackIf(check: Boolean, addition: () -> Unit, code: () -> Unit) {
+    if (check) {
+        this.stack {
+            addition.invoke()
+            code.invoke()
+        }
+    } else {
+        code.invoke()
+    }
+}
+
 fun mainCamera(): Camera = Minecraft.getInstance().gameRenderer.mainCamera
 
 typealias JomlMath = org.joml.Math

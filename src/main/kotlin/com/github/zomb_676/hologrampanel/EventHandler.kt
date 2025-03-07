@@ -4,13 +4,12 @@ import com.github.zomb_676.hologrampanel.interaction.CycleSelector
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
-import com.github.zomb_676.hologrampanel.payload.DataSynchronizerSyncPayload
-import com.github.zomb_676.hologrampanel.payload.HologramCreatePayload
-import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
+import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.sync.DataSynchronizer
 import com.github.zomb_676.hologrampanel.sync.SynchronizerManager
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
+import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveHelper
 import com.github.zomb_676.hologrampanel.widget.interactive.HologramInteractiveTarget
 import com.mojang.blaze3d.platform.InputConstants
@@ -154,6 +153,14 @@ object EventHandler {
             DataSynchronizerSyncPayload.HANDLE
         ).playToClient<ServerHandShakePayload>(
             ServerHandShakePayload.TYPE, ServerHandShakePayload.STREAM_CODEC, ServerHandShakePayload.HANDLE
+        ).playToServer<ComponentRequestDataPayload<*>>(
+            ComponentRequestDataPayload.TYPE,
+            ComponentRequestDataPayload.STREAM_CODEC,
+            ComponentRequestDataPayload.HANDLE
+        ).playToClient<ComponentResponseDataPayload>(
+            ComponentResponseDataPayload.TYPE,
+            ComponentResponseDataPayload.STREAM_CODEC,
+            ComponentResponseDataPayload.HANDLE
         )
     }
 
@@ -189,17 +196,23 @@ object EventHandler {
         require(!player.level().isClientSide)
 
         SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
+        DataQueryManager.Server.clearForPlayer(player)
     }
 
+    /**
+     * always on logic server
+     */
     private fun onPlayerChangeDimension(event: PlayerEvent.PlayerChangedDimensionEvent) {
         val player = event.entity
         require(!player.level().isClientSide)
 
         SynchronizerManager.Server.clearForPlayer(player as ServerPlayer)
+        DataQueryManager.Server.clearForPlayer(player)
     }
 
     private fun tickServerPostEvent(event: ServerTickEvent.Post) {
         SynchronizerManager.Server.syncers.values.forEach(DataSynchronizer::tick)
+        DataQueryManager.Server.tick()
     }
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {
@@ -211,6 +224,7 @@ object EventHandler {
             HologramManager.clearHologram()
             InteractionModeManager.clearState()
             SynchronizerManager.Client.syncers.clear()
+            DataQueryManager.Client.closeAll()
         }
     }
 

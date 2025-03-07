@@ -1,26 +1,27 @@
 package com.github.zomb_676.hologrampanel.interaction.context
 
+import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.widget.interactive.DistType
-import io.netty.buffer.ByteBuf
-import net.minecraft.core.registries.Registries
+import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
-import net.minecraft.resources.ResourceKey
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
+import net.neoforged.neoforge.server.ServerLifecycleHooks
 import org.joml.Vector3f
 import org.joml.Vector3fc
+import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
 class EntityHologramContext(
-    val entity: Entity,
-    private val player: Player,
-    private val hitResult: EntityHitResult?
+    val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
 ) : HologramContext {
-    internal val tag = CompoundTag()
+    private var tag : CompoundTag? = null
 
     override fun getLevel(): Level = player.level()
 
@@ -35,7 +36,11 @@ class EntityHologramContext(
 
     override fun getHitContext(): HitResult? = hitResult
 
-    override fun attachedServerData(): CompoundTag = tag
+    override fun attachedServerData(): CompoundTag? = tag
+
+    override fun setServerUpdateDat(tag: CompoundTag) {
+        this.tag = tag
+    }
 
     companion object {
         fun of(hit: EntityHitResult, player: Player): EntityHologramContext {
@@ -43,7 +48,29 @@ class EntityHologramContext(
             return EntityHologramContext(entity, player, hit)
         }
 
-        private val LEVEL_STREAM_CODE: StreamCodec<ByteBuf, ResourceKey<Level>> =
-            ResourceKey.streamCodec(Registries.DIMENSION)
+        val STREAM_CODE: StreamCodec<RegistryFriendlyByteBuf, EntityHologramContext> =
+            object : StreamCodec<RegistryFriendlyByteBuf, EntityHologramContext> {
+                override fun decode(buffer: RegistryFriendlyByteBuf): EntityHologramContext {
+                    val levelKey = AllRegisters.Codecs.LEVEL_STREAM_CODE.decode(buffer)
+                    val server = ServerLifecycleHooks.getCurrentServer()!!
+                    val level = server.getLevel(levelKey)!!
+                    val entity = level.getEntity(buffer.readVarInt())!!
+                    val player = server.playerList.getPlayer(UUIDUtil.STREAM_CODEC.decode(buffer))!!
+                    val location = buffer.readOptional(Vec3.STREAM_CODEC).getOrNull()
+                    val hit = if (location != null) {
+                        EntityHitResult(entity, location)
+                    } else null
+                    return EntityHologramContext(entity, player, hit)
+                }
+
+                override fun encode(
+                    buffer: RegistryFriendlyByteBuf, value: EntityHologramContext
+                ) {
+                    AllRegisters.Codecs.LEVEL_STREAM_CODE.encode(buffer, value.entity.level().dimension())
+                    buffer.writeVarInt(value.entity.id)
+                    UUIDUtil.STREAM_CODEC.encode(buffer, value.player.uuid)
+                    buffer.writeOptional(Optional.ofNullable(value.hitResult?.location), Vec3.STREAM_CODEC)
+                }
+            }
     }
 }
