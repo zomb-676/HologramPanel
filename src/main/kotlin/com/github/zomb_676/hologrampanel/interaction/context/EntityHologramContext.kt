@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.util.DistType
+import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
@@ -13,6 +14,7 @@ import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
 import net.neoforged.neoforge.server.ServerLifecycleHooks
+import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3f
 import org.joml.Vector3fc
 import java.util.*
@@ -22,6 +24,7 @@ class EntityHologramContext(
     val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
 ) : HologramContext {
     private var tag : CompoundTag? = null
+    private var remember = Remember.create(this)
 
     override fun getLevel(): Level = player.level()
 
@@ -36,11 +39,15 @@ class EntityHologramContext(
 
     override fun getHitContext(): HitResult? = hitResult
 
+    @ApiStatus.Internal
     override fun attachedServerData(): CompoundTag? = tag
 
+    @ApiStatus.Internal
     override fun setServerUpdateDat(tag: CompoundTag) {
         this.tag = tag
     }
+
+    override fun getRememberData(): Remember<*> = remember
 
     companion object {
         fun of(hit: EntityHitResult, player: Player): EntityHologramContext {

@@ -1,7 +1,9 @@
 package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.api.EfficientConst
+import com.github.zomb_676.hologrampanel.api.GenericThis
 import com.github.zomb_676.hologrampanel.util.DistType
+import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.BlockPos
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
@@ -15,6 +17,7 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.phys.BlockHitResult
 import net.neoforged.neoforge.server.ServerLifecycleHooks
+import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3f
 import org.joml.Vector3fc
 import java.util.*
@@ -29,6 +32,7 @@ class BlockHologramContext(
     private var tag : CompoundTag? = null
 
     private val centerPosition = Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f)
+    private val remember = Remember.create(this)
 
     override fun getLevel(): Level = player.level()
 
@@ -43,11 +47,15 @@ class BlockHologramContext(
 
     override fun getHitContext(): BlockHitResult? = hitResult
 
+    @ApiStatus.Internal
     override fun attachedServerData(): CompoundTag? = tag
 
+    @ApiStatus.Internal
     override fun setServerUpdateDat(tag: CompoundTag) {
         this.tag = tag
     }
+
+    override fun getRememberData(): Remember<BlockHologramContext> = remember
 
     fun getBlockState(): BlockState = getLevel().getBlockState(pos)
 

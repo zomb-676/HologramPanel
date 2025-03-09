@@ -7,7 +7,7 @@ import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import kotlin.math.max
 
-sealed interface HologramWidgetComponent<T : Any> {
+interface HologramWidgetComponent<T : Any> {
     val contentSize: Size
 
     /**
@@ -39,7 +39,7 @@ sealed interface HologramWidgetComponent<T : Any> {
             internal set
     }
 
-    abstract class Group<T : Any>(val children: List<HologramWidgetComponent<T>>) : HologramWidgetComponent<T> {
+    abstract class Group<T : Any>(open val children: List<HologramWidgetComponent<T>>) : HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             private set
         final override var visualSize: Size = contentSize
@@ -145,11 +145,6 @@ sealed interface HologramWidgetComponent<T : Any> {
                     is Single<T> -> code.invoke(child)
                 }
             }
-        }
-
-        fun isRequestServerData(): Boolean {
-            //todo
-            return false
         }
     }
 }

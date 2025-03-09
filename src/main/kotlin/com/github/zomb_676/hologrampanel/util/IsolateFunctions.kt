@@ -59,3 +59,10 @@ inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> 
 }
 
 inline val profiler: ProfilerFiller get() = Profiler.get()
+
+inline fun <T> profilerStack(name: String, code: () -> T) : T {
+    profiler.push(name)
+    val res = code.invoke()
+    profiler.pop()
+    return res
+}

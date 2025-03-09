@@ -5,19 +5,18 @@ import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.profiler
+import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.util.profiling.Profiler
 
 object HologramManager {
     private val widgets = mutableMapOf<Any, HologramWidget>()
-    private val states = mutableMapOf<HologramWidget, HologramState>()
-    private var lookingWidget: HologramState? = null
+    private val states = mutableMapOf<HologramWidget, HologramRenderState>()
+    private var lookingWidget: HologramRenderState? = null
 
     fun clearHologram() {
         this.widgets.clear()
@@ -30,22 +29,19 @@ object HologramManager {
     fun tryAddWidget(widget: HologramWidget, context: HologramContext) {
         if (!widgets.containsKey(context.getIdentityObject())) {
             widgets[context.getIdentityObject()] = widget
-            states[widget] = HologramState(widget, context)
+            states[widget] = HologramRenderState(widget, context)
             this.needArrange = true
 
             widget.onAdd()
         }
     }
 
-    internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) {
-        profiler.push("hologram_panel_render")
-        profiler.push("hologram_find_target")
+    internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
         val context = RayTraceHelper.findTarget(32, partialTicks)
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context)
             this.tryAddWidget(widget, context)
         }
-        profiler.pop()
 
         if (needArrange) {
             needArrange = false
@@ -57,8 +53,8 @@ object HologramManager {
         states.forEach { (widget, state) ->
             val widgetSize = state.measure(DisplayType.NORMAL, style)
 
+            if (!state.viewVectorDegreeCheckPass()) return@forEach
             style.stack {
-                if (!state.viewVectorDegreeCheckPass()) return@stack
 
                 val screenPos = state.updateScreenPosition().equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
@@ -93,10 +89,9 @@ object HologramManager {
         this.renderHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), 8)
         this.renderHologramStateTip(style, InteractionModeManager.getFindCandidateHologram(), 0xff_efe4b0.toInt(), 11)
         profiler.pop()
-        profiler.pop()
     }
 
-    private fun renderHologramStateTip(style: HologramStyle, target: HologramState?, color: Int, baseOffset: Int) {
+    private fun renderHologramStateTip(style: HologramStyle, target: HologramRenderState?, color: Int, baseOffset: Int) {
         val target = target ?: return
         if (!target.displayed) return
         style.stack {
@@ -166,11 +161,11 @@ object HologramManager {
             }
     }
 
-    fun getLookingHologram(): HologramState? {
+    fun getLookingHologram(): HologramRenderState? {
         return this.lookingWidget
     }
 
-    fun getSubsequentDisplayedCandidate(state: HologramState?, exact: Exact.SelectHologram): HologramState? {
+    fun getSubsequentDisplayedCandidate(state: HologramRenderState?, exact: Exact.SelectHologram): HologramRenderState? {
         return when (exact) {
             Exact.SelectHologram.SELECT_HOLOGRAM -> getLookingHologram()
             Exact.SelectHologram.SWITCH_HOLOGRAM_UP -> null

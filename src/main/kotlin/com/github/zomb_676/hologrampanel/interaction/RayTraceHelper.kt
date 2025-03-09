@@ -5,11 +5,13 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.profiler
+import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetBuilder
+import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import com.github.zomb_676.hologrampanel.widget.component.ServerDataProvider
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
@@ -18,7 +20,7 @@ import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 
 object RayTraceHelper {
-    fun findTarget(radius: Int, partialTicks: Float): HologramContext? {
+    fun findTarget(radius: Int, partialTicks: Float): HologramContext? = profilerStack("hologram_find_target") {
         val player = Minecraft.getInstance().player!!
         val result: HitResult = player.pick(20.0, partialTicks, true)
         if (result.type == HitResult.Type.MISS) return null
@@ -73,7 +75,7 @@ object RayTraceHelper {
         if (target == null) return
         query(target::class.java).forEach { provider ->
             builder.currentProvider = provider.unsafeCast<ComponentProvider<T>>()
-            provider.unsafeCast<ComponentProvider<T>>().appendComponent(builder)
+            provider.unsafeCast<ComponentProvider<T>>().appendComponent(builder, DisplayType.NORMAL)
             builder.currentProvider = null
         }
     }

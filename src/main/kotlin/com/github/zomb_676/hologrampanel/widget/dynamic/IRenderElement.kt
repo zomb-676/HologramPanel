@@ -1,11 +1,10 @@
-package com.github.zomb_676.hologrampanel.widget.component
+package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
-import com.github.zomb_676.hologrampanel.widget.component.IRenderElement
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
@@ -19,7 +18,6 @@ interface IRenderElement {
 
     fun measureContentSize(style: HologramStyle): Size
     fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType)
-    fun update()
 
     fun setScale(scale: Double): RenderElement
     fun getScale(): Double
@@ -29,27 +27,8 @@ interface IRenderElement {
 
     var contentSize: Size
 
-    class StaticRenderElement(val warp : IRenderElement) : IRenderElement by warp {
-        private var hasUpdate = false
-        override fun update() {
-            if (hasUpdate) return
-            warp.update()
-            hasUpdate = true
-        }
-
-        companion object {
-            fun <T : IRenderElement> tryWrap(warp : T) =
-                warp as? StaticRenderElement ?: StaticRenderElement(warp)
-        }
-    }
-
-    companion object {
-        const val UN_LOAD_STRING = "N"
-    }
-
     abstract class RenderElement : IRenderElement {
         final override var contentSize: Size = Size.ZERO
-
 
         private var scale: Double = 1.0
             @JvmName("privateScaleSet")
@@ -85,52 +64,32 @@ interface IRenderElement {
         }
     }
 
-    open class StringRenderElement(val updater: () -> Component) : RenderElement() {
-        private var str: Component = Component.literal("un_initialized")
+    open class StringRenderElement(val component: Component) : RenderElement() {
 
         override fun measureContentSize(
             style: HologramStyle
         ): Size {
-            return style.measureString(str).scale()
+            return style.measureString(component).scale()
         }
 
         override fun render(
             style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType
         ) {
-            style.drawString(str)
-        }
-
-        override fun update() {
-            this.str = updater.invoke()
+            style.drawString(component)
         }
     }
 
-    open class ItemStackElement(val renderDecoration: Boolean = true, val updater: () -> ItemStack) : RenderElement() {
-        private var itemStack: ItemStack? = null
+    open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement() {
 
-        override fun measureContentSize(style: HologramStyle): Size {
-            return if (itemStack == null) {
-                style.measureString(UN_LOAD_STRING)
-            } else {
-                style.itemStackSize()
-            }.scale()
-        }
+        override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize()
 
         override fun render(
             style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType
         ) {
-            if (itemStack == null) {
-                style.drawString(UN_LOAD_STRING)
-            } else {
-                style.guiGraphics.renderItem(itemStack, 0, 0)
-                if (renderDecoration) {
-                    style.guiGraphics.renderItemDecorations(style.font, itemStack, 0, 0)
-                }
+            style.guiGraphics.renderItem(itemStack, 0, 0)
+            if (renderDecoration) {
+                style.guiGraphics.renderItemDecorations(style.font, itemStack, 0, 0)
             }
-        }
-
-        override fun update() {
-            this.itemStack = updater.invoke()
         }
 
         fun smallItem(): ItemStackElement {
@@ -139,15 +98,13 @@ interface IRenderElement {
         }
     }
 
-    class TextureAtlasSpriteRenderElement(val updater: () -> TextureAtlasSprite) : RenderElement() {
+    class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderElement() {
         companion object {
             @Suppress("DEPRECATION")
             val missing: TextureAtlasSprite =
                 Minecraft.getInstance().modelManager.getAtlas(TextureAtlas.LOCATION_BLOCKS)
                     .getSprite(MissingTextureAtlasSprite.getLocation())
         }
-
-        private var sprite: TextureAtlasSprite = missing
 
         override fun measureContentSize(style: HologramStyle): Size {
             val contents = sprite.contents()
@@ -161,10 +118,6 @@ interface IRenderElement {
         ) {
             val size = this.contentSize
             style.guiGraphics.blitSprite(RenderType::guiTextured, sprite, 0, 0, size.width, size.height)
-        }
-
-        override fun update() {
-            this.sprite = updater.invoke()
         }
     }
 
@@ -182,12 +135,6 @@ interface IRenderElement {
         open fun initialized() = progressMax >= 0 && progressCurrent >= 0
 
         open fun fromLeftToRight(): Boolean = true
-
-        override fun update() {
-            this.progressMax = progressMax()
-            this.progressCurrent = progressCurrent()
-            this.percent = progressCurrent.toDouble() / progressMax
-        }
 
         override fun measureContentSize(
             style: HologramStyle

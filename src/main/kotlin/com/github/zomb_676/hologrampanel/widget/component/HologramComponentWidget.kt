@@ -1,6 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
-import com.github.zomb_676.hologrampanel.interaction.HologramState
+import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact.SelectComponent
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -18,7 +18,7 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget 
         private var currentIndex = 0
         private var currentDepth = 1
 
-        fun selectCommand(state: HologramState, selectCommand: SelectComponent) {
+        fun selectCommand(state: HologramRenderState, selectCommand: SelectComponent) {
             when (selectCommand) {
                 SelectComponent.SELECT_NEXT -> {
                     val children = stack.lastOrNull()?.children ?: return
@@ -84,34 +84,35 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget 
         private set
     private var selectedPath: SelectTree<T> = SelectTree(this)
     private var mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty<T>(this.component)
-    private val requestServerData: Boolean = this.component.isRequestServerData()
 
-    override fun render(state: HologramState, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
+    override fun render(state: HologramRenderState, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
         val path: SelectedPath<HologramWidgetComponent<T>> = if (state.isSelected()) this.selectedPath else mimicPath
         this.component.render(target, style, path, displayType, partialTicks)
     }
 
     override fun measure(style: HologramStyle, displayType: DisplayType): Size {
-        this.component = updateComponent(this.component)
         this.component.measureSize(this.target, style, displayType)
         return this.component.visualSize
     }
 
     protected abstract fun initialComponent(): HologramWidgetComponent.Group<T>
 
-    protected open fun updateComponent(component: HologramWidgetComponent.Group<T>): HologramWidgetComponent.Group<T> =
-        component
+    open fun updateComponent() {}
 
-    fun selectComponent(state: HologramState, selectCommand: SelectComponent) {
+    fun selectComponent(state: HologramRenderState, selectCommand: SelectComponent) {
         selectedPath.selectCommand(state, selectCommand)
     }
 
     override fun onSelected() {}
     override fun onDisSelected() {
-        selectedPath.resetToDefault()
+        this.resetSelectState()
     }
 
-    fun operateCommand(state: HologramState, operateCommand: InteractionCommand.Exact.OperateCommand) {
+    fun resetSelectState() {
+        this.selectedPath.resetToDefault()
+    }
+
+    fun operateCommand(state: HologramRenderState, operateCommand: InteractionCommand.Exact.OperateCommand) {
         when (operateCommand) {
             InteractionCommand.Exact.OperateCommand.SWITCH_COLLAPSE -> {
                 val selected = this.selectedPath.terminal()

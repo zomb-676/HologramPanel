@@ -33,14 +33,14 @@ object InteractionModeManager {
             }
         }
 
-    private var selectedHologram: HologramState? = null
+    private var selectedHologram: HologramRenderState? = null
         set(value) {
             field?.widget?.onDisSelected()
             field = value
             field?.widget?.onSelected()
         }
 
-    private var findCandidateHologram: HologramState? = null
+    private var findCandidateHologram: HologramRenderState? = null
 
     fun onRawCommand(raw: Raw) {
         val lookingTarget = HologramManager.getLookingHologram()
@@ -110,7 +110,7 @@ object InteractionModeManager {
         this.processCommand(raw, exactCommand, lookingTarget)
     }
 
-    private fun processCommand(raw: Raw, exact: Exact?, lookingTarget: HologramState?) {
+    private fun processCommand(raw: Raw, exact: Exact?, lookingTarget: HologramRenderState?) {
         when (exact) {
             is Exact.SelectHologram -> {
                 when (exact) {

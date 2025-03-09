@@ -13,7 +13,7 @@ import org.joml.Vector3f
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
-class HologramState(val widget: HologramWidget, val context: HologramContext) {
+class HologramRenderState(val widget: HologramWidget, val context: HologramContext) {
     var displayed: Boolean = false
 
     var size: Size = Size.ZERO

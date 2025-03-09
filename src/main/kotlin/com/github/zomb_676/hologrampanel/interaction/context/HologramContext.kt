@@ -2,11 +2,14 @@ package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.EfficientConst
+import com.github.zomb_676.hologrampanel.api.GenericThis
 import com.github.zomb_676.hologrampanel.util.DistType
+import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.HitResult
+import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3fc
 
 /**
@@ -30,8 +33,12 @@ sealed interface HologramContext {
 
     /**
      * the player who trig the context
-     * should be [net.minecraft.client.player.LocalPlayer] at client
-     * and [net.minecraft.server.level.ServerPlayer] at server
+     *
+     *
+     * [net.minecraft.client.player.LocalPlayer] at client
+     *
+     *
+     * [net.minecraft.server.level.ServerPlayer] at server
      */
     @EfficientConst
     fun getPlayer(): Player
@@ -61,11 +68,18 @@ sealed interface HologramContext {
     @EfficientConst
     fun getHitContext(): HitResult?
 
+    @ApiStatus.Internal
+    fun attachedServerData() : CompoundTag?
+
+    @ApiStatus.Internal
+    fun setServerUpdateDat(tag: CompoundTag)
+
     /**
      * get data query from server here
      * why [CompoundTag]?, data can support check existence and arbitrary sort
+     *
+     * @return must be [GenericThis]
      */
-    fun attachedServerData() : CompoundTag?
-
-    fun setServerUpdateDat(tag: CompoundTag)
+    @EfficientConst
+    fun getRememberData() : Remember<out HologramContext>
 }

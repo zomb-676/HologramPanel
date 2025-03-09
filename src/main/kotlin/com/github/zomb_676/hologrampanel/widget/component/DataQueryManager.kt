@@ -32,7 +32,10 @@ object DataQueryManager {
                 //todo
                 return
             }
-            maps[widget]!!.setServerUpdateDat(tag)
+            maps[widget]!!.let { context ->
+                context.setServerUpdateDat(tag)
+                context.getRememberData().onReceiveData(tag)
+            }
         }
 
         fun closeForWidget() {
