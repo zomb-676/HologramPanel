@@ -11,6 +11,12 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    maven {
+        url "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 base {
@@ -90,6 +96,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
     jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10"))
     additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:2.1.10"
+
+    runtimeOnly("curse.maven:jade-324717:6170888")
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

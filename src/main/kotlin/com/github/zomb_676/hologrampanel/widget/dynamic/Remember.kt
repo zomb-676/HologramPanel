@@ -10,9 +10,11 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 import kotlin.reflect.KProperty
 
 class Remember<T : HologramContext> private constructor() {
+    val uuid: UUID = UUID.randomUUID()
     private val map: MutableMap<ComponentProvider<T>, MutableList<Holder<T, *>>> = mutableMapOf()
 
     @PublishedApi
@@ -22,11 +24,12 @@ class Remember<T : HologramContext> private constructor() {
 
     private val servers: Int2ObjectOpenHashMap<Holder<T, *>> = Int2ObjectOpenHashMap()
     private val clients: Int2ObjectOpenHashMap<Holder<T, *>> = Int2ObjectOpenHashMap()
+    private val keeps : Int2ObjectOpenHashMap<Any> = Int2ObjectOpenHashMap()
 
     lateinit var context: T
 
     class Holder<T : HologramContext, V>(
-        private val provider: ComponentProvider<T>,
+        internal val provider: ComponentProvider<T>,
         private val remember: Remember<T>,
         private val updater: (CompoundTag) -> V,
         initial: V
@@ -57,6 +60,16 @@ class Remember<T : HologramContext> private constructor() {
         this.provider = provider
         code.invoke()
         this.provider = null
+    }
+
+    fun <V : Any> keep(identity: Int, data: V) : V {
+        val key = calculateKey(identity, data)
+        var res = keeps.get(key)
+        if (res == null) {
+            res = data
+            keeps.put(key, data)
+        }
+        return res.unsafeCast()
     }
 
     fun <V> client(identity: Int, initial: V, code: () -> V): Holder<T, V> {
@@ -90,13 +103,13 @@ class Remember<T : HologramContext> private constructor() {
         return res.unsafeCast()
     }
 
-    private fun calculateKey(identity: Int, provider: ComponentProvider<T>): Int {
+    private fun calculateKey(identity: Int, provider: Any): Int {
         var result = identity
         result = 31 * result + provider.hashCode()
         return result
     }
 
-    fun addHolder(key: Int, holder: Holder<T, *>, side: DistType) {
+    private fun addHolder(key: Int, holder: Holder<T, *>, side: DistType) {
         this.map.computeIfAbsent(this.provider!!) { mutableListOf() }.add(holder)
         this.dirtyMark.put(this.provider, true)
         when (side) {
@@ -120,14 +133,21 @@ class Remember<T : HologramContext> private constructor() {
         this.clients.values.forEach { it.tryUpdate(MIMIC_EMPTY_TAG) }
     }
 
-    inline fun consumerRebuild(code: (provider: ServerDataProvider<T>) -> Unit) {
-        val iterator = this.dirtyMark.object2BooleanEntrySet().fastIterator()
-        while (iterator.hasNext()) {
-            val next = iterator.next()
-            if (!next.booleanValue) {
-                code.invoke(next.key.unsafeCast())
-                next.setValue(false)
-            }
-        }
+    fun consumerRebuild(provider: ComponentProvider<T>): Boolean {
+        val value  = this.dirtyMark.getBoolean(provider)
+        this.dirtyMark.put(provider, false)
+        return value
     }
+
+    fun requireRebuild(): Boolean {
+        for (entry in this.dirtyMark.object2BooleanEntrySet()) {
+            if (entry.booleanValue) return true
+        }
+        return false
+    }
+
+    fun serverDataEntries() = this.servers
+        .values.asSequence().map { it.provider }.distinct().toList().unsafeCast<List<ServerDataProvider<T>>>()
+
+    fun providers() = this.dirtyMark.keys
 }

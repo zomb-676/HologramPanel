@@ -1,7 +1,6 @@
 package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.api.EfficientConst
-import com.github.zomb_676.hologrampanel.api.GenericThis
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.BlockPos
@@ -55,7 +54,7 @@ class BlockHologramContext(
         this.tag = tag
     }
 
-    override fun getRememberData(): Remember<BlockHologramContext> = remember
+    override fun getRememberData(): Remember<out HologramContext> = remember
 
     fun getBlockState(): BlockState = getLevel().getBlockState(pos)
 

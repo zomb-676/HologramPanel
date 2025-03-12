@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.EfficientConst
 import com.github.zomb_676.hologrampanel.api.GenericThis
 import com.github.zomb_676.hologrampanel.util.DistType
+import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
@@ -82,4 +83,6 @@ sealed interface HologramContext {
      */
     @EfficientConst
     fun getRememberData() : Remember<out HologramContext>
+
+    fun <T : HologramContext> getRememberDataUnsafe() : Remember<T> = getRememberData().unsafeCast()
 }

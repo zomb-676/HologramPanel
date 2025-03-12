@@ -23,7 +23,7 @@ import kotlin.jvm.optionals.getOrNull
 class EntityHologramContext(
     val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
 ) : HologramContext {
-    private var tag : CompoundTag? = null
+    private var tag: CompoundTag? = null
     private var remember = Remember.create(this)
 
     override fun getLevel(): Level = player.level()
@@ -33,7 +33,7 @@ class EntityHologramContext(
     override fun getLogicSide(): DistType = DistType.from(getLevel())
 
     override fun hologramCenterPosition(): Vector3fc =
-        Vector3f(entity.x.toFloat(), entity.y.toFloat(), entity.z.toFloat())
+        Vector3f(entity.x.toFloat(), entity.y.toFloat() + (entity.bbHeight), entity.z.toFloat())
 
     override fun getIdentityObject(): Any = entity.uuid
 
@@ -47,7 +47,7 @@ class EntityHologramContext(
         this.tag = tag
     }
 
-    override fun getRememberData(): Remember<*> = remember
+    override fun getRememberData(): Remember<out HologramContext> = remember
 
     companion object {
         fun of(hit: EntityHitResult, player: Player): EntityHologramContext {

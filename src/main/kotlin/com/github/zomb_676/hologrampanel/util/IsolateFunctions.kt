@@ -13,6 +13,14 @@ import net.neoforged.neoforge.client.GlStateBackup
 @Suppress("UNCHECKED_CAST")
 fun <T> Any.unsafeCast(): T = this as T
 
+fun <T> Any.unsafeCast(errorString: String): T {
+    try {
+        return this.unsafeCast<T>()
+    } catch (e: ClassCastException) {
+        throw RuntimeException(errorString, e)
+    }
+}
+
 inline fun PoseStack.stack(code: () -> Unit) {
     this.pushPose()
     code.invoke()
@@ -60,7 +68,7 @@ inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> 
 
 inline val profiler: ProfilerFiller get() = Profiler.get()
 
-inline fun <T> profilerStack(name: String, code: () -> T) : T {
+inline fun <T> profilerStack(name: String, code: () -> T): T {
     profiler.push(name)
     val res = code.invoke()
     profiler.pop()

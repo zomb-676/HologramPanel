@@ -12,6 +12,9 @@ import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.ItemStack
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions
+import net.neoforged.neoforge.client.textures.FluidSpriteCache
+import net.neoforged.neoforge.fluids.FluidStack
 import kotlin.math.floor
 
 interface IRenderElement {
@@ -121,25 +124,29 @@ interface IRenderElement {
         }
     }
 
-    abstract class ProgressBarElement() : RenderElement() {
-        var progressMax: Int = -1
-            private set
-        var progressCurrent: Int = -1
-            private set
-        var percent = 0.0
-            private set
+    class ProgressData(var progressCurrent: Int = 0, var progressMax: Int = 100, val LTR: Boolean = true) {
+        val percent get() = progressCurrent.toDouble() / progressMax
 
-        abstract fun progressMax(): Int
-        abstract fun progressCurrent(): Int
-        open fun working(): Boolean = progressMax != 0
-        open fun initialized() = progressMax >= 0 && progressCurrent >= 0
+        fun current(value : Int): ProgressData {
+            this.progressCurrent = value
+            return this
+        }
 
-        open fun fromLeftToRight(): Boolean = true
+        fun max(value : Int): ProgressData {
+            this.progressMax = value
+            return this
+        }
+    }
+
+    abstract class ProgressBarElement(val progress: ProgressData) : RenderElement() {
+        companion object {
+            const val BAR_WITH = 30
+        }
 
         override fun measureContentSize(
             style: HologramStyle
         ): Size {
-            return Size.of(30, style.font.lineHeight).scale()
+            return Size.of(BAR_WITH + 2, style.font.lineHeight + 4).scale()
         }
 
         override fun render(
@@ -148,53 +155,53 @@ interface IRenderElement {
             style.guiGraphics.renderOutline(
                 0, 0, this.contentSize.width, this.contentSize.height, style.contextColor
             )
-            style.moveAfterDrawSlotOutline()
-            style.stack {
-                this.fillBar(style, this.contentSize)
-            }
             val description = getDescription()
             val width = style.measureString(description).width
-            style.drawString(description, (this.contentSize.width - width) / 2, 0)
+            style.drawString(description, (this.contentSize.width - width) / 2, 2)
+
+            style.stack {
+                style.move(1, 1)
+                if (progress.LTR) {
+                    this.fillBar(style, 0, (BAR_WITH * progress.percent).toInt(), 11)
+                } else {
+                    this.fillBar(style, ((1.0 - progress.percent) * BAR_WITH).toInt(), BAR_WITH, 11)
+                }
+            }
         }
 
-        abstract fun fillBar(style: HologramStyle, size: Size)
-        abstract fun getDescription(): String
+        abstract fun fillBar(style: HologramStyle, left: Int, right: Int, height: Int)
+        open fun getDescription(): String = java.lang.String.valueOf(progress.percent * 100) + "%"
     }
 
-//    class EnergyBarElement : ProgressBarElement() {
-//        override fun progressMax(target: IEnergyStorage): Int = target.maxEnergyStored
-//        override fun progressCurrent(target: IEnergyStorage): Int = target.energyStored
-//        override fun fillBar(style: HologramStyle, size: Size) {
-//            style.fill(size, 0xffff0000.toInt())
-//        }
-//
-//        override fun getDescription(): String = "$progressCurrent/$progressMax"
-//    }
-//    class FluidBarElement : ProgressBarElement() {
-//        override fun progressMax(target: IFluidTank): Int = target.capacity
-//        override fun progressCurrent(target: IFluidTank): Int = target.fluidAmount
-//
-//        private var fluid: FluidStack? = null
-//
-//        override fun update(target: IFluidTank) {
-//            super.update(target)
-//            this.fluid = target.fluid
-//        }
-//
-//        override fun fillBar(
-//            style: HologramStyle,
-//            size: Size
-//        ) {
-//            val fluid = fluid ?: return
-//            val handle: IClientFluidTypeExtensions = IClientFluidTypeExtensions.of(fluid.fluidType)
-//            val still = handle.stillTexture
-//            val atlasSprite: TextureAtlasSprite = FluidSpriteCache.getSprite(still)
-//            style.guiGraphics.blitSprite(RenderType::guiTextured, atlasSprite, 0,0,size.width, size.height)
-//        }
-//
-//        override fun getDescription(): String = "1"
-//    }
+    class EnergyBarElement(progress: ProgressData) : ProgressBarElement(progress) {
+        override fun fillBar(style: HologramStyle, left: Int, right: Int, height: Int) {
+            style.fill(left, 0, right, height, 0xffff0000.toInt())
+        }
 
-    class WorkingProgressBarElement
-    class FuelProgressBar
+//        override fun getDescription(): String = "${progress.progressCurrent}/${progress.progressMax}"
+    }
+
+    class FluidBarElement(progress: ProgressData, val fluid: FluidStack) : ProgressBarElement(progress) {
+        override fun fillBar(style: HologramStyle, left: Int, right: Int, height: Int) {
+            val fluid = fluid ?: return
+            val handle: IClientFluidTypeExtensions = IClientFluidTypeExtensions.of(fluid.fluidType)
+            val still = handle.stillTexture
+            val atlasSprite: TextureAtlasSprite = FluidSpriteCache.getSprite(still)
+            val width = right - left
+            style.guiGraphics.blitSprite(RenderType::guiTextured, atlasSprite, left, 0, width, height)
+        }
+
+        override fun getDescription(): String = "1"
+    }
+
+    class WorkingProgressBarElement(progress: ProgressData) : ProgressBarElement(progress) {
+        override fun fillBar(
+            style: HologramStyle,
+            left: Int,
+            right: Int,
+            height: Int
+        ) {
+
+        }
+    }
 }

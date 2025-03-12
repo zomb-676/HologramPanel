@@ -1,8 +1,11 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.util.unsafeCast
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
-import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.Item
@@ -14,10 +17,6 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     private val helper = this.Helper()
     private var currentInSingle = false
     internal var currentProvider: ComponentProvider<T>? = null
-
-    interface ProviderRelated<T : HologramContext> {
-        val provider: ComponentProvider<T>?
-    }
 
     init {
         stack.add(mutableListOf())
@@ -35,11 +34,26 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         currentInSingle = true
         helper.begin()
         codeBlock.invoke(helper)
-        stack.peek().add(createSingleFromElements(helper.end()))
+        val single = createSingleFromElements(helper.end())
+        if (single != null) {
+            stack.peek().add(single)
+        }
         currentInSingle = false
     }
 
-    private fun createSingleFromElements(elements: List<IRenderElement>): DynamicBuildComponentWidget.Single<T> {
+    internal inline fun rebuildScope(
+        provider: ComponentProvider<T>,
+        code: () -> Unit
+    ): List<DynamicBuildComponentWidget<T>> {
+        this.stack.push(mutableListOf())
+        this.currentProvider = provider
+        code.invoke()
+        this.currentProvider = null
+        return this.stack.pop()!!
+    }
+
+    private fun createSingleFromElements(elements: List<IRenderElement>): DynamicBuildComponentWidget.Single<T>? {
+        if (elements.isEmpty()) return null
         return DynamicBuildComponentWidget.Single(currentProvider!!, elements)
     }
 
@@ -53,25 +67,42 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         stack.push(mutableListOf())
         codeBlock.invoke()
         require(stack.peek().isNotEmpty()) { "group contains nothing added" }
-        val desWidget = createSingleFromElements(helper.isolateScope { description.invoke(helper) })
+        val desWidget = createSingleFromElements(helper.isolateScope { description.invoke(helper) })!!
         val group = createGroupForElements(stack.pop(), desWidget)
-        stack.peek().add(group)
+        if (group != null) {
+            stack.peek().add(group)
+        }
     }
 
     private fun createGroupForElements(
         child: MutableList<DynamicBuildComponentWidget<T>>,
         desWidget: DynamicBuildComponentWidget.Single<T>
-    ): DynamicBuildComponentWidget.Group<T> {
+    ): DynamicBuildComponentWidget.Group<T>? {
+        if (child.isEmpty()) return null
         return DynamicBuildComponentWidget.Group(this.currentProvider!!, desWidget, child)
     }
 
-    internal fun build(description: Helper.() -> Unit): HologramComponentWidget<T> {
+    /**
+     * this provider can only and must produce exactly one single
+     */
+    internal fun build(provider: ComponentProvider<T>, displayType: DisplayType = DisplayType.NORMAL): DynamicBuildWidget<T> {
+        val currentCount = this.stack.peek().size
         helper.begin()
-        description.invoke(helper)
-        val descSingle = createSingleFromElements(helper.end())
-        val globalGroup = createGroupForElements(stack.pop(), descSingle)
+        this.currentProvider = provider
+        context.getRememberDataUnsafe<T>().providerScope(provider) {
+            provider.appendComponent(this, displayType)
+        }
+        val currentStack = stack.pop()
+        require(currentCount + 1 == currentStack.size) {"can only produce on single"}
+
+        val desc = currentStack.removeLast().unsafeCast<DynamicBuildComponentWidget.Single<T>>("must be single not group")
+        if (currentStack.isEmpty()) {
+            currentStack.addAll(DynamicBuildComponentWidget.onNoProvider(context))
+        }
+        val global = createGroupForElements(currentStack, desc)!!
         require(stack.isEmpty())
-        return DynamicBuildWidget<T>(context, globalGroup)
+        this.currentProvider = null
+        return DynamicBuildWidget(context, global)
     }
 
     inner class Helper() {
@@ -95,7 +126,6 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         }
 
         internal fun end(): List<IRenderElement> {
-            require(elements.isNotEmpty())
             val res = elements.toList()
             this.elements.clear()
             return res
@@ -129,8 +159,12 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
         }
 
-        fun progress() {
+        fun progress(progressBar: IRenderElement.ProgressData) {
 
+        }
+
+        fun energyBar(progressBar: IRenderElement.ProgressData): IRenderElement.EnergyBarElement {
+            return IRenderElement.EnergyBarElement(progressBar).attach()
         }
 
         fun sprite(sprite: TextureAtlasSprite): IRenderElement {

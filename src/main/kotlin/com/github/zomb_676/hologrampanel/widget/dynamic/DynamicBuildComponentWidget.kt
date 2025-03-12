@@ -1,22 +1,25 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.BuildInPlugin
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.ScreenPosition
-import com.github.zomb_676.hologrampanel.util.SelectedPath
-import com.github.zomb_676.hologrampanel.util.Size
-import com.github.zomb_676.hologrampanel.util.stackIf
+import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
-import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
-import java.util.LinkedList
+import net.minecraft.network.chat.Component
 import kotlin.math.max
 
 sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidgetComponent<T> {
-    fun getProvider() : ComponentProvider<T>
+    fun getProvider(): ComponentProvider<T>
 
-    class Single<T : HologramContext>(val provider: ComponentProvider<T>,val elements: List<IRenderElement>) : HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
+    open class Single<T : HologramContext>(
+        private val provider: ComponentProvider<T>,
+        val elements: List<IRenderElement>
+    ) :
+        HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
         private var baseY: Int = 0
         private val padding = 1
 
@@ -72,11 +75,30 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         override fun getProvider(): ComponentProvider<T> = provider
     }
 
+    companion object {
+        private val element = IRenderElement.StringRenderElement(Component.literal("No Active Provider Found"))
+        private val block: Single<BlockHologramContext> =
+            NoProvider<BlockHologramContext>(BuildInPlugin.Companion.DefaultBlockDescriptionProvider)
+        private val entity: Single<EntityHologramContext> =
+            NoProvider<EntityHologramContext>(BuildInPlugin.Companion.DefaultEntityDescriptionProvider)
+
+        fun <T : HologramContext> onNoProvider(context: T): List<Single<T>> {
+            return listOf(
+                when (context) {
+                    is BlockHologramContext -> block
+                    is EntityHologramContext -> entity
+                }.unsafeCast()
+            )
+        }
+    }
+
+    private class NoProvider<T : HologramContext>(provider: ComponentProvider<T>) : Single<T>(provider, listOf(element))
+
     class Group<T : HologramContext>(
-        val provider: ComponentProvider<T>,
-        val descriptionWidget : Single<T>,
-        override val children: MutableList<DynamicBuildComponentWidget<T>>
-    ) : HologramWidgetComponent.Group<T>(children) , DynamicBuildComponentWidget<T> {
+        private val provider: ComponentProvider<T>,
+        val descriptionWidget: Single<T>,
+        override var children: List<DynamicBuildComponentWidget<T>>
+    ) : HologramWidgetComponent.Group<T>(children), DynamicBuildComponentWidget<T> {
         override fun descriptionSize(
             target: T,
             style: HologramStyle,

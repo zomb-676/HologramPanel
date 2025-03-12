@@ -7,6 +7,7 @@ import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
 import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
+import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
@@ -151,6 +152,10 @@ object EventHandler {
             ComponentResponseDataPayload.TYPE,
             ComponentResponseDataPayload.STREAM_CODEC,
             ComponentResponseDataPayload.HANDLE
+        ).playToServer<SyncClosePayload>(
+            SyncClosePayload.TYPE,
+            SyncClosePayload.STREAM_CODEC,
+            SyncClosePayload.HANDLE
         )
     }
 
@@ -205,6 +210,9 @@ object EventHandler {
                 plugin.registerCommon(reg)
                 event.register(AllRegisters.ComponentHologramProviderRegistry.RESOURCE_KEY) { helper ->
                     reg.blockProviders.forEach { provider ->
+                        helper.register(provider.location(), provider)
+                    }
+                    reg.entityProviders.forEach { provider ->
                         helper.register(provider.location(), provider)
                     }
                 }

@@ -8,8 +8,9 @@ import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildComponentWidget
 
-abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget {
+abstract class HologramComponentWidget<T : Any>(val target: T, val component: HologramWidgetComponent.Group<T>) : HologramWidget {
 
     private class SelectTree<T : Any>(val widget: HologramComponentWidget<T>) :
         SelectedPath<HologramWidgetComponent<T>> {
@@ -63,8 +64,9 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget 
         override fun atTerminus(component: HologramWidgetComponent<T>): Boolean = this.current == component
 
         override fun atWholePath(component: HologramWidgetComponent<T>): Boolean = when (component) {
-            is HologramWidgetComponent.Single<T> -> atTerminus(component)
-            is HologramWidgetComponent.Group<T> -> atUnTerminusPath(component)
+            is HologramWidgetComponent.Single<T>, is DynamicBuildComponentWidget.Single<T> -> atTerminus(component)
+            is HologramWidgetComponent.Group<T>, is DynamicBuildComponentWidget.Group<T> -> atUnTerminusPath(component)
+            else -> throw RuntimeException()
         }
 
         override fun unTerminalPath(): Sequence<HologramWidgetComponent<T>> = this.stack.asSequence()
@@ -80,12 +82,15 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget 
         }
     }
 
-    var component: HologramWidgetComponent.Group<T> = initialComponent()
-        private set
     private var selectedPath: SelectTree<T> = SelectTree(this)
     private var mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty<T>(this.component)
 
-    override fun render(state: HologramRenderState, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
+    override fun render(
+        state: HologramRenderState,
+        style: HologramStyle,
+        displayType: DisplayType,
+        partialTicks: Float
+    ) {
         val path: SelectedPath<HologramWidgetComponent<T>> = if (state.isSelected()) this.selectedPath else mimicPath
         this.component.render(target, style, path, displayType, partialTicks)
     }
@@ -94,10 +99,6 @@ abstract class HologramComponentWidget<T : Any>(val target: T) : HologramWidget 
         this.component.measureSize(this.target, style, displayType)
         return this.component.visualSize
     }
-
-    protected abstract fun initialComponent(): HologramWidgetComponent.Group<T>
-
-    open fun updateComponent() {}
 
     fun selectComponent(state: HologramRenderState, selectCommand: SelectComponent) {
         selectedPath.selectCommand(state, selectCommand)

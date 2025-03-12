@@ -47,10 +47,6 @@ interface HologramWidgetComponent<T : Any> {
 
         var collapse: Boolean = false
 
-        init {
-            require(children.isNotEmpty())
-        }
-
         final override fun measureSize(
             target: T, style: HologramStyle, displayType: DisplayType
         ): Size {
