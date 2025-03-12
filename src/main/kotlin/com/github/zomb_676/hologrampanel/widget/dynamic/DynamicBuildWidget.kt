@@ -2,7 +2,6 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
-import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
@@ -11,9 +10,10 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidge
 class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicBuildComponentWidget.Group<T>) :
     HologramComponentWidget<T>(target, container) {
 
-    private var maps: Map<ComponentProvider<T>, List<DynamicBuildComponentWidget<T>>> = target
-        .getRememberData().providers().associateWith { prov -> this.container.children.filter { it.getProvider() == prov } }
-        .unsafeCast()
+    private var maps: Map<ComponentProvider<T>, List<DynamicBuildComponentWidget<T>>> =
+        target.getRememberDataUnsafe<T>().providers().associateWith { prov ->
+            this.container.children.filter { it.getProvider() == prov }
+        }
 
     fun updateComponent() {
         //todo

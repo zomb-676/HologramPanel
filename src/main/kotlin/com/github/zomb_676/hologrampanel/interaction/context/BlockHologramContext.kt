@@ -54,7 +54,7 @@ class BlockHologramContext(
         this.tag = tag
     }
 
-    override fun getRememberData(): Remember<out HologramContext> = remember
+    override fun getRememberData(): Remember<BlockHologramContext> = remember
 
     fun getBlockState(): BlockState = getLevel().getBlockState(pos)
 

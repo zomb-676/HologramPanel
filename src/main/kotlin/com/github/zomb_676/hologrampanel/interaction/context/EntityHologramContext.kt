@@ -47,7 +47,7 @@ class EntityHologramContext(
         this.tag = tag
     }
 
-    override fun getRememberData(): Remember<out HologramContext> = remember
+    override fun getRememberData(): Remember<EntityHologramContext> = remember
 
     companion object {
         fun of(hit: EntityHitResult, player: Player): EntityHologramContext {
