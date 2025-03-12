@@ -26,6 +26,10 @@ object HologramManager {
 
     private var needArrange = false
 
+    fun checkIdentityExist(any : Any): Boolean {
+        return widgets.containsKey(any)
+    }
+
     fun tryAddWidget(widget: HologramWidget, context: HologramContext) {
         if (!widgets.containsKey(context.getIdentityObject())) {
             widgets[context.getIdentityObject()] = widget
@@ -53,12 +57,12 @@ object HologramManager {
         states.forEach { (widget, state) ->
             val widgetSize = state.measure(DisplayType.NORMAL, style)
 
-            if (!state.viewVectorDegreeCheckPass()) return@forEach
+            if (!state.viewVectorDegreeCheckPass(partialTicks)) return@forEach
             style.stack {
 
-                val screenPos = state.updateScreenPosition().equivalentSmooth(style)
+                val screenPos = state.updateScreenPosition(partialTicks).equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
-                val distance = state.distanceToCamera()
+                val distance = state.distanceToCamera(partialTicks)
 
                 fun calculateScale(distance: Double, start: Double, end: Double): Double = when {
                     distance <= start -> 1.0

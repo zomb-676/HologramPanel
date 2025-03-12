@@ -7,6 +7,7 @@ import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
+import net.minecraft.util.Mth
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -21,10 +22,16 @@ import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 class EntityHologramContext(
-    val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
+    private val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
 ) : HologramContext {
     private var tag: CompoundTag? = null
     private var remember = Remember.create(this)
+
+    fun getEntity() = entity
+
+    @Suppress("UNCHECKED_CAST")
+    @JvmName("getEntityWithGenericFilter")
+    fun <T : Entity> getEntity(): T? = entity as T?
 
     override fun getLevel(): Level = player.level()
 
@@ -34,6 +41,14 @@ class EntityHologramContext(
 
     override fun hologramCenterPosition(): Vector3fc =
         Vector3f(entity.x.toFloat(), entity.y.toFloat() + (entity.bbHeight), entity.z.toFloat())
+
+    override fun hologramCenterPosition(partialTick: Float): Vector3fc {
+        val value = partialTick.toDouble()
+        val x = Mth.lerp(value, entity.xOld, entity.x)
+        val y = Mth.lerp(value, entity.yOld, entity.y)
+        val z = Mth.lerp(value, entity.zOld, entity.z)
+        return Vector3f(x.toFloat(), y.toFloat() + entity.bbHeight, z.toFloat())
+    }
 
     override fun getIdentityObject(): Any = entity.uuid
 

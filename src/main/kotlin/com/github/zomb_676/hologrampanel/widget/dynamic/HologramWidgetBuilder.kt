@@ -1,15 +1,19 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
-import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
-import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.neoforged.neoforge.fluids.FluidStack
+import net.neoforged.neoforge.fluids.FluidType
 import java.util.*
 
 class HologramWidgetBuilder<T : HologramContext>(val context: T) {
@@ -85,7 +89,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     /**
      * this provider can only and must produce exactly one single
      */
-    internal fun build(provider: ComponentProvider<T>, displayType: DisplayType = DisplayType.NORMAL): DynamicBuildWidget<T> {
+    internal fun build(
+        provider: ComponentProvider<T>,
+        displayType: DisplayType = DisplayType.NORMAL
+    ): DynamicBuildWidget<T> {
         val currentCount = this.stack.peek().size
         helper.begin()
         this.currentProvider = provider
@@ -93,9 +100,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             provider.appendComponent(this, displayType)
         }
         val currentStack = stack.pop()
-        require(currentCount + 1 == currentStack.size) {"can only produce on single"}
+        require(currentCount + 1 == currentStack.size) { "can only produce on single" }
 
-        val desc = currentStack.removeLast().unsafeCast<DynamicBuildComponentWidget.Single<T>>("must be single not group")
+        val desc =
+            currentStack.removeLast().unsafeCast<DynamicBuildComponentWidget.Single<T>>("must be single not group")
         if (currentStack.isEmpty()) {
             currentStack.addAll(DynamicBuildComponentWidget.onNoProvider(context))
         }
@@ -151,10 +159,6 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.ItemStackElement(true, itemStack).attach()
         }
 
-        fun fluid() {
-
-        }
-
         fun energy() {
 
         }
@@ -167,16 +171,34 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.EnergyBarElement(progressBar).attach()
         }
 
-        fun sprite(sprite: TextureAtlasSprite): IRenderElement {
+        fun fluid(progressBar: IRenderElement.ProgressData, fluid : FluidType): IRenderElement.FluidBarElement {
+            return IRenderElement.FluidBarElement(progressBar,fluid).attach()
+        }
+
+        fun sprite(sprite: TextureAtlasSprite): IRenderElement.TextureAtlasSpriteRenderElement {
             return IRenderElement.TextureAtlasSpriteRenderElement(sprite).attach()
         }
 
-        fun text(str: String): IRenderElement {
+        fun text(str: String): IRenderElement.StringRenderElement {
             return IRenderElement.StringRenderElement(Component.literal(str)).attach()
         }
 
-        fun component(str: Component): IRenderElement {
+        fun component(str: Component): IRenderElement.StringRenderElement {
             return IRenderElement.StringRenderElement(str).attach()
+        }
+
+        fun heart(): IRenderElement.TextureAtlasSpriteRenderElement {
+            val location = Gui.HeartType.NORMAL.getSprite(false, false, false)
+            val atlas = Minecraft.getInstance().guiSprites.getSprite(location)
+            return sprite(atlas).apply { setPositionOffset(0, -1) }
+        }
+
+        fun entity(entity: Entity, scale: Double = 3.0): IRenderElement.EntityRenderElement {
+            return if (entity is LivingEntity) {
+                IRenderElement.EntityRenderElement(entity, scale)
+            } else {
+                TODO()
+            }.attach()
         }
     }
 }

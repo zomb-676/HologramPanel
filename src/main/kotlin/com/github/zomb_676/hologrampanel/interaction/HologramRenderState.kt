@@ -21,13 +21,13 @@ class HologramRenderState(val widget: HologramWidget, val context: HologramConte
     var centerScreenPos: ScreenCoordinate = ScreenCoordinate.ZERO
     var displayScale: Double = 1.0
 
-    fun sourcePosition() = context.hologramCenterPosition()
+    fun sourcePosition(partialTick : Float) = context.hologramCenterPosition(partialTick)
 
-    fun viewVectorDegreeCheckPass(): Boolean {
+    fun viewVectorDegreeCheckPass(partialTick: Float): Boolean {
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
         val viewVector = camera.lookVector
         val cameraPosition = camera.position
-        val sourcePosition = this.sourcePosition()
+        val sourcePosition = this.sourcePosition(partialTick)
         val sourceVector = Vector3f(
             (sourcePosition.x() - cameraPosition.x).toFloat(),
             (sourcePosition.y() - cameraPosition.y).toFloat(),
@@ -47,8 +47,8 @@ class HologramRenderState(val widget: HologramWidget, val context: HologramConte
         return this.size
     }
 
-    fun updateScreenPosition(): ScreenCoordinate {
-        this.centerScreenPos = MVPMatrixRecorder.transform(this.sourcePosition())
+    fun updateScreenPosition(partialTick: Float): ScreenCoordinate {
+        this.centerScreenPos = MVPMatrixRecorder.transform(this.sourcePosition(partialTick))
         return this.centerScreenPos
     }
 
@@ -64,8 +64,8 @@ class HologramRenderState(val widget: HologramWidget, val context: HologramConte
     fun isLookingAt() = HologramManager.getLookingHologram() == this
     fun isSelected() = InteractionModeManager.getSelectedHologram() == this
 
-    fun distanceToCamera(): Double {
-        val source = this.sourcePosition()
+    fun distanceToCamera(partialTick: Float): Double {
+        val source = this.sourcePosition(partialTick)
         val camera = Minecraft.getInstance().gameRenderer.mainCamera.position
         val x = source.x() - camera.x
         val y = source.y() - camera.y

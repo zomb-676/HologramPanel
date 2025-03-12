@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.api.HologramClientRegistration
 import com.github.zomb_676.hologrampanel.api.HologramCommonRegistration
 import com.github.zomb_676.hologrampanel.api.HologramPlugin
 import com.github.zomb_676.hologrampanel.api.IHologramPlugin
@@ -16,8 +17,10 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.IntArrayTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.level.block.*
 import net.minecraft.world.level.block.entity.*
+import net.minecraft.world.level.material.Fluids
 import kotlin.jvm.optionals.getOrNull
 
 @HologramPlugin
@@ -49,6 +52,12 @@ class BuildInPlugin : IHologramPlugin {
                         energyBar(progressBar)
                     }
                     if (!item2.isEmpty) itemStack(item2)
+                }
+                builder.single {
+                    fluid(progressBar, Fluids.WATER.fluidType)
+                }
+                builder.single {
+                    fluid(progressBar, Fluids.LAVA.fluidType)
                 }
             }
 
@@ -230,6 +239,7 @@ class BuildInPlugin : IHologramPlugin {
 
             override fun location(): ResourceLocation = HologramPanel.rl("juke_box")
         })
+
         register.registerBlockComponent(object : ServerDataProvider<BlockHologramContext> {
             override fun appendServerData(
                 additionData: CompoundTag,
@@ -298,10 +308,13 @@ class BuildInPlugin : IHologramPlugin {
                 displayType: DisplayType
             ) {
                 val context = builder.context
-                val entity = (context.entity as LivingEntity?) ?: return
+                val entity = context.getEntity<LivingEntity>() ?: return
                 val remember = context.getRememberData()
                 val currentHealth by remember.server(0, -1.0f) { tag -> tag.getFloat("current_health") }
-                builder.single { text("health:${currentHealth}/${entity.maxHealth}") }
+                builder.single {
+                    heart()
+                    text("health:${currentHealth}/${entity.maxHealth}")
+                }
             }
 
             override fun targetClass(): Class<*> = LivingEntity::class.java
@@ -313,12 +326,48 @@ class BuildInPlugin : IHologramPlugin {
                 targetData: CompoundTag,
                 context: EntityHologramContext
             ): Boolean {
-                val entity = (context.entity as LivingEntity?) ?: return true
+                val entity = context.getEntity<LivingEntity>() ?: return true
                 targetData.putFloat("current_health", entity.health)
                 return true
             }
 
         })
+
+        register.registerEntityComponent(object : ServerDataProvider<EntityHologramContext> {
+            override fun appendComponent(
+                builder: HologramWidgetBuilder<EntityHologramContext>,
+                displayType: DisplayType
+            ) {
+                val context = builder.context
+                val remember = context.getRememberData()
+
+                val lifeSpan by remember.server(0, 0) { tag -> tag.getInt("life_span") }
+                val age by remember.server(1, -1) { tag -> tag.getInt("age") }
+
+                if (age != -1) {
+                    builder.single { text("remain:${lifeSpan - age} Ticks") }
+                }
+            }
+
+            override fun targetClass(): Class<*> = ItemEntity::class.java
+
+            override fun location(): ResourceLocation = HologramPanel.rl("item_entity")
+
+            override fun appendServerData(
+                additionData: CompoundTag,
+                targetData: CompoundTag,
+                context: EntityHologramContext
+            ): Boolean {
+                val itemEntity = context.getEntity<ItemEntity>() ?: return true
+                targetData.putInt("life_span", itemEntity.lifespan)
+                targetData.putInt("age", itemEntity.age)
+                return true
+            }
+
+        })
+    }
+
+    override fun registerClient(register: HologramClientRegistration) {
     }
 
     companion object {
@@ -346,7 +395,18 @@ class BuildInPlugin : IHologramPlugin {
             ) {
                 val context = builder.context
                 builder.single {
-                    component(context.entity.name)
+                    when(context.getEntity()) {
+                        is ItemEntity -> {
+
+                        }
+                        is LivingEntity -> {
+                            entity(context.getEntity(), 10.0)
+                        }
+                        else -> {
+
+                        }
+                    }
+                    component(context.getEntity().name)
                 }
             }
 

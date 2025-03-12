@@ -15,19 +15,35 @@ import com.github.zomb_676.hologrampanel.widget.component.ServerDataProvider
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.world.entity.EntitySelector
+import net.minecraft.world.entity.projectile.ProjectileUtil
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 
 object RayTraceHelper {
     fun findTarget(radius: Int, partialTicks: Float): HologramContext? = profilerStack("hologram_find_target") {
+        val distance = 20.0
         val player = Minecraft.getInstance().player!!
-        val result: HitResult = when(val mcHit = Minecraft.getInstance().hitResult) {
-            null -> {
-                player.pick(20.0, partialTicks, true)
-            }
-            else -> mcHit
+        val blockHit = player.pick(distance, partialTicks, true)
+        val entityHit = run {
+            val from = player.eyePosition
+            val viewVector = player.getViewVector(partialTicks)
+            val to = from.add(viewVector.x * distance, viewVector.y * distance, viewVector.z * distance)
+            val aabb = player.boundingBox.expandTowards(viewVector.scale(distance)).inflate(1.0, 1.0, 10.0)
+            ProjectileUtil.getEntityHitResult(
+                player, from, to, aabb, EntitySelector.ENTITY_STILL_ALIVE, distance
+            )
         }
+        val result : HitResult = run {
+            if (entityHit == null) {
+                return@run blockHit
+            }
+            val blockDistance = blockHit.distanceTo(player)
+            val entityDistance = entityHit.distanceTo(player)
+            return@run if (blockDistance < entityDistance) blockHit else entityHit
+        }
+
         if (result.type == HitResult.Type.MISS) return null
         return when (result) {
             is BlockHitResult -> BlockHologramContext.of(result, player)
@@ -37,14 +53,13 @@ object RayTraceHelper {
     }
 
     fun <T : HologramContext> createHologramWidget(
-        context: T,
-        displayType: DisplayType = DisplayType.NORMAL
+        context: T, displayType: DisplayType = DisplayType.NORMAL
     ): HologramWidget = profilerStack("create_hologram") {
 
         val widget = when (context) {
             is EntityHologramContext -> {
                 val builder = HologramWidgetBuilder(context)
-                applyProvider(context.entity, builder, displayType)
+                applyProvider(context.getEntity(), builder, displayType)
                 builder.build(BuildInPlugin.Companion.DefaultEntityDescriptionProvider.unsafeCast(), displayType)
             }
 
@@ -71,18 +86,15 @@ object RayTraceHelper {
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : HologramContext> applyProvider(
-        target: Any?,
-        builder: HologramWidgetBuilder<T>,
-        displayType: DisplayType
+        target: Any?, builder: HologramWidgetBuilder<T>, displayType: DisplayType
     ) {
         if (target == null) return
         queryProvidersForClass(target::class.java).forEach { provider ->
-            builder.context.getRememberDataUnsafe<T>()
-                .providerScope(provider as ComponentProvider<T>) {
-                    builder.currentProvider = provider
-                    provider.appendComponent(builder, displayType)
-                    builder.currentProvider = null
-                }
+            builder.context.getRememberDataUnsafe<T>().providerScope(provider as ComponentProvider<T>) {
+                builder.currentProvider = provider
+                provider.appendComponent(builder, displayType)
+                builder.currentProvider = null
+            }
         }
     }
 
@@ -90,8 +102,7 @@ object RayTraceHelper {
         val res = map[target]
         if (res != null) return res
 
-        val maps = AllRegisters.ComponentHologramProviderRegistry.REGISTRY
-            .associateBy { it.targetClass() }
+        val maps = AllRegisters.ComponentHologramProviderRegistry.REGISTRY.associateBy { it.targetClass() }
         val list = mutableListOf<ComponentProvider<*>>()
         searchByInheritTree(target, maps, list)
         map[target] = list

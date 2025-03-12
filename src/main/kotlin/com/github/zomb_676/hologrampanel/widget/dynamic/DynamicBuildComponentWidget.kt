@@ -64,7 +64,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 if (offset != ScreenPosition.ZERO) {
                     style.move(offset)
                 }
-                style.stackIf(element.getScale() != 0.0, { style.scale(element.getScale()) }) {
+                style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
                     element.render(style, partialTicks, pathType)
                 }
                 val size = element.contentSize

@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.server.level.ServerPlayer
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
 import net.neoforged.neoforge.client.event.*
 import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
@@ -41,6 +42,7 @@ object EventHandler {
         forgeBus.addListener(::onPlayerLogout)
         forgeBus.addListener(::levelUnload)
         modBus.addListener(::onRegistryEvent)
+        modBus.addListener(::onClientSetup)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
         }
@@ -218,5 +220,12 @@ object EventHandler {
                 }
             }
         }
+    }
+
+    private fun onClientSetup(event: FMLClientSetupEvent) {
+        PluginManager.getInstance().clientRegistration.forEach { (plugin, reg) ->
+            plugin.registerClient(reg)
+        }
+        PluginManager.getInstance().onClientRegisterEnd()
     }
 }

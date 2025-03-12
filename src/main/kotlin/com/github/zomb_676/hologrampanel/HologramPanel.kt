@@ -34,22 +34,7 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
 
     init {
-        val plugins =  run {
-            ModList.get().allScanData.asSequence()
-                .flatMap { it.getAnnotatedBy(HologramPlugin::class.java, ElementType.TYPE).asSequence() }.map {
-                    var plugin: IHologramPlugin? = null
-                    try {
-                        plugin = getClassOf<IHologramPlugin>(it.clazz().className).getDeclaredConstructor()
-                            .apply { require(trySetAccessible()) }.newInstance()
-                        LOGGER.debug("success loaded plugin: {}", plugin.location())
-                    } catch (e: Exception) {
-                        LOGGER.error("failed to load plugin class:{}", it.clazz.className)
-                        LOGGER.traceExit(e)
-                    }
-                    plugin
-                }.filterNotNull().toList()
-        }
-        PluginManager.init(plugins)
+        PluginManager.init()
 
         if (dist == Dist.DEDICATED_SERVER) {
             serverInstalled = true

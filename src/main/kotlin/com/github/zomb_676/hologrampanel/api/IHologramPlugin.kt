@@ -7,4 +7,6 @@ interface IHologramPlugin {
     fun location() : ResourceLocation
 
     fun registerCommon(register: HologramCommonRegistration) {}
+
+    fun registerClient(register: HologramClientRegistration) {}
 }

@@ -42,6 +42,8 @@ class BlockHologramContext(
     @EfficientConst
     override fun hologramCenterPosition(): Vector3fc = centerPosition
 
+    override fun hologramCenterPosition(partialTick: Float): Vector3fc = hologramCenterPosition()
+
     override fun getIdentityObject(): Any = pos
 
     override fun getHitContext(): BlockHitResult? = hitResult

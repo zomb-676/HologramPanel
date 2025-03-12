@@ -58,6 +58,11 @@ sealed interface HologramContext {
     fun hologramCenterPosition(): Vector3fc
 
     /**
+     * for entity should consider interpolation
+     */
+    fun hologramCenterPosition(partialTick : Float): Vector3fc
+
+    /**
      * identity object for check to avoid repeat create
      */
     @EfficientConst
@@ -84,5 +89,6 @@ sealed interface HologramContext {
     @EfficientConst
     fun getRememberData() : Remember<out HologramContext>
 
+    @EfficientConst
     fun <T : HologramContext> getRememberDataUnsafe() : Remember<T> = getRememberData().unsafeCast()
 }
