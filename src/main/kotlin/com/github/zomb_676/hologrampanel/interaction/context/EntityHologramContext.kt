@@ -64,6 +64,8 @@ class EntityHologramContext(
 
     override fun getRememberData(): Remember<EntityHologramContext> = remember
 
+    override fun stillValid(): Boolean = !this.entity.isRemoved
+
     companion object {
         fun of(hit: EntityHitResult, player: Player): EntityHologramContext {
             val entity: Entity = hit.entity

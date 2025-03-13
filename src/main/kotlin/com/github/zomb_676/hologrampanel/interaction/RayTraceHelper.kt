@@ -46,7 +46,13 @@ object RayTraceHelper {
 
         if (result.type == HitResult.Type.MISS) return null
         return when (result) {
-            is BlockHitResult -> BlockHologramContext.of(result, player)
+            is BlockHitResult -> {
+                if (Minecraft.getInstance().level?.getBlockEntity(result.blockPos) == null) {
+                    //todo add event to control this
+                    return null
+                }
+                BlockHologramContext.of(result, player)
+            }
             is EntityHitResult -> EntityHologramContext.of(result, player)
             else -> throw RuntimeException("unknown hit result:$result")
         }

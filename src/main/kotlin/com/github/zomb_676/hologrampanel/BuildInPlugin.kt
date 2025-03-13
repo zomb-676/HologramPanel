@@ -59,6 +59,9 @@ class BuildInPlugin : IHologramPlugin {
                 builder.single {
                     fluid(progressBar, Fluids.LAVA.fluidType)
                 }
+                builder.single {
+                    workingProgress(progressBar)
+                }
             }
 
             override fun targetClass(): Class<*> = AbstractFurnaceBlock::class.java
@@ -395,17 +398,7 @@ class BuildInPlugin : IHologramPlugin {
             ) {
                 val context = builder.context
                 builder.single {
-                    when(context.getEntity()) {
-                        is ItemEntity -> {
-
-                        }
-                        is LivingEntity -> {
-                            entity(context.getEntity(), 10.0)
-                        }
-                        else -> {
-
-                        }
-                    }
+                    entity(context.getEntity())
                     component(context.getEntity().name)
                 }
             }

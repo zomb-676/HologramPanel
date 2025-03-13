@@ -91,4 +91,6 @@ sealed interface HologramContext {
 
     @EfficientConst
     fun <T : HologramContext> getRememberDataUnsafe() : Remember<T> = getRememberData().unsafeCast()
+
+    fun stillValid() : Boolean
 }

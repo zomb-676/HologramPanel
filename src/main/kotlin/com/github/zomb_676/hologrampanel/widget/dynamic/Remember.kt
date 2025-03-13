@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.unsafeCast
@@ -16,6 +17,7 @@ import kotlin.reflect.KProperty
 class Remember<T : HologramContext> private constructor() {
     val uuid: UUID = UUID.randomUUID()
     private val map: MutableMap<ComponentProvider<T>, MutableList<Holder<T, *>>> = mutableMapOf()
+    private val requireMimicTick : MutableList<Holder<T,*>> = mutableListOf()
 
     @PublishedApi
     @ApiStatus.Internal
@@ -35,19 +37,44 @@ class Remember<T : HologramContext> private constructor() {
         initial: V
     ) {
         private var cachedValue: V = initial
+        private var mimicTickValue : V = cachedValue
+        private var lastValueSynced = 0
+        private var mimicTick : ((V) -> V)? = null
 
         operator fun getValue(owner: Any?, property: KProperty<*>): V = this.get()
 
         /**
          * call this value if you are on java or not use property delegate
          */
-        fun get(): V = this.cachedValue
+        fun get(): V = if (mimicTick != null) {
+                mimicTickValue
+            } else {
+                cachedValue
+            }
+
 
         internal fun tryUpdate(tag: CompoundTag) {
             val newValue = updater.invoke(tag)
+            this.lastValueSynced = 0
             if (newValue != this.cachedValue) {
                 this.cachedValue = newValue
+                this.mimicTickValue = newValue
                 this.remember.markDirty(this.provider)
+            }
+        }
+
+        fun clientMimicTick(tick : (V) -> V): Holder<T, V> {
+            require(this.mimicTickValue == null)
+            this.mimicTick = tick
+            this.remember.requireMimicTick.add(this)
+            return this
+        }
+
+        fun tickMimic() {
+            if (this.lastValueSynced < Config.Server.updateInternal.get()) {
+                val tickFunction = this.mimicTick!!
+                this.mimicTickValue = tickFunction.invoke(this.mimicTickValue)
+                this.lastValueSynced++
             }
         }
     }
@@ -129,21 +156,18 @@ class Remember<T : HologramContext> private constructor() {
         }
     }
 
-    fun tickClient() {
+    fun tickClientValueUpdate() {
         this.clients.values.forEach { it.tryUpdate(MIMIC_EMPTY_TAG) }
+    }
+
+    fun tickMimicClientUpdate() {
+        this.requireMimicTick.forEach { it.tickMimic() }
     }
 
     fun consumerRebuild(provider: ComponentProvider<T>): Boolean {
         val value  = this.dirtyMark.getBoolean(provider)
         this.dirtyMark.put(provider, false)
         return value
-    }
-
-    fun requireRebuild(): Boolean {
-        for (entry in this.dirtyMark.object2BooleanEntrySet()) {
-            if (entry.booleanValue) return true
-        }
-        return false
     }
 
     fun serverDataEntries() = this.servers

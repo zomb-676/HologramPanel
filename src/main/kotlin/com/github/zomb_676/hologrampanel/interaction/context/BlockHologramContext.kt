@@ -11,6 +11,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.FluidState
@@ -28,6 +29,7 @@ class BlockHologramContext(
     private val hitResult: BlockHitResult?
 ) : HologramContext {
 
+    private val originalBlock: Block = player.level().getBlockState(pos).block
     private var tag : CompoundTag? = null
 
     private val centerPosition = Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f)
@@ -68,6 +70,8 @@ class BlockHologramContext(
     inline fun <reified T : BlockEntity> getBlockEntity(): T? {
         return getBlockEntity() as T?
     }
+
+    override fun stillValid(): Boolean = getBlockState().block == originalBlock
 
     companion object {
         fun of(hit: BlockHitResult, player: Player): BlockHologramContext {

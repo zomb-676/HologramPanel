@@ -223,13 +223,29 @@ object HologramManager {
     }
 
     fun remove(widget: HologramWidget) {
-        if (this.widgets.remove(widget) != null) {
-            this.states.remove(widget)
+        val state = this.states.remove(widget)
+        if (state != null) {
+            this.widgets.remove(state.context.getIdentityObject())
             if (this.lookingWidget?.widget == widget) {
                 this.lookingWidget = null
             }
             InteractionModeManager.onWidgetRemoved(widget)
-            widget.onRemove()
+        }
+    }
+
+    fun clientTick() {
+        val forRemoved = ArrayList<HologramRenderState>(0)
+        this.states.values.forEach { widget ->
+            if (widget.context.stillValid()) {
+                val remember = widget.context.getRememberData()
+                remember.tickMimicClientUpdate()
+                remember.tickClientValueUpdate()
+            } else {
+                forRemoved.add(widget)
+            }
+        }
+        if (forRemoved.isNotEmpty()) {
+            forRemoved.forEach { it.widget.closeWidget() }
         }
     }
 }

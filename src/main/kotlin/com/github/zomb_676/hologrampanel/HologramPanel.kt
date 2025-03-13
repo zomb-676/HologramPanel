@@ -1,19 +1,13 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.api.HologramPlugin
-import com.github.zomb_676.hologrampanel.api.IHologramPlugin
-import com.github.zomb_676.hologrampanel.util.getClassOf
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModList
 import net.neoforged.fml.common.Mod
 import net.neoforged.fml.javafmlmod.FMLModContainer
 import net.neoforged.fml.loading.FMLEnvironment
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import java.lang.annotation.ElementType
-import kotlin.streams.asSequence
 
 @Mod(HologramPanel.MOD_ID)
 class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: IEventBus) {
@@ -35,6 +29,7 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
     init {
         PluginManager.init()
+        Config.registerConfig(container, modBus)
 
         if (dist == Dist.DEDICATED_SERVER) {
             serverInstalled = true

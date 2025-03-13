@@ -9,12 +9,15 @@ import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.renderer.CoreShaders
+import net.minecraft.network.chat.Component
 import kotlin.math.cos
 import kotlin.math.sin
 
-//todo
-class CycleSelector(entries: List<CycleEntry>, val outRadius: Float, val innerRadius: Float = 0f) {
+class CycleSelectorScreen(entries: List<CycleEntry>, val outRadius: Float, val innerRadius: Float = 0f) : Screen(
+    Component.literal("cycle_selector_screen")
+) {
 
     var beginDegree = 0.0
 
@@ -23,6 +26,7 @@ class CycleSelector(entries: List<CycleEntry>, val outRadius: Float, val innerRa
     }
 
     fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
+        return
         val partialTick = tracker.getGameTimeDeltaPartialTick(false)
 
         this.renderCyclesAndSplitLine(graphics, partialTick)
@@ -80,8 +84,6 @@ class CycleSelector(entries: List<CycleEntry>, val outRadius: Float, val innerRa
 
     companion object {
         const val TESSELLATION_COUNT = 180
-        private var instance: CycleSelector? = null
-        fun currentInstance(): CycleSelector? = CycleSelector(listOf(), 80f)
     }
 
     class CycleEntryData(val entry: CycleEntry, val index: Int, val total: Int)

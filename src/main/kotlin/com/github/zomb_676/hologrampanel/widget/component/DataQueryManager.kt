@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
+import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
@@ -48,6 +49,11 @@ object DataQueryManager {
             syncs.remove(widget.target.getRememberData().uuid)
         }
 
+        fun closeForWidget(uuid : UUID) {
+            val widget = syncs.remove(uuid) ?: return
+            maps.remove(widget)
+        }
+
         fun closeAll() {
             this.syncs.clear()
             this.maps.clear()
@@ -56,7 +62,7 @@ object DataQueryManager {
 
     object Server {
         private val syncs: MutableMap<ServerPlayer, MutableMap<UUID, ComponentRequestDataPayload<*>>> = mutableMapOf()
-        private var lastSyncTick: Int = 5
+        private var lastSyncTick: Int = Config.Server.updateInternal.get()
 
         fun <T : HologramContext> create(player: ServerPlayer, payload: ComponentRequestDataPayload<T>) {
             syncs.computeIfAbsent(player) { mutableMapOf() }[payload.uuid] = (payload)
@@ -64,7 +70,7 @@ object DataQueryManager {
 
         fun tick() {
             if (--lastSyncTick != 0) return
-            lastSyncTick = 5
+            lastSyncTick = Config.Server.updateInternal.get()
 
             syncs.forEach { (player, payloads) ->
                 for (payload in payloads.values) {

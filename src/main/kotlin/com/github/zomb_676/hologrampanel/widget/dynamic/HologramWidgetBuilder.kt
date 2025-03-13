@@ -9,10 +9,9 @@ import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.fluids.FluidStack
 import net.neoforged.neoforge.fluids.FluidType
 import java.util.*
 
@@ -163,16 +162,17 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
         }
 
-        fun progress(progressBar: IRenderElement.ProgressData) {
-
+        fun workingProgress(progressBar: IRenderElement.ProgressData): IRenderElement.WorkingProgressBarElement {
+            val element = IRenderElement.WorkingProgressBarElement(progressBar)
+            return element.attach()
         }
 
         fun energyBar(progressBar: IRenderElement.ProgressData): IRenderElement.EnergyBarElement {
             return IRenderElement.EnergyBarElement(progressBar).attach()
         }
 
-        fun fluid(progressBar: IRenderElement.ProgressData, fluid : FluidType): IRenderElement.FluidBarElement {
-            return IRenderElement.FluidBarElement(progressBar,fluid).attach()
+        fun fluid(progressBar: IRenderElement.ProgressData, fluid: FluidType): IRenderElement.FluidBarElement {
+            return IRenderElement.FluidBarElement(progressBar, fluid).attach()
         }
 
         fun sprite(sprite: TextureAtlasSprite): IRenderElement.TextureAtlasSpriteRenderElement {
@@ -193,12 +193,14 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return sprite(atlas).apply { setPositionOffset(0, -1) }
         }
 
-        fun entity(entity: Entity, scale: Double = 3.0): IRenderElement.EntityRenderElement {
-            return if (entity is LivingEntity) {
-                IRenderElement.EntityRenderElement(entity, scale)
-            } else {
-                TODO()
-            }.attach()
+        fun entity(entity: Entity) = if (entity is ItemEntity) {
+            entity(entity, 15.0).setPositionOffset(0, 5)
+        } else {
+            entity(entity, 10.0)
+        }
+
+        fun entity(entity: Entity, scale: Double): IRenderElement.EntityRenderElement {
+            return IRenderElement.EntityRenderElement(entity, scale).attach()
         }
     }
 }

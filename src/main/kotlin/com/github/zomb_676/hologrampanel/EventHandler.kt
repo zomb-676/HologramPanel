@@ -1,6 +1,5 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.interaction.CycleSelector
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
@@ -133,9 +132,6 @@ object EventHandler {
 
         private fun registerLayer(event: RegisterGuiLayersEvent) {
             event.registerAboveAll(HologramPanel.rl("interaction_mode_layer"), InteractionLayer.getLayer())
-            event.registerAboveAll(HologramPanel.rl("cycle_selector")) { guiGraphics, deltaTracker ->
-                CycleSelector.currentInstance()?.render(guiGraphics, deltaTracker)
-            }
         }
 
         private fun onPlayerLogout(event: ClientPlayerNetworkEvent.LoggingOut) {
@@ -154,7 +150,7 @@ object EventHandler {
             ComponentResponseDataPayload.TYPE,
             ComponentResponseDataPayload.STREAM_CODEC,
             ComponentResponseDataPayload.HANDLE
-        ).playToServer<SyncClosePayload>(
+        ).playBidirectional<SyncClosePayload>(
             SyncClosePayload.TYPE,
             SyncClosePayload.STREAM_CODEC,
             SyncClosePayload.HANDLE
@@ -196,6 +192,7 @@ object EventHandler {
     }
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {
+        HologramManager.clientTick()
     }
 
     private fun levelUnload(event: LevelEvent.Unload) {
