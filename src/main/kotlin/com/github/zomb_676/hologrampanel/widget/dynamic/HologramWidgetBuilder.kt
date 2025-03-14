@@ -1,9 +1,9 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
-import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
@@ -60,18 +60,18 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         return DynamicBuildComponentWidget.Single(currentProvider!!, elements)
     }
 
-    fun group(des: String, codeBlock: () -> Unit) {
-        group({ text(des) }, codeBlock)
+    fun group(des: String, collapse: Boolean = false, codeBlock: () -> Unit) {
+        group({ text(des) }, codeBlock, collapse)
     }
 
-    fun group(description: Helper.() -> Unit, codeBlock: () -> Unit) {
+    fun group(description: Helper.() -> Unit, codeBlock: () -> Unit, collapse: Boolean = false) {
         requireNotNull(currentProvider)
         require(!currentInSingle) { "not call group in single" }
         stack.push(mutableListOf())
         codeBlock.invoke()
         require(stack.peek().isNotEmpty()) { "group contains nothing added" }
         val desWidget = createSingleFromElements(helper.isolateScope { description.invoke(helper) })!!
-        val group = createGroupForElements(stack.pop(), desWidget)
+        val group = createGroupForElements(stack.pop(), desWidget, collapse)
         if (group != null) {
             stack.peek().add(group)
         }
@@ -79,10 +79,11 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
     private fun createGroupForElements(
         child: MutableList<DynamicBuildComponentWidget<T>>,
-        desWidget: DynamicBuildComponentWidget.Single<T>
+        desWidget: DynamicBuildComponentWidget.Single<T>,
+        collapse: Boolean
     ): DynamicBuildComponentWidget.Group<T>? {
         if (child.isEmpty()) return null
-        return DynamicBuildComponentWidget.Group(this.currentProvider!!, desWidget, child)
+        return DynamicBuildComponentWidget.Group(this.currentProvider!!, desWidget, child, collapse)
     }
 
     /**
@@ -109,7 +110,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         if (context.getRememberData().serverDataEntries().isNotEmpty()) {
             currentStack.add(DynamicBuildComponentWidget.requireServerData(context))
         }
-        val global = createGroupForElements(currentStack, desc)!!
+        val global = createGroupForElements(currentStack, desc, false)!!
         require(stack.isEmpty())
         this.currentProvider = null
         return DynamicBuildWidget(context, global)

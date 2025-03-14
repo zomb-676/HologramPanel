@@ -303,6 +303,7 @@ class BuildInPlugin : IHologramPlugin {
                             }
                         }
                     }
+                    builder.group({},{})
                 }
             }
 

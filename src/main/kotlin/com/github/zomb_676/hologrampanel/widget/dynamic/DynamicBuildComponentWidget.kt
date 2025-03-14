@@ -2,13 +2,13 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
 import com.github.zomb_676.hologrampanel.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
-import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import net.minecraft.network.chat.Component
 import kotlin.math.max
@@ -112,8 +112,9 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
     class Group<T : HologramContext>(
         private val provider: ComponentProvider<T>,
         val descriptionWidget: Single<T>,
-        override var children: List<DynamicBuildComponentWidget<T>>
-    ) : HologramWidgetComponent.Group<T>(children), DynamicBuildComponentWidget<T> {
+        override var children: List<DynamicBuildComponentWidget<T>>,
+        collapse: Boolean
+    ) : HologramWidgetComponent.Group<T>(children, collapse), DynamicBuildComponentWidget<T> {
         override fun descriptionSize(
             target: T,
             style: HologramStyle,

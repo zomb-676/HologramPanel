@@ -39,13 +39,12 @@ interface HologramWidgetComponent<T : Any> {
             internal set
     }
 
-    abstract class Group<T : Any>(open val children: List<HologramWidgetComponent<T>>) : HologramWidgetComponent<T> {
+    abstract class Group<T : Any>(open val children: List<HologramWidgetComponent<T>>, var collapse: Boolean = false) :
+        HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             private set
         final override var visualSize: Size = contentSize
             private set
-
-        var collapse: Boolean = false
 
         final override fun measureSize(
             target: T, style: HologramStyle, displayType: DisplayType
