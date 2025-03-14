@@ -33,7 +33,7 @@ class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicB
             }
         }
         val res = maps.flatMap { (_, v) -> v }
-        this.container.children = if (res.isNotEmpty()) res else DynamicBuildComponentWidget.onNoProvider(target)
+        this.container.children = if (res.isNotEmpty()) res else listOf(DynamicBuildComponentWidget.onNoProvider(target))
         this.resetSelectState()
     }
 

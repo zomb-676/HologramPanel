@@ -41,7 +41,7 @@ class BuildInPlugin : IHologramPlugin {
                 val litTotalTime by remember.server(4, 0) { tag -> tag.getIntArray("furnace_progress_data")[1] }
                 val cookingTimer by remember.server(5, 0) { tag -> tag.getIntArray("furnace_progress_data")[2] }
                 val cookingTotalTime by remember.server(6, 0) { tag -> tag.getIntArray("furnace_progress_data")[3] }
-                val progressBar = remember.keep(7, IRenderElement.ProgressData())
+                val progressBar = remember.keep(7, IRenderElement::ProgressData)
 
                 progressBar.current(cookingTimer).max(cookingTotalTime)
 
@@ -60,7 +60,13 @@ class BuildInPlugin : IHologramPlugin {
                     fluid(progressBar, Fluids.LAVA.fluidType)
                 }
                 builder.single {
-                    workingProgress(progressBar)
+                    workingArrowProgress(progressBar)
+                }
+                builder.single {
+                    workingCycleProgress(progressBar)
+                }
+                builder.single {
+                    workingTorusProgress(progressBar)
                 }
             }
 
@@ -374,7 +380,7 @@ class BuildInPlugin : IHologramPlugin {
     }
 
     companion object {
-        object DefaultBlockDescriptionProvider : ComponentProvider<BlockHologramContext> {
+        data object DefaultBlockDescriptionProvider : ComponentProvider<BlockHologramContext> {
             override fun appendComponent(
                 builder: HologramWidgetBuilder<BlockHologramContext>,
                 displayType: DisplayType
@@ -391,7 +397,7 @@ class BuildInPlugin : IHologramPlugin {
             override fun location(): ResourceLocation = HologramPanel.rl("default_block_description_provider")
         }
 
-        object DefaultEntityDescriptionProvider : ComponentProvider<EntityHologramContext> {
+        data object DefaultEntityDescriptionProvider : ComponentProvider<EntityHologramContext> {
             override fun appendComponent(
                 builder: HologramWidgetBuilder<EntityHologramContext>,
                 displayType: DisplayType

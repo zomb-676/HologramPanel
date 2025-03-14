@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.stack
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.BufferUploader

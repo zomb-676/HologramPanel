@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
-import com.github.zomb_676.hologrampanel.BuildInPlugin
+import com.github.zomb_676.hologrampanel.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
+import com.github.zomb_676.hologrampanel.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
@@ -76,23 +77,37 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
     }
 
     companion object {
-        private val element = IRenderElement.StringRenderElement(Component.literal("No Active Provider Found"))
-        private val block: Single<BlockHologramContext> =
-            NoProvider<BlockHologramContext>(BuildInPlugin.Companion.DefaultBlockDescriptionProvider)
-        private val entity: Single<EntityHologramContext> =
-            NoProvider<EntityHologramContext>(BuildInPlugin.Companion.DefaultEntityDescriptionProvider)
+        private val noActiveElement = IRenderElement.StringRenderElement(Component.literal("No Active Provider Found"))
+        private val requireServerDataElement =
+            IRenderElement.StringRenderElement(Component.literal("Waiting for Server Packet"))
 
-        fun <T : HologramContext> onNoProvider(context: T): List<Single<T>> {
-            return listOf(
-                when (context) {
-                    is BlockHologramContext -> block
-                    is EntityHologramContext -> entity
-                }.unsafeCast()
-            )
+        object NoProvider {
+            val block: Single<BlockHologramContext> =
+                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, noActiveElement)
+            val entity: Single<EntityHologramContext> =
+                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, noActiveElement)
         }
+
+        object RequireServerData {
+            val block: Single<BlockHologramContext> =
+                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, requireServerDataElement)
+            val entity: Single<EntityHologramContext> =
+                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, requireServerDataElement)
+        }
+
+        fun <T : HologramContext> onNoProvider(context: T): Single<T> = when (context) {
+            is BlockHologramContext -> NoProvider.block
+            is EntityHologramContext -> NoProvider.entity
+        }.unsafeCast()
+
+        fun <T : HologramContext> requireServerData(context: T): Single<T> = when (context) {
+            is BlockHologramContext -> RequireServerData.block
+            is EntityHologramContext -> RequireServerData.entity
+        }.unsafeCast()
     }
 
-    private class NoProvider<T : HologramContext>(provider: ComponentProvider<T>) : Single<T>(provider, listOf(element))
+    private class SpecialProvider<T : HologramContext>(provider: ComponentProvider<T>, element: IRenderElement) :
+        Single<T>(provider, listOf(element))
 
     class Group<T : HologramContext>(
         private val provider: ComponentProvider<T>,

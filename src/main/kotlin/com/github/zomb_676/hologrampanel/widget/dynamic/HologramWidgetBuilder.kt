@@ -104,7 +104,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         val desc =
             currentStack.removeLast().unsafeCast<DynamicBuildComponentWidget.Single<T>>("must be single not group")
         if (currentStack.isEmpty()) {
-            currentStack.addAll(DynamicBuildComponentWidget.onNoProvider(context))
+            currentStack.add(DynamicBuildComponentWidget.onNoProvider(context))
+        }
+        if (context.getRememberData().serverDataEntries().isNotEmpty()) {
+            currentStack.add(DynamicBuildComponentWidget.requireServerData(context))
         }
         val global = createGroupForElements(currentStack, desc)!!
         require(stack.isEmpty())
@@ -162,8 +165,25 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
         }
 
-        fun workingProgress(progressBar: IRenderElement.ProgressData): IRenderElement.WorkingProgressBarElement {
-            val element = IRenderElement.WorkingProgressBarElement(progressBar)
+        fun workingArrowProgress(progress: IRenderElement.ProgressData): IRenderElement.WorkingArrowProgressBarElement {
+            val element = IRenderElement.WorkingArrowProgressBarElement(progress)
+            return element.attach()
+        }
+
+        fun workingCycleProgress(
+            progress: IRenderElement.ProgressData,
+            radius: Float = 10.0f
+        ): IRenderElement.WorkingCircleProgressElement {
+            val element = IRenderElement.WorkingCircleProgressElement(progress, radius, 0.0f)
+            return element.attach()
+        }
+
+        fun workingTorusProgress(
+            progress: IRenderElement.ProgressData,
+            outRadius: Float = 10.0f,
+            inRadius: Float = 8.0f
+        ): IRenderElement.WorkingCircleProgressElement {
+            val element = IRenderElement.WorkingCircleProgressElement(progress, outRadius, inRadius)
             return element.attach()
         }
 

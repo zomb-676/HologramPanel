@@ -11,13 +11,13 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
+import java.util.*
 import kotlin.reflect.KProperty
 
 class Remember<T : HologramContext> private constructor() {
     val uuid: UUID = UUID.randomUUID()
     private val map: MutableMap<ComponentProvider<T>, MutableList<Holder<T, *>>> = mutableMapOf()
-    private val requireMimicTick : MutableList<Holder<T,*>> = mutableListOf()
+    private val requireMimicTick: MutableList<Holder<T, *>> = mutableListOf()
 
     @PublishedApi
     @ApiStatus.Internal
@@ -26,7 +26,7 @@ class Remember<T : HologramContext> private constructor() {
 
     private val servers: Int2ObjectOpenHashMap<Holder<T, *>> = Int2ObjectOpenHashMap()
     private val clients: Int2ObjectOpenHashMap<Holder<T, *>> = Int2ObjectOpenHashMap()
-    private val keeps : Int2ObjectOpenHashMap<Any> = Int2ObjectOpenHashMap()
+    private val keeps: Int2ObjectOpenHashMap<Any> = Int2ObjectOpenHashMap()
 
     lateinit var context: T
 
@@ -37,9 +37,9 @@ class Remember<T : HologramContext> private constructor() {
         initial: V
     ) {
         private var cachedValue: V = initial
-        private var mimicTickValue : V = cachedValue
+        private var mimicTickValue: V = cachedValue
         private var lastValueSynced = 0
-        private var mimicTick : ((V) -> V)? = null
+        private var mimicTick: ((V) -> V)? = null
 
         operator fun getValue(owner: Any?, property: KProperty<*>): V = this.get()
 
@@ -47,10 +47,10 @@ class Remember<T : HologramContext> private constructor() {
          * call this value if you are on java or not use property delegate
          */
         fun get(): V = if (mimicTick != null) {
-                mimicTickValue
-            } else {
-                cachedValue
-            }
+            mimicTickValue
+        } else {
+            cachedValue
+        }
 
 
         internal fun tryUpdate(tag: CompoundTag) {
@@ -63,7 +63,7 @@ class Remember<T : HologramContext> private constructor() {
             }
         }
 
-        fun clientMimicTick(tick : (V) -> V): Holder<T, V> {
+        fun clientMimicTick(tick: (V) -> V): Holder<T, V> {
             require(this.mimicTickValue == null)
             this.mimicTick = tick
             this.remember.requireMimicTick.add(this)
@@ -89,12 +89,12 @@ class Remember<T : HologramContext> private constructor() {
         this.provider = null
     }
 
-    fun <V : Any> keep(identity: Int, data: V) : V {
+    fun <V : Any> keep(identity: Int, data: () -> V): V {
         val key = calculateKey(identity, data)
         var res = keeps.get(key)
         if (res == null) {
-            res = data
-            keeps.put(key, data)
+            res = data.invoke()
+            keeps.put(key, res)
         }
         return res.unsafeCast()
     }
@@ -165,7 +165,7 @@ class Remember<T : HologramContext> private constructor() {
     }
 
     fun consumerRebuild(provider: ComponentProvider<T>): Boolean {
-        val value  = this.dirtyMark.getBoolean(provider)
+        val value = this.dirtyMark.getBoolean(provider)
         this.dirtyMark.put(provider, false)
         return value
     }

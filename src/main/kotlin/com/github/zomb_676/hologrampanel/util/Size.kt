@@ -20,6 +20,8 @@ value class Size private constructor(@PublishedApi internal val size: Long) {
     companion object {
         fun of(width: Int, height: Int) = Size((width.toLong() shl Int.SIZE_BITS) or (height.toLong()))
 
+        fun of(length : Int) = of(length, length)
+
         fun ofMinecraftWindowScaledSize(): Size {
             val window = Minecraft.getInstance().window
             return of(window.guiScaledWidth, window.guiScaledHeight)

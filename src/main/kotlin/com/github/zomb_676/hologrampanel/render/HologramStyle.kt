@@ -3,16 +3,21 @@ package com.github.zomb_676.hologrampanel.render
 import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.Size
-import com.mojang.blaze3d.vertex.PoseStack
+import com.github.zomb_676.hologrampanel.util.normalizedInto2PI
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferUploader
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
 import net.minecraft.util.ARGB
 import net.minecraft.world.item.DyeColor
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.*
 
 interface HologramStyle {
     val guiGraphics: GuiGraphics
@@ -38,6 +43,7 @@ interface HologramStyle {
     fun drawString(string: Component, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
         guiGraphics.drawString(font, string, x, y, color, false)
     }
+
     fun drawHorizontalLine(left: Int, right: Int, y: Int, color: Int = contextColor) {
         guiGraphics.hLine(left, right, y, color)
     }
@@ -70,6 +76,19 @@ interface HologramStyle {
         guiGraphics.fill(minX, minY, maxX, maxY, color)
     }
 
+    fun fill(minX: Double, minY: Double, maxX: Double, maxY: Double, color: Int = contextColor) {
+        fill(minX.toFloat(), minY.toFloat(), maxX.toFloat(), maxY.toFloat())
+    }
+
+    fun fill(minX: Float, minY: Float, maxX: Float, maxY: Float, color: Int = contextColor) {
+        val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
+        val pose = guiGraphics.pose().last().pose()
+        consumer.addVertex(pose, minX, minY, 0.0f).setColor(color)
+        consumer.addVertex(pose, minX, maxY, 0.0f).setColor(color)
+        consumer.addVertex(pose, maxX, maxY, 0.0f).setColor(color)
+        consumer.addVertex(pose, maxX, minY, 0.0f).setColor(color)
+    }
+
     fun scale(x: Double, y: Double) {
         this.scale(x.toFloat(), y.toFloat())
     }
@@ -98,15 +117,125 @@ interface HologramStyle {
 
     fun itemStackSize(): Size = ITEM_STACK_SIZE
 
+    fun outline(size: Size, color: Int = contextColor) {
+        guiGraphics.renderOutline(0, 0, size.width, size.height, color)
+    }
 
-    companion object {
-        inline fun HologramStyle.poseStore(pose: PoseStack, code: () -> Unit) {
-            val back = guiGraphics.pose
-            guiGraphics.pose = pose
-            code.invoke()
-            guiGraphics.pose = back
+    fun drawCycle(
+        outRadius: Float,
+        colorOut: Int = contextColor,
+        colorIn: Int = colorOut,
+        beginRadian: Double = Math.PI * 2,
+        endRadian: Double = 0.0,
+        tessellationCount: Int = 180,
+        isClockWise: Boolean = true
+    ) {
+        require(outRadius > 0)
+        var endRadian = endRadian.normalizedInto2PI
+        var beginRadian = beginRadian.normalizedInto2PI
+        if (isClockWise) {
+            if (endRadian > beginRadian) {
+                endRadian -= Math.PI * 2
+            }
+            val temp = beginRadian
+            beginRadian = endRadian
+            endRadian = temp
+        } else {
+            if (endRadian < beginRadian) {
+                endRadian += Math.PI * 2
+            }
         }
 
+        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+        val tesselator = Tesselator.getInstance()
+        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
+
+        val matrix = guiGraphics.pose().last().pose()
+        builder.addVertex(matrix, 0f, 0f, 0f).setColor(colorIn)
+
+        var radius = beginRadian
+        val step = Math.toRadians(360.0 / tessellationCount).toFloat()
+        while (true) {
+            if (abs(radius - endRadian) > abs(step)) {
+                builder.addVertex(
+                    matrix,
+                    sin(radius).toFloat() * outRadius,
+                    cos(radius).toFloat() * outRadius,
+                    0.0f
+                ).setColor(colorOut)
+                radius += step
+            } else {
+                break
+            }
+        }
+        builder.addVertex(matrix, sin(endRadian).toFloat() * outRadius, cos(endRadian).toFloat() * outRadius, 0.0f)
+            .setColor(colorOut)
+
+        BufferUploader.drawWithShader(builder.buildOrThrow())
+    }
+
+    fun drawTorus(
+        inRadius: Float,
+        outRadius: Float,
+        colorOut: Int = contextColor,
+        colorIn: Int = colorOut,
+        beginRadian: Double = Math.PI * 2,
+        endRadian: Double = 0.0,
+        tessellationCount: Int = 180,
+        isClockWise: Boolean = true
+    ) {
+        require(outRadius > inRadius)
+        if (inRadius == 0.0f) {
+            drawCycle(outRadius, colorOut, colorIn, beginRadian, endRadian, tessellationCount, isClockWise)
+            return
+        }
+        require(inRadius > 0)
+
+        var endRadian = endRadian.normalizedInto2PI
+        var beginRadian = beginRadian.normalizedInto2PI
+        if (isClockWise) {
+            if (endRadian > beginRadian) {
+                endRadian -= Math.PI * 2
+            }
+            val temp = beginRadian
+            beginRadian = endRadian
+            endRadian = temp
+        } else {
+            if (endRadian < beginRadian) {
+                endRadian += Math.PI * 2
+            }
+        }
+
+        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+        val tesselator = Tesselator.getInstance()
+        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+
+        val matrix = guiGraphics.pose().last().pose()
+
+        var radius = beginRadian
+        val step = Math.toRadians(360.0 / tessellationCount).toFloat()
+
+        fun fillVertex(fillVertexRadius: Double) {
+            val lastSin = sin(fillVertexRadius).toFloat()
+            val lastCos = cos(fillVertexRadius).toFloat()
+            builder.addVertex(matrix, lastSin * inRadius, lastCos * inRadius, 0.0f).setColor(colorIn)
+            builder.addVertex(matrix, lastSin * outRadius, lastCos * outRadius, 0.0f).setColor(colorOut)
+        }
+
+        while (true) {
+            if (abs(radius - endRadian) > abs(step)) {
+                fillVertex(radius)
+                radius += step
+            } else {
+                fillVertex(endRadian)
+                break
+            }
+        }
+
+        BufferUploader.drawWithShader(builder.buildOrThrow())
+    }
+
+    companion object {
         const val ITEM_STACK_LENGTH = 16
         val ITEM_STACK_SIZE = Size.of(ITEM_STACK_LENGTH, ITEM_STACK_LENGTH)
     }

@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
 import net.neoforged.neoforge.client.GlStateBackup
+import org.lwjgl.opengl.GL46
 
 @Suppress("UNCHECKED_CAST")
 fun <T> Any.unsafeCast(): T = this as T
@@ -73,4 +74,22 @@ inline fun <T> profilerStack(name: String, code: () -> T): T {
     val res = code.invoke()
     profiler.pop()
     return res
+}
+
+@Suppress("KotlinConstantConditions")
+inline val Double.normalizedInto2PI: Double
+    get() {
+        if (this == (Math.PI * 2)) return this
+        val res = this % (Math.PI * 2)
+        return if (res < 0) {
+            res + (Math.PI * 2)
+        } else {
+            res
+        }
+    }
+
+inline fun glDebugStack(debugLabelName : String, id : Int = 0, code : () -> Unit) {
+    GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, id, debugLabelName)
+    code.invoke()
+    GL46.glPopDebugGroup()
 }

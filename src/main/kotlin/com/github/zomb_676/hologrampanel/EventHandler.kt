@@ -7,7 +7,9 @@ import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
 import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
+import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.CommandDSL
+import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.blaze3d.platform.InputConstants
@@ -27,6 +29,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.registries.RegisterEvent
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.opengl.GL46
 
 object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
