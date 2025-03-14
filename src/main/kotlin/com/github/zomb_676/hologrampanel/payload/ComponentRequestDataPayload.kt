@@ -6,9 +6,9 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import com.github.zomb_676.hologrampanel.widget.component.ServerDataProvider
+import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf

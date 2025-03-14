@@ -2,6 +2,9 @@ package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 
+/**
+ * used for object selection in tree like data structure
+ */
 interface SelectedPath<T> {
     fun atTerminus(component: T): Boolean
     fun atUnTerminusPath(component: T): Boolean

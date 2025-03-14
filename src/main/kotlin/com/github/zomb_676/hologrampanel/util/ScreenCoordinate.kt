@@ -93,7 +93,7 @@ value class ScreenCoordinate private constructor(@PublishedApi internal val vect
     companion object {
 
         /**
-         * @param f take the ownership
+         * @param f take the ownership, the input value should not be changed anymore
          */
         fun of(f: Vector4f): ScreenCoordinate {
             return ScreenCoordinate(f)

@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
 import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload

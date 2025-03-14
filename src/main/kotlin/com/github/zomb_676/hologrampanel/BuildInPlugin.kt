@@ -7,8 +7,8 @@ import com.github.zomb_676.hologrampanel.api.IHologramPlugin
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
-import com.github.zomb_676.hologrampanel.widget.component.ServerDataProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
 import io.netty.buffer.Unpooled

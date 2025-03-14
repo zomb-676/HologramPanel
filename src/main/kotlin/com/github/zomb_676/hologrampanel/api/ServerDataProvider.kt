@@ -1,8 +1,11 @@
-package com.github.zomb_676.hologrampanel.widget.component
+package com.github.zomb_676.hologrampanel.api
 
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import net.minecraft.nbt.CompoundTag
 
+/**
+ * implementation this if your [ComponentProvider] require server data
+ */
 interface ServerDataProvider<T : HologramContext> : ComponentProvider<T> {
     /**
      * run on logic server

@@ -14,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3fc
 
 /**
+ * describes the context with a bunch of objects where different widget target will require
+ *
  * the trace will generate this and keep of it until invalid
  */
 sealed interface HologramContext {
@@ -80,17 +82,25 @@ sealed interface HologramContext {
     @ApiStatus.Internal
     fun setServerUpdateDat(tag: CompoundTag)
 
+
     /**
-     * get data query from server here
-     * why [CompoundTag]?, data can support check existence and arbitrary sort
-     *
-     * @return must be [GenericThis]
+     * @see Remember
+     * @return notice that the [HologramContext] in generic must be the context it supports
      */
     @EfficientConst
     fun getRememberData() : Remember<out HologramContext>
 
+    /**
+     * @see Remember
+     * @return notice that the [HologramContext] in generic must be the context it supports
+     */
     @EfficientConst
     fun <T : HologramContext> getRememberDataUnsafe() : Remember<T> = getRememberData().unsafeCast()
 
+    /**
+     * if the trace object is still alive or exist
+     *
+     * in this case, we think the tracing object is no longer valid
+     */
     fun stillValid() : Boolean
 }

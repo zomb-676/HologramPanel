@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.AllRegisters
+import com.github.zomb_676.hologrampanel.api.EfficientConst
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.UUIDUtil
@@ -21,18 +22,28 @@ import org.joml.Vector3fc
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
+/**
+ * context object describing entity-based target
+ */
 class EntityHologramContext(
     private val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
 ) : HologramContext {
     private var tag: CompoundTag? = null
     private var remember = Remember.create(this)
 
+    /**
+     * the entity traced
+     */
+    @EfficientConst
     fun getEntity() = entity
 
     @Suppress("UNCHECKED_CAST")
     @JvmName("getEntityWithGenericFilter")
     fun <T : Entity> getEntity(): T? = entity as T?
 
+    /**
+     * the player level, not the entity level, may be different
+     */
     override fun getLevel(): Level = player.level()
 
     override fun getPlayer(): Player = player
@@ -50,6 +61,9 @@ class EntityHologramContext(
         return Vector3f(x.toFloat(), y.toFloat() + entity.bbHeight, z.toFloat())
     }
 
+    /**
+     * identity by [Entity.uuid]
+     */
     override fun getIdentityObject(): Any = entity.uuid
 
     override fun getHitContext(): HitResult? = hitResult
@@ -64,6 +78,9 @@ class EntityHologramContext(
 
     override fun getRememberData(): Remember<EntityHologramContext> = remember
 
+    /**
+     * when the entity is removed, not alive, we think by no way can we continue display
+     **/
     override fun stillValid(): Boolean = !this.entity.isRemoved
 
     companion object {

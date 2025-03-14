@@ -10,6 +10,9 @@ import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildComponentWidget
 
+/**
+ * tree structure type widget
+ */
 abstract class HologramComponentWidget<T : Any>(val target: T, val component: HologramWidgetComponent.Group<T>) : HologramWidget {
 
     private class SelectTree<T : Any>(val widget: HologramComponentWidget<T>) :

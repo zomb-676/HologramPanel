@@ -6,6 +6,9 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * the basic hologram widget interface
+ */
 interface HologramWidget {
 
     /**
@@ -21,7 +24,6 @@ interface HologramWidget {
     fun onSelected() {}
     fun onDisSelected() {}
 
-    @ApiStatus.NonExtendable
     fun closeWidget() {
         HologramManager.remove(this)
         this.onRemove()

@@ -2,8 +2,10 @@ package com.github.zomb_676.hologrampanel.api
 
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
 
+/**
+ * register and setup setting on both physical dist
+ */
 class HologramCommonRegistration(val plugin: IHologramPlugin) {
 
     internal val blockProviders: MutableList<ComponentProvider<BlockHologramContext>> = mutableListOf()

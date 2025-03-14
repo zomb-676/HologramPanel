@@ -3,7 +3,7 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.texture.TextureAtlasSprite

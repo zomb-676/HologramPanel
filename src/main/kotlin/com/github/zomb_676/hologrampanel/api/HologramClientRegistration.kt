@@ -1,6 +1,9 @@
 package com.github.zomb_676.hologrampanel.api
 
-class HologramClientRegistration(val plugin: IHologramPlugin) {
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Experimental
+class HologramClientRegistration(internal val plugin: IHologramPlugin) {
     internal val blockPopup : MutableList<PopupCallback.BlockPopupCallback> = mutableListOf()
     internal val entityPopup : MutableList<PopupCallback.EntityPopupCallback> = mutableListOf()
 

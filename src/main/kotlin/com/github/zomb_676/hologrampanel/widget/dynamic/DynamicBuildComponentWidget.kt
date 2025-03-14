@@ -8,7 +8,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import net.minecraft.network.chat.Component
 import kotlin.math.max

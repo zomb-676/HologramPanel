@@ -4,9 +4,11 @@ import com.github.zomb_676.hologrampanel.HologramPanel.Companion.LOGGER
 import com.github.zomb_676.hologrampanel.api.*
 import com.github.zomb_676.hologrampanel.util.getClassOf
 import net.neoforged.fml.ModList
+import org.jetbrains.annotations.ApiStatus
 import java.lang.annotation.ElementType
 import kotlin.streams.asSequence
 
+@ApiStatus.Internal
 internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
     companion object {
         private var INSTANCE: PluginManager? = null
@@ -27,7 +29,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
 
                             val classInstance = getClassOf<IHologramPlugin>(it.clazz().className)
                             val annotation = classInstance.getAnnotation(HologramPlugin::class.java)!!
-                            if (annotation.enable) {
+                            if (annotation.enable && annotation.requireMods.all(ModList.get()::isLoaded)) {
                                 plugin = classInstance.getDeclaredConstructor()
                                     .apply { require(trySetAccessible()) }.newInstance()
                                 LOGGER.debug("success loaded plugin: {}", plugin.location())

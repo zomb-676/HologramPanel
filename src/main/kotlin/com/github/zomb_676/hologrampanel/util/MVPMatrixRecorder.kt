@@ -11,6 +11,8 @@ import org.joml.Vector4f
 
 /**
  * transform world-space position into minecraft screen-space location
+ *
+ * all input positions should be located in minecraft world space anchored by world zero not camera
  */
 object MVPMatrixRecorder {
 

@@ -23,13 +23,16 @@ import org.joml.Vector3fc
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
+/**
+ * context object describing block-based target
+ */
 class BlockHologramContext(
     val pos: BlockPos,
     private val player: Player,
     private val hitResult: BlockHitResult?
 ) : HologramContext {
 
-    private val originalBlock: Block = player.level().getBlockState(pos).block
+    private val originalBlock: BlockState = player.level().getBlockState(pos)
     private var tag : CompoundTag? = null
 
     private val centerPosition = Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f)
@@ -46,6 +49,9 @@ class BlockHologramContext(
 
     override fun hologramCenterPosition(partialTick: Float): Vector3fc = hologramCenterPosition()
 
+    /**
+     * identity by the [BlockPos]
+     */
     override fun getIdentityObject(): Any = pos
 
     override fun getHitContext(): BlockHitResult? = hitResult
@@ -60,18 +66,33 @@ class BlockHologramContext(
 
     override fun getRememberData(): Remember<BlockHologramContext> = remember
 
+    /**
+     * the block state the pos it is at, maybe be different to [createTimeBlockState]
+     */
     fun getBlockState(): BlockState = getLevel().getBlockState(pos)
+
+    /**
+     * the block state when context created
+     */
+    @EfficientConst
+    fun createTimeBlockState() = originalBlock
 
     fun getFluidState(): FluidState = getBlockState().fluidState
 
     fun getBlockEntity(): BlockEntity? = getLevel().getBlockEntity(pos)
 
+    /**
+     * type cast type of [getBlockEntity] will return null if not satisfy
+     */
     @JvmName("getBlockEntityWithGenericFilter")
     inline fun <reified T : BlockEntity> getBlockEntity(): T? {
         return getBlockEntity() as T?
     }
 
-    override fun stillValid(): Boolean = getBlockState().block == originalBlock
+    /**
+     * when the block(not block state) change, we think the widget si invalid
+     **/
+    override fun stillValid(): Boolean = getBlockState().block == originalBlock.block
 
     companion object {
         fun of(hit: BlockHitResult, player: Player): BlockHologramContext {

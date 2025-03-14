@@ -4,8 +4,8 @@ import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.unsafeCast
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
-import com.github.zomb_676.hologrampanel.widget.component.ServerDataProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import net.minecraft.nbt.CompoundTag
@@ -14,6 +14,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KProperty
 
+/**
+ * update value on server package arrival and mark dirty when data actual change
+ *
+ * it is intended to re-build the widget when data actual change and only rebuild the necessary part
+ *
+ * inspired by jetpack-compose
+ */
 class Remember<T : HologramContext> private constructor() {
     val uuid: UUID = UUID.randomUUID()
     private val map: MutableMap<ComponentProvider<T>, MutableList<Holder<T, *>>> = mutableMapOf()
@@ -52,7 +59,9 @@ class Remember<T : HologramContext> private constructor() {
             cachedValue
         }
 
-
+        /**
+         * mark dirty if the value really changed
+         */
         internal fun tryUpdate(tag: CompoundTag) {
             val newValue = updater.invoke(tag)
             this.lastValueSynced = 0
@@ -63,6 +72,11 @@ class Remember<T : HologramContext> private constructor() {
             }
         }
 
+        /**
+         * in most server, server will not sync to clients every tick
+         *
+         * so clients can do mimic tick to simulate the change for smooth animation in widgets
+         */
         fun clientMimicTick(tick: (V) -> V): Holder<T, V> {
             require(this.mimicTickValue == null)
             this.mimicTick = tick
@@ -89,6 +103,11 @@ class Remember<T : HologramContext> private constructor() {
         this.provider = null
     }
 
+    /**
+     * do nothing just to avoid meanness new
+     *
+     * @param identity used to locate identity during multi call
+     */
     fun <V : Any> keep(identity: Int, data: () -> V): V {
         val key = calculateKey(identity, data)
         var res = keeps.get(key)
@@ -99,6 +118,13 @@ class Remember<T : HologramContext> private constructor() {
         return res.unsafeCast()
     }
 
+    /**
+     * the value source is stored on clients which do not need server sync
+     *
+     * @param identity used to locate identity during multi call
+     * @param initial the initial value
+     * @param code the function to update the value
+     */
     fun <V> client(identity: Int, initial: V, code: () -> V): Holder<T, V> {
         val provider = this.provider ?: throw RuntimeException()
         val key = calculateKey(identity, provider)
@@ -118,6 +144,13 @@ class Remember<T : HologramContext> private constructor() {
         }
     }
 
+    /**
+     * the value requires data synced from server
+     *
+     * @param identity used to locate identity during multi call
+     * @param initial the initial value which works as a predicate to check is package has arrived or not
+     * @param code decode actual data from server
+     */
     fun <V> server(identity: Int, initial: V, code: (tag: CompoundTag) -> V): Holder<T, V> {
         val provider = this.provider ?: throw RuntimeException()
         require(provider is ServerDataProvider<T>)
@@ -130,6 +163,9 @@ class Remember<T : HologramContext> private constructor() {
         return res.unsafeCast()
     }
 
+    /**
+     * the function to calculate the actual identity key
+     */
     private fun calculateKey(identity: Int, provider: Any): Int {
         var result = identity
         result = 31 * result + provider.hashCode()
@@ -150,28 +186,46 @@ class Remember<T : HologramContext> private constructor() {
     }
 
     companion object {
+        /**
+         * the object for [client] type holders
+         */
         private val MIMIC_EMPTY_TAG = CompoundTag()
         fun <T : HologramContext> create(context: T): Remember<T> = Remember<T>().also {
             it.context = context
         }
     }
 
+    /**
+     * tick [client] type holders
+     */
     fun tickClientValueUpdate() {
         this.clients.values.forEach { it.tryUpdate(MIMIC_EMPTY_TAG) }
     }
 
+    /**
+     * tick [Holder.mimicTick] holders
+     */
     fun tickMimicClientUpdate() {
         this.requireMimicTick.forEach { it.tickMimic() }
     }
 
+    /**
+     * check if the provider is marked as dirty and need re-build, and clean dirty mark
+     */
     fun consumerRebuild(provider: ComponentProvider<T>): Boolean {
         val value = this.dirtyMark.getBoolean(provider)
         this.dirtyMark.put(provider, false)
         return value
     }
 
+    /**
+     * return all providers that need server data
+     */
     fun serverDataEntries() = this.servers
         .values.asSequence().map { it.provider }.distinct().toList().unsafeCast<List<ServerDataProvider<T>>>()
 
+    /**
+     * return all the providers that use the [Remember] object
+     */
     fun providers() = this.dirtyMark.keys
 }

@@ -1,6 +1,6 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import io.netty.buffer.ByteBuf
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.Registries

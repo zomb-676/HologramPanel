@@ -3,10 +3,13 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
 import com.github.zomb_676.hologrampanel.widget.DisplayType
-import com.github.zomb_676.hologrampanel.widget.component.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 
+/**
+ * widget that support re-build partial when some [ComponentProvider] data have changed
+ */
 class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicBuildComponentWidget.Group<T>) :
     HologramComponentWidget<T>(target, container) {
 
