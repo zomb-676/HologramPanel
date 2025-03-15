@@ -1,14 +1,9 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.api.HologramClientRegistration
-import com.github.zomb_676.hologrampanel.api.HologramCommonRegistration
-import com.github.zomb_676.hologrampanel.api.HologramPlugin
-import com.github.zomb_676.hologrampanel.api.IHologramPlugin
+import com.github.zomb_676.hologrampanel.api.*
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
-import com.github.zomb_676.hologrampanel.api.ComponentProvider
-import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
 import io.netty.buffer.Unpooled
@@ -294,7 +289,7 @@ class BuildInPlugin : IHologramPlugin {
                         val tick = tag.getInt("bee_${index}_ticks_in_hive")
                         val byteBuffer = Unpooled.wrappedBuffer(tag.getByteArray("bee_$index"))
                         val data = BeehiveBlockEntity.Occupant.STREAM_CODEC.decode(byteBuffer)
-                        builder.group("Bee$index","Bee ${index + 1}") {
+                        builder.lazyGroup("Bee$index", "Bee ${index + 1}") {
                             builder.single("in_hive") { text("inHive:$tick/${data.minTicksInHive()}") }
                             @Suppress("DEPRECATION") val pos = data.entityData().unsafe.get("flower_pos")
                             if (pos != null && pos.type == IntArrayTag.TYPE) {

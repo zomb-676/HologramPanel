@@ -80,13 +80,17 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         }
     }
 
+    fun lazyGroup(identityName: String, description: String, codeBlock: () -> Unit) {
+        lazyGroup(identityName, { text(description) }, codeBlock)
+    }
+
     fun lazyGroup(identityName: String, description: Helper.() -> Unit, codeBlock: () -> Unit) {
-        requireNotNull(currentProvider)
+        val currentProvider = this.currentProvider!!
         require(!currentInSingle) { "not call group in single" }
         val desWidget =
             createSingleFromElements(helper.isolateScope { description.invoke(helper) }, "description_$identityName")!!
-        val group = DynamicBuildComponentWidget.LazyGroup(this.currentProvider!!, desWidget, identityName) {
-            rebuildScope(currentProvider!!) {
+        val group = DynamicBuildComponentWidget.LazyGroup(currentProvider, desWidget, identityName) {
+            rebuildScope(currentProvider) {
                 codeBlock.invoke()
             }
         }

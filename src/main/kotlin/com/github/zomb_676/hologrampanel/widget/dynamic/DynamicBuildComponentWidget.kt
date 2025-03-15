@@ -142,7 +142,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         override var collapse: Boolean = true
             set(value) {
                 field = value
-                if (value) {
+                if (!value) {
                     tryLoadChildren()
                 }
             }
