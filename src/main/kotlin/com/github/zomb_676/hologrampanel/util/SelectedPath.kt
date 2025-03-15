@@ -13,6 +13,8 @@ interface SelectedPath<T> {
     fun atWholePath(component: T): Boolean =
         atTerminus(component) || atUnTerminusPath(component)
 
+    fun atHead(component: T): Boolean
+
     fun unTerminalPath(): Sequence<T>
     fun terminal(): T
     fun fullPath(): Sequence<T> = sequence {
@@ -20,21 +22,11 @@ interface SelectedPath<T> {
         yield(terminal())
     }
 
-    fun forAny(any: T): SelectPathType =
-        if (atTerminus(any)) {
-            SelectPathType.ON_TERMINAL
-        } else if (atUnTerminusPath(any)) {
-            SelectPathType.ON_NONE_TERMINAL_PATH
-        } else {
-            SelectPathType.UN_SELECTED
-        }
-
-    fun forTerminal(terminal: T): SelectPathType =
-        if (atTerminus(terminal)) SelectPathType.ON_TERMINAL else SelectPathType.UN_SELECTED
+    fun forAny(any: T): SelectPathType = SelectPathType.of(this, any)
 
     fun resetToDefault()
 
-    fun tryRecover(newTop : T, oldContents : List<T>)
+    fun tryRecover(newTop: T, oldContents: List<T>)
 
     fun selectCommand(state: HologramRenderState, command: InteractionCommand.Exact.SelectComponent)
 
@@ -50,15 +42,15 @@ interface SelectedPath<T> {
 
         override fun atWholePath(component: HologramWidgetComponent<T>): Boolean = false
 
+        override fun atHead(component: HologramWidgetComponent<T>): Boolean = terminal == component
+
         override fun fullPath(): Sequence<HologramWidgetComponent<T>> = sequenceOf(terminal)
 
-        override fun forAny(any: HologramWidgetComponent<T>): SelectPathType = SelectPathType.UN_SELECTED
-
-        override fun forTerminal(terminal: HologramWidgetComponent<T>): SelectPathType = SelectPathType.UN_SELECTED
+        override fun forAny(any: HologramWidgetComponent<T>): SelectPathType = TODO()
 
         override fun resetToDefault() {}
 
-        override fun tryRecover(newTop: HologramWidgetComponent<T>, oldContents : List<HologramWidgetComponent<T>>) {
+        override fun tryRecover(newTop: HologramWidgetComponent<T>, oldContents: List<HologramWidgetComponent<T>>) {
             this.terminal = newTop
         }
 

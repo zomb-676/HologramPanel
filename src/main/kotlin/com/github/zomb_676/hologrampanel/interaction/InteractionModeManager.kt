@@ -95,7 +95,12 @@ object InteractionModeManager {
                         }
                     } else null
 
-                    is Raw.MouseButton -> null
+                    is Raw.MouseButton -> if (raw.action == GLFW.GLFW_PRESS) {
+                        when(raw.button) {
+                            GLFW.GLFW_MOUSE_BUTTON_LEFT -> Exact.OperateCommand.SWITCH_COLLAPSE
+                            else -> null
+                        }
+                    } else null
                     is Raw.MouseMove -> null
                     is Raw.MouseScroll -> when {
                         raw.scrollDeltaY > 0 -> Exact.SelectComponent.SELECT_BEFORE

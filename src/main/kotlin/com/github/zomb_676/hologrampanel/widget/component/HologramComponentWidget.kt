@@ -18,8 +18,7 @@ abstract class HologramComponentWidget<T : Any>(val target: T, val component: Ho
     override fun render(
         state: HologramRenderState, style: HologramStyle, displayType: DisplayType, partialTicks: Float
     ) {
-        val path = this.getSelectedPath()
-        this.component.render(target, style, path, displayType, partialTicks)
+        this.component.render(target, style, this.getSelectedPath(), displayType, partialTicks)
     }
 
     abstract fun getSelectedPath() : SelectedPath<HologramWidgetComponent<T>>
@@ -39,7 +38,6 @@ abstract class HologramComponentWidget<T : Any>(val target: T, val component: Ho
 
     override fun onSelected() {}
     override fun onDisSelected() {
-        this.resetSelectState()
     }
 
     fun resetSelectState() {

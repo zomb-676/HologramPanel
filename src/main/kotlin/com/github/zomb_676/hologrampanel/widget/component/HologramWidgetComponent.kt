@@ -32,7 +32,7 @@ interface HologramWidgetComponent<T : Any> {
         partialTicks: Float
     )
 
-    fun isGroup() : Boolean
+    fun isGroup(): Boolean
 
     abstract class Single<T : Any> : HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
@@ -43,7 +43,10 @@ interface HologramWidgetComponent<T : Any> {
         override fun isGroup(): Boolean = false
     }
 
-    abstract class Group<T : Any>(open val children: List<HologramWidgetComponent<T>>,open var collapse: Boolean = false) :
+    abstract class Group<T : Any>(
+        open val children: List<HologramWidgetComponent<T>>,
+        open var collapse: Boolean = false
+    ) :
         HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             private set
@@ -89,7 +92,7 @@ interface HologramWidgetComponent<T : Any> {
             partialTicks: Float
         ) {
             val selectedType = path.forAny(this)
-            style.drawGroupOutline(this.visualSize, selectedType)
+            style.drawGroupOutline(this.visualSize, selectedType, this.collapse)
             style.stack {
                 style.moveToGroupDescription()
                 this.renderGroupDescription(target, style, path, displayType, partialTicks)
@@ -102,7 +105,7 @@ interface HologramWidgetComponent<T : Any> {
                         when (component) {
                             is Single<T> -> {
                                 style.drawSingleOutline(
-                                    component.visualSize, path.forTerminal(component)
+                                    component.visualSize, path.forAny(component)
                                 )
                                 style.stack {
                                     style.moveAfterDrawSingleOutline()

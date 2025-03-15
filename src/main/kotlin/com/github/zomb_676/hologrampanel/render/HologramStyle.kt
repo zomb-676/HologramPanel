@@ -27,7 +27,7 @@ interface HologramStyle {
     fun mergeOutlineSizeForSingle(contentSize: Size): Size
     fun mergeOutlineSizeForGroup(contentSize: Size, descriptionSize: Size, collapse: Boolean): Size
     fun drawSingleOutline(size: Size, selected: SelectPathType, color: Int = contextColor)
-    fun drawGroupOutline(size: Size, selected: SelectPathType, color: Int = contextColor)
+    fun drawGroupOutline(size: Size, selected: SelectPathType, collapse: Boolean, color: Int = contextColor)
     fun moveToGroupDescription()
     fun moveAfterDrawGroupOutline(descriptionSize: Size)
     fun moveAfterDrawSingleOutline()
@@ -260,13 +260,15 @@ interface HologramStyle {
         }
 
         override fun drawSingleOutline(size: Size, selected: SelectPathType, color: Int) {
-
+            if (selected.isAtTerminal) {
+                outline(size.shrinkHeight(2), brightColorBySelectedType(color, selected))
+            }
         }
 
-        fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when (selected) {
-            SelectPathType.UN_SELECTED -> 0xff000000.toInt()
-            SelectPathType.ON_NONE_TERMINAL_PATH -> 0xff7f7f7f.toInt()
-            SelectPathType.ON_TERMINAL -> 0xffffffff.toInt()
+        fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when {
+            selected.isUnSelect -> 0xff000000.toInt()
+            selected.isAtTerminal -> 0xffffffff.toInt()
+            else  -> 0xff7f7f7f.toInt()
         }
 
         fun brighter(color: Int): Int {
@@ -292,15 +294,31 @@ interface HologramStyle {
             )
         }
 
-        override fun drawGroupOutline(size: Size, selected: SelectPathType, color: Int) {
-            guiGraphics.renderOutline(0, 0, size.width, size.height, brightColorBySelectedType(color, selected))
+        override fun drawGroupOutline(size: Size, selected: SelectPathType, collapse: Boolean, color: Int) {
+            val height = if (selected.isAtHead) {
+                size.height
+            } else {
+                size.height - 2
+            }
+            guiGraphics.renderOutline(0, 0, size.width, height, brightColorBySelectedType(color, selected))
 
             val matrix = guiGraphics.pose().last().pose()
             val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
-            consumer.addVertex(matrix, -1 + 4f, 2.0f, 0.0f).setColor(0xff0000ff.toInt())
-            consumer.addVertex(matrix, -1 + 4f, 10f, 0.0f).setColor(0xff0000ff.toInt())
-            consumer.addVertex(matrix, -1 + 10f, 6f, 0.0f).setColor(0xff0000ff.toInt())
-            consumer.addVertex(matrix, -1 + 10f, 6f, 0.0f).setColor(0xff0000ff.toInt())
+            val left = 4.0f
+            val right = 8.0f
+            val up = 4.0f
+            val down = 8.0f
+
+            consumer.addVertex(matrix, left, 5.5f, 0.0f).setColor(color)
+            consumer.addVertex(matrix, left, 6.5f, 0.0f).setColor(color)
+            consumer.addVertex(matrix, right, 6.5f, 0.0f).setColor(color)
+            consumer.addVertex(matrix, right, 5.5f, 0.0f).setColor(color)
+            if (!collapse) {
+                consumer.addVertex(matrix, 5.5f, up, 0.0f).setColor(color)
+                consumer.addVertex(matrix, 5.5f, down, 0.0f).setColor(color)
+                consumer.addVertex(matrix, 6.5f, down, 0.0f).setColor(color)
+                consumer.addVertex(matrix, 6.5f, up, 0.0f).setColor(color)
+            }
         }
 
         override fun moveToGroupDescription() {

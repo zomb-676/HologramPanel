@@ -53,7 +53,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             displayType: DisplayType,
             partialTicks: Float
         ) {
-            val pathType = path.forTerminal(this)
+            val pathType = path.forAny(this)
             if (baseY != 0) {
                 style.move(0, baseY)
             }

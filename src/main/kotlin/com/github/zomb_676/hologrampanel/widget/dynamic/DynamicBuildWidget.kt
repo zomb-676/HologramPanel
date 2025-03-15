@@ -18,6 +18,7 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponen
 class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicBuildComponentWidget.Group<T>) :
     HologramComponentWidget<T>(target, container) {
 
+//    private val mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty(container)
     private val path: SelectedPath<HologramWidgetComponent<T>> = object : SelectedPath<HologramWidgetComponent<T>> {
         val stack: MutableList<DynamicBuildComponentWidget.Group<T>> = mutableListOf()
 
@@ -30,7 +31,6 @@ class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicB
 
         override fun atTerminus(component: HologramWidgetComponent<T>): Boolean = this.current == component
 
-
         override fun atUnTerminusPath(component: HologramWidgetComponent<T>): Boolean = this.stack.contains(component)
 
         override fun unTerminalPath(): Sequence<HologramWidgetComponent<T>> = this.stack.asSequence()
@@ -39,6 +39,9 @@ class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicB
 
         override fun atWholePath(component: HologramWidgetComponent<T>): Boolean = if (component.isGroup())
             atUnTerminusPath(component) else atUnTerminusPath(component)
+
+        override fun atHead(component: HologramWidgetComponent<T>): Boolean =
+            (stack.firstOrNull() ?: current) == component
 
         override fun resetToDefault() {
             this.stack.clear()
@@ -50,9 +53,16 @@ class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicB
         override fun tryRecover(newTop: HologramWidgetComponent<T>, oldContents: List<HologramWidgetComponent<T>>) {
             val newTop = newTop.unsafeCast<DynamicBuildComponentWidget.Group<T>>()
 
-            require(newTop.getIdentityName() == stack.first().getIdentityName())
             this.recoveryCollapseState(oldContents, newTop.children)
-            stack[0] = newTop.unsafeCast()
+
+            require(newTop.getIdentityName() == (stack.firstOrNull() ?: this.current).getIdentityName())
+            if (stack.isNotEmpty()) {
+                stack[0] = newTop.unsafeCast()
+            } else {
+                this.current = newTop
+                this.currentIndex = 0
+                return
+            }
 
 
             var index = 0
@@ -150,6 +160,10 @@ class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicB
 
                 SelectComponent.SELECT_PARENT -> {
                     if (this.stack.size > 1) {
+                        this.current = this.stack.removeLast()
+                        this.currentIndex = this.stack.last().children.indexOf(this.current)
+                        require(currentIndex >= 0)
+                    } else if (this.stack.size == 1) {
                         this.current = this.stack.removeLast()
                         this.currentIndex = 0
                     }
