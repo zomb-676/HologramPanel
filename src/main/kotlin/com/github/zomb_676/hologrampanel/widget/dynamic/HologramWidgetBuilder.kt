@@ -31,13 +31,13 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         stack.peek().add(component)
     }
 
-    fun single(codeBlock: Helper.() -> Unit) {
+    fun single(identityName: String, codeBlock: Helper.() -> Unit) {
         requireNotNull(currentProvider)
         require(!currentInSingle) { "not call single in single" }
         currentInSingle = true
         helper.begin()
         codeBlock.invoke(helper)
-        val single = createSingleFromElements(helper.end())
+        val single = createSingleFromElements(helper.end(), identityName)
         if (single != null) {
             stack.peek().add(single)
         }
@@ -55,35 +55,52 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         return this.stack.pop()!!
     }
 
-    private fun createSingleFromElements(elements: List<IRenderElement>): DynamicBuildComponentWidget.Single<T>? {
+    private fun createSingleFromElements(
+        elements: List<IRenderElement>,
+        identityName: String
+    ): DynamicBuildComponentWidget.Single<T>? {
         if (elements.isEmpty()) return null
-        return DynamicBuildComponentWidget.Single(currentProvider!!, elements)
+        return DynamicBuildComponentWidget.Single(currentProvider!!, elements, identityName)
     }
 
-    fun group(des: String, collapse: Boolean = false, codeBlock: () -> Unit) {
-        group({ text(des) }, codeBlock, collapse)
+    fun group(identityName: String, des: String, collapse: Boolean = false, codeBlock: () -> Unit) {
+        group(identityName, { text(des) }, codeBlock, collapse)
     }
 
-    fun group(description: Helper.() -> Unit, codeBlock: () -> Unit, collapse: Boolean = false) {
+    fun group(identityName: String, description: Helper.() -> Unit, codeBlock: () -> Unit, collapse: Boolean = false) {
         requireNotNull(currentProvider)
         require(!currentInSingle) { "not call group in single" }
         stack.push(mutableListOf())
         codeBlock.invoke()
-        require(stack.peek().isNotEmpty()) { "group contains nothing added" }
-        val desWidget = createSingleFromElements(helper.isolateScope { description.invoke(helper) })!!
-        val group = createGroupForElements(stack.pop(), desWidget, collapse)
+        val desWidget =
+            createSingleFromElements(helper.isolateScope { description.invoke(helper) }, "description_$identityName")!!
+        val group = createGroupForElements(stack.pop(), desWidget, collapse, identityName)
         if (group != null) {
             stack.peek().add(group)
         }
     }
 
+    fun lazyGroup(identityName: String, description: Helper.() -> Unit, codeBlock: () -> Unit) {
+        requireNotNull(currentProvider)
+        require(!currentInSingle) { "not call group in single" }
+        val desWidget =
+            createSingleFromElements(helper.isolateScope { description.invoke(helper) }, "description_$identityName")!!
+        val group = DynamicBuildComponentWidget.LazyGroup(this.currentProvider!!, desWidget, identityName) {
+            rebuildScope(currentProvider!!) {
+                codeBlock.invoke()
+            }
+        }
+        stack.peek().add(group)
+    }
+
     private fun createGroupForElements(
         child: MutableList<DynamicBuildComponentWidget<T>>,
         desWidget: DynamicBuildComponentWidget.Single<T>,
-        collapse: Boolean
+        collapse: Boolean,
+        identityName: String
     ): DynamicBuildComponentWidget.Group<T>? {
         if (child.isEmpty()) return null
-        return DynamicBuildComponentWidget.Group(this.currentProvider!!, desWidget, child, collapse)
+        return DynamicBuildComponentWidget.Group(this.currentProvider!!, desWidget, child, identityName, collapse)
     }
 
     /**
@@ -110,7 +127,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         if (context.getRememberData().serverDataEntries().isNotEmpty()) {
             currentStack.add(DynamicBuildComponentWidget.requireServerData(context))
         }
-        val global = createGroupForElements(currentStack, desc, false)!!
+        val global = createGroupForElements(currentStack, desc, false, "lobal")!!
         require(stack.isEmpty())
         this.currentProvider = null
         return DynamicBuildWidget(context, global)

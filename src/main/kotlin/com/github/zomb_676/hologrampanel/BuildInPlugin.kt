@@ -45,7 +45,7 @@ class BuildInPlugin : IHologramPlugin {
 
                 progressBar.current(cookingTimer).max(cookingTotalTime)
 
-                builder.single {
+                builder.single("working") {
                     if (!item0.isEmpty) itemStack(item0)
                     if (!item1.isEmpty) itemStack(item1)
                     if (litTimeRemaining != 0) {
@@ -53,19 +53,19 @@ class BuildInPlugin : IHologramPlugin {
                     }
                     if (!item2.isEmpty) itemStack(item2)
                 }
-                builder.single {
+                builder.single("fluid") {
                     fluid(progressBar, Fluids.WATER.fluidType)
                 }
-                builder.single {
+                builder.single("lava") {
                     fluid(progressBar, Fluids.LAVA.fluidType)
                 }
-                builder.single {
+                builder.single("arrow") {
                     workingArrowProgress(progressBar)
                 }
-                builder.single {
+                builder.single("cycle") {
                     workingCycleProgress(progressBar)
                 }
-                builder.single {
+                builder.single("torus") {
                     workingTorusProgress(progressBar)
                 }
             }
@@ -126,9 +126,9 @@ class BuildInPlugin : IHologramPlugin {
                 val item3 by remember.serverItemStack(5, "item3")
                 val item4 by remember.serverItemStack(6, "item4")
 
-                builder.single { text("fuel:$fuel") }
-                builder.single { text("breeTime:$breeTime") }
-                builder.single {
+                builder.single("brew_fuel") { text("fuel:$fuel") }
+                builder.single("brew_time") { text("breeTime:$breeTime") }
+                builder.single("brew_items") {
                     if (!item0.isEmpty) itemStack(item0)
                     if (!item1.isEmpty) itemStack(item1)
                     if (!item2.isEmpty) itemStack(item2)
@@ -179,25 +179,25 @@ class BuildInPlugin : IHologramPlugin {
                 val item3 by remember.serverItemStack(5, "item3")
 
                 if (!item0.isEmpty) {
-                    builder.single {
+                    builder.single("cooking0") {
                         itemStack(item0)
                         text("progress:${cookingProgress[0]}/time:${cookingTime[0]}")
                     }
                 }
                 if (!item1.isEmpty) {
-                    builder.single {
+                    builder.single("cooking1") {
                         itemStack(item1)
                         text("progress:${cookingProgress[1]}/time:${cookingTime[1]}")
                     }
                 }
                 if (!item2.isEmpty) {
-                    builder.single {
+                    builder.single("cooking2") {
                         itemStack(item2)
                         text("progress:${cookingProgress[2]}/time:${cookingTime[2]}")
                     }
                 }
                 if (!item3.isEmpty) {
-                    builder.single {
+                    builder.single("cooking3") {
                         itemStack(item3)
                         text("progress:${cookingProgress[3]}/time:${cookingTime[3]}")
                     }
@@ -234,11 +234,11 @@ class BuildInPlugin : IHologramPlugin {
                     val playable = songItem.components.get(DataComponents.JUKEBOX_PLAYABLE) ?: return
                     val song =
                         playable.song().unwrap(context.getLevel().registryAccess()).getOrNull()?.value() ?: return
-                    builder.single {
+                    builder.single("song_item") {
                         itemStack(songItem).setScale(0.75)
                         component(song.description().copy())
                     }
-                    builder.single {
+                    builder.single("song_time") {
                         text("$songStarted/${song.lengthInTicks()} Ticks").setScale(1.5)
                     }
                 }
@@ -287,23 +287,22 @@ class BuildInPlugin : IHologramPlugin {
                 val beeCount = data.size
                 if (beeCount != 0) {
                     val tag = context.attachedServerData()!!
-                    builder.single {
+                    builder.single("bee_count") {
                         text("Bee Count:$beeCount")
                     }
                     repeat(beeCount) { index ->
                         val tick = tag.getInt("bee_${index}_ticks_in_hive")
                         val byteBuffer = Unpooled.wrappedBuffer(tag.getByteArray("bee_$index"))
                         val data = BeehiveBlockEntity.Occupant.STREAM_CODEC.decode(byteBuffer)
-                        builder.group("Bee ${index + 1}") {
-                            builder.single { text("inHive:$tick/${data.minTicksInHive()}") }
+                        builder.group("Bee$index","Bee ${index + 1}") {
+                            builder.single("in_hive") { text("inHive:$tick/${data.minTicksInHive()}") }
                             @Suppress("DEPRECATION") val pos = data.entityData().unsafe.get("flower_pos")
                             if (pos != null && pos.type == IntArrayTag.TYPE) {
                                 val tag = (pos as IntArrayTag)
-                                builder.single { text("flower pos:${tag[0]} ${tag[1]} ${tag[2]}") }
+                                builder.single("flower_pos") { text("flower pos:${tag[0]} ${tag[1]} ${tag[2]}") }
                             }
                         }
                     }
-                    builder.group({},{})
                 }
             }
 
@@ -321,7 +320,7 @@ class BuildInPlugin : IHologramPlugin {
                 val entity = context.getEntity<LivingEntity>() ?: return
                 val remember = context.getRememberData()
                 val currentHealth by remember.server(0, -1.0f) { tag -> tag.getFloat("current_health") }
-                builder.single {
+                builder.single("health") {
                     heart()
                     text("health:${currentHealth}/${entity.maxHealth}")
                 }
@@ -355,7 +354,7 @@ class BuildInPlugin : IHologramPlugin {
                 val age by remember.server(1, -1) { tag -> tag.getInt("age") }
 
                 if (age != -1) {
-                    builder.single { text("remain:${lifeSpan - age} Ticks") }
+                    builder.single("item_life_span") { text("remain:${lifeSpan - age} Ticks") }
                 }
             }
 
@@ -387,7 +386,7 @@ class BuildInPlugin : IHologramPlugin {
                 displayType: DisplayType
             ) {
                 val context = builder.context
-                builder.single {
+                builder.single("default_block") {
                     item(context.getBlockState().block.asItem()).setScale(0.75)
                     component(context.getBlockState().block.name).setScale(1.5)
                 }
@@ -404,7 +403,7 @@ class BuildInPlugin : IHologramPlugin {
                 displayType: DisplayType
             ) {
                 val context = builder.context
-                builder.single {
+                builder.single("default_entity") {
                     entity(context.getEntity())
                     component(context.getEntity().name)
                 }

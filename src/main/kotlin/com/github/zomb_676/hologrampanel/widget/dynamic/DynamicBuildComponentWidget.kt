@@ -15,19 +15,16 @@ import kotlin.math.max
 
 sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidgetComponent<T> {
     fun getProvider(): ComponentProvider<T>
+    fun getIdentityName(): String
 
     open class Single<T : HologramContext>(
-        private val provider: ComponentProvider<T>,
-        val elements: List<IRenderElement>
-    ) :
-        HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
+        private val provider: ComponentProvider<T>, val elements: List<IRenderElement>, private val identityName: String
+    ) : HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
         private var baseY: Int = 0
         private val padding = 1
 
         override fun measureSize(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType
+            target: T, style: HologramStyle, displayType: DisplayType
         ): Size {
             var width = 0
             var height = 0
@@ -74,6 +71,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         }
 
         override fun getProvider(): ComponentProvider<T> = provider
+        override fun getIdentityName(): String = this.identityName
     }
 
     companion object {
@@ -83,16 +81,16 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
 
         object NoProvider {
             val block: Single<BlockHologramContext> =
-                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, noActiveElement)
+                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, noActiveElement, "no_provider")
             val entity: Single<EntityHologramContext> =
-                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, noActiveElement)
+                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, noActiveElement, "no_provider")
         }
 
         object RequireServerData {
             val block: Single<BlockHologramContext> =
-                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, requireServerDataElement)
+                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, requireServerDataElement, "require_server_data")
             val entity: Single<EntityHologramContext> =
-                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, requireServerDataElement)
+                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, requireServerDataElement, "require_server_data")
         }
 
         fun <T : HologramContext> onNoProvider(context: T): Single<T> = when (context) {
@@ -106,19 +104,19 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         }.unsafeCast()
     }
 
-    private class SpecialProvider<T : HologramContext>(provider: ComponentProvider<T>, element: IRenderElement) :
-        Single<T>(provider, listOf(element))
+    private class SpecialProvider<T : HologramContext>(
+        provider: ComponentProvider<T>, element: IRenderElement, identityName: String
+    ) : Single<T>(provider, listOf(element), identityName)
 
-    class Group<T : HologramContext>(
+    open class Group<T : HologramContext>(
         private val provider: ComponentProvider<T>,
         val descriptionWidget: Single<T>,
         override var children: List<DynamicBuildComponentWidget<T>>,
+        private val identityName: String,
         collapse: Boolean
     ) : HologramWidgetComponent.Group<T>(children, collapse), DynamicBuildComponentWidget<T> {
         override fun descriptionSize(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType
+            target: T, style: HologramStyle, displayType: DisplayType
         ): Size = descriptionWidget.measureSize(target, style, displayType)
 
         override fun renderGroupDescription(
@@ -132,5 +130,60 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         }
 
         override fun getProvider(): ComponentProvider<T> = provider
+        override fun getIdentityName(): String = identityName
+    }
+
+    class LazyGroup<T : HologramContext>(
+        provider: ComponentProvider<T>,
+        descriptionWidget: Single<T>,
+        identityName: String,
+        val initializer: () -> List<DynamicBuildComponentWidget<T>>
+    ) : Group<T>(provider, descriptionWidget, listOf(), identityName, true) {
+        override var collapse: Boolean = true
+            set(value) {
+                field = value
+                if (value) {
+                    tryLoadChildren()
+                }
+            }
+        private var actualChildren: List<DynamicBuildComponentWidget<T>> = listOf()
+
+        fun tryLoadChildren() {
+            if (actualChildren.isNotEmpty()) return
+            actualChildren = initializer.invoke()
+        }
+
+        override var children: List<DynamicBuildComponentWidget<T>> = listOf()
+            get() = if (actualChildren.isNotEmpty()) {
+                actualChildren
+            } else {
+                field
+            }
+
+        override fun descriptionSize(
+            target: T, style: HologramStyle, displayType: DisplayType
+        ): Size {
+            return super.descriptionSize(target, style, displayType)
+        }
+
+        override fun renderGroupDescription(
+            target: T,
+            style: HologramStyle,
+            path: SelectedPath<HologramWidgetComponent<T>>,
+            displayType: DisplayType,
+            partialTicks: Float
+        ) {
+            super.renderGroupDescription(target, style, path, displayType, partialTicks)
+        }
+
+        override fun render(
+            target: T,
+            style: HologramStyle,
+            path: SelectedPath<HologramWidgetComponent<T>>,
+            displayType: DisplayType,
+            partialTicks: Float
+        ) {
+            super.render(target, style, path, displayType, partialTicks)
+        }
     }
 }

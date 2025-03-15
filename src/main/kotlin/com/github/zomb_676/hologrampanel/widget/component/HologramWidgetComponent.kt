@@ -32,19 +32,25 @@ interface HologramWidgetComponent<T : Any> {
         partialTicks: Float
     )
 
+    fun isGroup() : Boolean
+
     abstract class Single<T : Any> : HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             internal set
         final override var visualSize: Size = contentSize
             internal set
+
+        override fun isGroup(): Boolean = false
     }
 
-    abstract class Group<T : Any>(open val children: List<HologramWidgetComponent<T>>, var collapse: Boolean = false) :
+    abstract class Group<T : Any>(open val children: List<HologramWidgetComponent<T>>,open var collapse: Boolean = false) :
         HologramWidgetComponent<T> {
         final override var contentSize: Size = Size.ZERO
             private set
         final override var visualSize: Size = contentSize
             private set
+
+        override fun isGroup(): Boolean = true
 
         final override fun measureSize(
             target: T, style: HologramStyle, displayType: DisplayType

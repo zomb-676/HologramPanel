@@ -1,5 +1,7 @@
 package com.github.zomb_676.hologrampanel.util
 
+import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
+import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 
 /**
@@ -32,7 +34,11 @@ interface SelectedPath<T> {
 
     fun resetToDefault()
 
-    class Empty<T : Any>(val terminal: HologramWidgetComponent<T>) : SelectedPath<HologramWidgetComponent<T>> {
+    fun tryRecover(newTop : T, oldContents : List<T>)
+
+    fun selectCommand(state: HologramRenderState, command: InteractionCommand.Exact.SelectComponent)
+
+    class Empty<T : Any>(private var terminal: HologramWidgetComponent<T>) : SelectedPath<HologramWidgetComponent<T>> {
 
         override fun atTerminus(component: HologramWidgetComponent<T>): Boolean = false
 
@@ -51,5 +57,11 @@ interface SelectedPath<T> {
         override fun forTerminal(terminal: HologramWidgetComponent<T>): SelectPathType = SelectPathType.UN_SELECTED
 
         override fun resetToDefault() {}
+
+        override fun tryRecover(newTop: HologramWidgetComponent<T>, oldContents : List<HologramWidgetComponent<T>>) {
+            this.terminal = newTop
+        }
+
+        override fun selectCommand(state: HologramRenderState, command: InteractionCommand.Exact.SelectComponent) {}
     }
 }

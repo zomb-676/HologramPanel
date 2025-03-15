@@ -8,95 +8,21 @@ import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildComponentWidget
 
 /**
  * tree structure type widget
  */
-abstract class HologramComponentWidget<T : Any>(val target: T, val component: HologramWidgetComponent.Group<T>) : HologramWidget {
-
-    private class SelectTree<T : Any>(val widget: HologramComponentWidget<T>) :
-        SelectedPath<HologramWidgetComponent<T>> {
-        private val stack = mutableListOf<HologramWidgetComponent.Group<T>>(widget.component)
-        private var current: HologramWidgetComponent<T> = widget.component.children.first()
-        private var currentIndex = 0
-        private var currentDepth = 1
-
-        fun selectCommand(state: HologramRenderState, selectCommand: SelectComponent) {
-            when (selectCommand) {
-                SelectComponent.SELECT_NEXT -> {
-                    val children = stack.lastOrNull()?.children ?: return
-                    this.currentIndex = (this.currentIndex + 1) % children.size
-                    this.current = children[this.currentIndex]
-                }
-
-                SelectComponent.SELECT_BEFORE -> {
-                    val children = stack.lastOrNull()?.children ?: return
-                    --this.currentIndex
-                    this.currentIndex = if (this.currentIndex < 0) {
-                        children.size - 1
-                    } else {
-                        this.currentIndex % children.size
-                    }
-                    this.current = children[this.currentIndex]
-                }
-
-                SelectComponent.SELECT_GROUP_FIRST_CHILD -> {
-                    val current = current
-                    if (current is HologramWidgetComponent.Group<T>) {
-                        current.collapse = false
-                        this.stack.addLast(current)
-                        this.current = current.children.first()
-                        this.currentIndex = 0
-                        ++this.currentDepth
-                    }
-                }
-
-                SelectComponent.SELECT_PARENT -> {
-                    if (this.currentDepth > 0) {
-                        this.current = this.stack.removeLast()
-                        this.currentIndex = 0
-                        --this.currentDepth
-                    }
-                }
-            }
-        }
-
-        override fun atUnTerminusPath(component: HologramWidgetComponent<T>): Boolean = this.stack.contains(component)
-
-        override fun atTerminus(component: HologramWidgetComponent<T>): Boolean = this.current == component
-
-        override fun atWholePath(component: HologramWidgetComponent<T>): Boolean = when (component) {
-            is HologramWidgetComponent.Single<T>, is DynamicBuildComponentWidget.Single<T> -> atTerminus(component)
-            is HologramWidgetComponent.Group<T>, is DynamicBuildComponentWidget.Group<T> -> atUnTerminusPath(component)
-            else -> throw RuntimeException()
-        }
-
-        override fun unTerminalPath(): Sequence<HologramWidgetComponent<T>> = this.stack.asSequence()
-
-        override fun terminal(): HologramWidgetComponent<T> = current
-
-        override fun resetToDefault() {
-            this.stack.clear()
-            this.stack.add(widget.component)
-            this.current = widget.component.children.first()
-            this.currentIndex = 0
-            this.currentDepth = 1
-        }
-    }
-
-    private var selectedPath: SelectTree<T> = SelectTree(this)
-    private var mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty<T>(this.component)
+abstract class HologramComponentWidget<T : Any>(val target: T, val component: HologramWidgetComponent.Group<T>) :
+    HologramWidget {
 
     override fun render(
-        state: HologramRenderState,
-        style: HologramStyle,
-        displayType: DisplayType,
-        partialTicks: Float
+        state: HologramRenderState, style: HologramStyle, displayType: DisplayType, partialTicks: Float
     ) {
-        val path: SelectedPath<HologramWidgetComponent<T>> = if (state.isSelected()) this.selectedPath else mimicPath
+        val path = this.getSelectedPath()
         this.component.render(target, style, path, displayType, partialTicks)
     }
+
+    abstract fun getSelectedPath() : SelectedPath<HologramWidgetComponent<T>>
 
     override fun measure(style: HologramStyle, displayType: DisplayType): Size {
         this.component.measureSize(this.target, style, displayType)
@@ -104,7 +30,11 @@ abstract class HologramComponentWidget<T : Any>(val target: T, val component: Ho
     }
 
     fun selectComponent(state: HologramRenderState, selectCommand: SelectComponent) {
-        selectedPath.selectCommand(state, selectCommand)
+        try {
+            getSelectedPath().selectCommand(state, selectCommand)
+        } catch (e: Throwable) {
+            println(e)
+        }
     }
 
     override fun onSelected() {}
@@ -113,13 +43,13 @@ abstract class HologramComponentWidget<T : Any>(val target: T, val component: Ho
     }
 
     fun resetSelectState() {
-        this.selectedPath.resetToDefault()
+        this.getSelectedPath().resetToDefault()
     }
 
     fun operateCommand(state: HologramRenderState, operateCommand: InteractionCommand.Exact.OperateCommand) {
         when (operateCommand) {
             InteractionCommand.Exact.OperateCommand.SWITCH_COLLAPSE -> {
-                val selected = this.selectedPath.terminal()
+                val selected = this.getSelectedPath().terminal()
                 if (selected is HologramWidgetComponent.Group<T>) {
                     selected.switchCollapse()
                 }
