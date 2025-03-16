@@ -6,10 +6,16 @@ import com.github.zomb_676.hologrampanel.api.GenericThis
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
+import io.netty.buffer.Unpooled
+import net.minecraft.client.player.LocalPlayer
+import net.minecraft.core.RegistryAccess
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.HitResult
+import net.neoforged.neoforge.common.extensions.ICommonPacketListener
 import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3fc
 
@@ -103,4 +109,24 @@ sealed interface HologramContext {
      * in this case, we think the tracing object is no longer valid
      */
     fun stillValid() : Boolean
+
+    @ApiStatus.NonExtendable
+    fun getConnection() : ICommonPacketListener = if (this.getLogicSide().isClientSide) {
+        (this.getPlayer() as LocalPlayer).connection
+    } else {
+        (this.getPlayer() as ServerPlayer).connection
+    }
+
+    @ApiStatus.NonExtendable
+    fun getRegistryAccess(): RegistryAccess = this.getLevel().registryAccess()
+
+    @ApiStatus.NonExtendable
+    fun createRegistryFriendlyByteBuf(): RegistryFriendlyByteBuf {
+        return RegistryFriendlyByteBuf(Unpooled.buffer(), this.getRegistryAccess(), getConnection().connectionType)
+    }
+
+    @ApiStatus.NonExtendable
+    fun warpRegistryFriendlyByteBuf(data : ByteArray): RegistryFriendlyByteBuf {
+        return RegistryFriendlyByteBuf(Unpooled.wrappedBuffer(data), getRegistryAccess(), getConnection().connectionType)
+    }
 }

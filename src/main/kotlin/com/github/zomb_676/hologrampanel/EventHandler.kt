@@ -7,18 +7,21 @@ import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
 import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
-import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.CommandDSL
-import com.github.zomb_676.hologrampanel.util.stack
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.blaze3d.platform.InputConstants
+import net.minecraft.client.DeltaTracker
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.LayeredDraw
 import net.minecraft.server.level.ServerPlayer
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent
 import net.neoforged.neoforge.client.event.*
 import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
@@ -29,7 +32,6 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.registries.RegisterEvent
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.opengl.GL46
 
 object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
@@ -45,6 +47,7 @@ object EventHandler {
         forgeBus.addListener(::levelUnload)
         modBus.addListener(::onRegistryEvent)
         modBus.addListener(::onClientSetup)
+        modBus.addListener(::onLoadComplete)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
         }
@@ -75,13 +78,29 @@ object EventHandler {
             )
         }
 
+        val panelKey by lazy {
+            KeyMapping(
+                "key.a.selector_panel",
+                KeyConflictContext.IN_GAME,
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_Y,
+                "key.categories.misc"
+            )
+        }
+
         private fun registerKey(event: RegisterKeyMappingsEvent) {
             event.register(switchModeKey)
+            event.register(panelKey)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
             while (switchModeKey.consumeClick()) {
                 InteractionModeManager.switchModeKeyToggled()
+            }
+            if (panelKey.isDown) {
+                CycleSelector.tryBegin()
+            } else {
+                CycleSelector.tryEnd()
             }
         }
 
@@ -117,6 +136,14 @@ object EventHandler {
         }
 
         private fun onMouseButton(event: InputEvent.MouseButton.Pre) {
+            if (CycleSelector.preventPlayerTurn()) {
+                event.isCanceled = true
+                if (event.action == GLFW.GLFW_PRESS) {
+                    CycleSelector.onClick()
+                }
+                return
+            }
+
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
             if (InteractionModeManager.mode.isDisable()) return
@@ -135,6 +162,11 @@ object EventHandler {
 
         private fun registerLayer(event: RegisterGuiLayersEvent) {
             event.registerAboveAll(HologramPanel.rl("interaction_mode_layer"), InteractionLayer.getLayer())
+            event.registerAboveAll(HologramPanel.rl("cycle_selector"), object : LayeredDraw.Layer {
+                override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+                    CycleSelector.render(guiGraphics, deltaTracker)
+                }
+            })
         }
 
         private fun onPlayerLogout(event: ClientPlayerNetworkEvent.LoggingOut) {
@@ -228,4 +260,10 @@ object EventHandler {
         }
         PluginManager.getInstance().onClientRegisterEnd()
     }
+
+    private fun onLoadComplete(event: FMLLoadCompleteEvent) {
+        PluginManager.onLoadComplete()
+    }
+
+
 }

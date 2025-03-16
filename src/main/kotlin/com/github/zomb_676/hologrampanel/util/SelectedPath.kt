@@ -10,8 +10,7 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponen
 interface SelectedPath<T> {
     fun atTerminus(component: T): Boolean
     fun atUnTerminusPath(component: T): Boolean
-    fun atWholePath(component: T): Boolean =
-        atTerminus(component) || atUnTerminusPath(component)
+    fun atWholePath(component: T): Boolean = atTerminus(component) || atUnTerminusPath(component)
 
     fun atHead(component: T): Boolean
 
@@ -46,7 +45,11 @@ interface SelectedPath<T> {
 
         override fun fullPath(): Sequence<HologramWidgetComponent<T>> = sequenceOf(terminal)
 
-        override fun forAny(any: HologramWidgetComponent<T>): SelectPathType = TODO()
+        override fun forAny(any: HologramWidgetComponent<T>): SelectPathType = if (any == terminal) {
+            SelectPathType.SINGLE_TREE
+        } else {
+            SelectPathType.EMPTY
+        }
 
         override fun resetToDefault() {}
 

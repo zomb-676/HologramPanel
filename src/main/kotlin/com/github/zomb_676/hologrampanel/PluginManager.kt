@@ -12,6 +12,8 @@ import kotlin.streams.asSequence
 internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
     companion object {
         private var INSTANCE: PluginManager? = null
+        private val providerCache: MutableMap<Class<*>, List<ComponentProvider<*>>> = mutableMapOf()
+        private val classProvider: MutableMap<Class<*>, List<ComponentProvider<*>>> = mutableMapOf()
 
         fun getInstance() = INSTANCE!!
 
@@ -44,6 +46,35 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
                     }.filterNotNull().toList()
             }
             INSTANCE = PluginManager(plugins)
+        }
+
+        fun onLoadComplete() {
+            classProvider.clear()
+            classProvider.putAll(AllRegisters.ComponentHologramProviderRegistry.REGISTRY.groupBy { it.targetClass() })
+        }
+
+        internal fun queryProvidersForClass(target: Class<*>): List<ComponentProvider<*>> {
+            val res = providerCache[target]
+            if (res != null) return res
+
+            val list = mutableListOf<ComponentProvider<*>>()
+            searchByInheritTree(target, classProvider, list)
+            providerCache[target] = list
+            return list
+        }
+
+        private fun <V> searchByInheritTree(c: Class<*>, map: Map<Class<*>, List<V>>, list: MutableList<V>) {
+            val target = map[c]
+            if (target != null) {
+                list.addAll(target)
+            }
+            c.interfaces.forEach {
+                searchByInheritTree(it, map, list)
+            }
+            val sup = c.superclass
+            if (sup != null) {
+                searchByInheritTree(sup, map, list)
+            }
         }
     }
 

@@ -2,7 +2,6 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.ScreenPosition
-import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import com.mojang.blaze3d.platform.Lighting
@@ -29,18 +28,39 @@ import kotlin.math.min
 interface IRenderElement {
 
     fun measureContentSize(style: HologramStyle): Size
-    fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType)
+    fun render(style: HologramStyle, partialTicks: Float)
 
-    fun setScale(scale: Double): RenderElement
+    fun setScale(scale: Double): IRenderElement
     fun getScale(): Double
 
-    fun setPositionOffset(x: Int, y: Int): RenderElement
+    fun setPositionOffset(x: Int, y: Int): IRenderElement
     fun getPositionOffset(): ScreenPosition
 
     var contentSize: Size
 
     companion object {
         private fun Float.resetNan() = if (this.isNaN()) 0.0f else this
+    }
+
+    data object EmptyElement : IRenderElement {
+        override fun measureContentSize(style: HologramStyle): Size = Size.ZERO
+
+        override fun render(
+            style: HologramStyle,
+            partialTicks: Float
+        ) {
+        }
+
+        override fun setScale(scale: Double): IRenderElement = this
+        override fun getScale(): Double = 1.0
+
+        override fun setPositionOffset(x: Int, y: Int): IRenderElement = this
+
+        override fun getPositionOffset(): ScreenPosition = ScreenPosition.ZERO
+
+        override var contentSize: Size
+            get() = Size.ZERO
+            set(value) {}
     }
 
     abstract class RenderElement : IRenderElement {
@@ -90,7 +110,7 @@ interface IRenderElement {
             ).expandWidth(2).expandHeight(2).scale()
         }
 
-        override fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType) {
+        override fun render(style: HologramStyle, partialTicks: Float) {
             val guiGraphics = style.guiGraphics
             style.stack {
                 guiGraphics.pose().translate(
@@ -141,7 +161,7 @@ interface IRenderElement {
             ).expandWidth(2).expandHeight(2).scale()
         }
 
-        override fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType) {
+        override fun render(style: HologramStyle, partialTicks: Float) {
             InventoryScreen.renderEntityInInventory(
                 style.guiGraphics,
                 contentSize.width.toFloat() / 2,
@@ -169,12 +189,13 @@ interface IRenderElement {
     }
 
     open class StringRenderElement(val component: Component) : RenderElement() {
+        constructor(string : String) : this(Component.literal(string))
 
         override fun measureContentSize(style: HologramStyle): Size {
             return style.measureString(component).scale()
         }
 
-        override fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType) {
+        override fun render(style: HologramStyle, partialTicks: Float) {
             style.drawString(component)
         }
     }
@@ -184,7 +205,7 @@ interface IRenderElement {
         override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize()
 
         override fun render(
-            style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType
+            style: HologramStyle, partialTicks: Float
         ) {
             style.guiGraphics.renderItem(itemStack, 0, 0)
             if (renderDecoration) {
@@ -214,7 +235,7 @@ interface IRenderElement {
         }
 
         override fun render(
-            style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType
+            style: HologramStyle, partialTicks: Float
         ) {
             val size = this.contentSize
             style.guiGraphics.blitSprite(RenderType::guiTextured, sprite, 0, 0, size.width, size.height)
@@ -250,7 +271,7 @@ interface IRenderElement {
 
         val decorateLineColor = 0xff555555.toInt()
 
-        override fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType) {
+        override fun render(style: HologramStyle, partialTicks: Float) {
             if (this.requireOutlineDecorate()) {
                 style.outline(this.contentSize, style.contextColor)
             }
@@ -351,7 +372,7 @@ interface IRenderElement {
     class WorkingArrowProgressBarElement(progress: ProgressData, barWidth: Float = 15f) :
         ProgressBarElement(progress, barWidth) {
 
-        override fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType) {
+        override fun render(style: HologramStyle, partialTicks: Float) {
             val percent = progress.percent.resetNan()
             style.stack {
                 style.move(1, 1)
@@ -428,7 +449,7 @@ interface IRenderElement {
             const val FILL_COLOR = 0xff4786da.toInt()
         }
 
-        override fun render(style: HologramStyle, partialTicks: Float, forTerminal: SelectPathType) {
+        override fun render(style: HologramStyle, partialTicks: Float) {
             val percent = progress.percent.resetNan()
 
             GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, 0, "widget")

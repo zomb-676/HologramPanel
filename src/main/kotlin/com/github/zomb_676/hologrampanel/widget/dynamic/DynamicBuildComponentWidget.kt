@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
-import com.github.zomb_676.hologrampanel.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
-import com.github.zomb_676.hologrampanel.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
+import com.github.zomb_676.hologrampanel.addon.universial.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
+import com.github.zomb_676.hologrampanel.addon.universial.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
@@ -63,7 +63,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                     style.move(offset)
                 }
                 style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
-                    element.render(style, partialTicks, pathType)
+                    element.render(style, partialTicks)
                 }
                 val size = element.contentSize
                 style.move(size.width + padding, -offset.y)

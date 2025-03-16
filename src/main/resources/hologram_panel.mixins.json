@@ -10,7 +10,8 @@
     "GameRenderMixin",
     "LevelRenderMixin",
     "LocalPlayerMixin",
-    "MinecraftMixin"
+    "MinecraftMixin",
+    "MouseHandleMixin"
   ],
   "injectors": {
     "defaultRequire": 1

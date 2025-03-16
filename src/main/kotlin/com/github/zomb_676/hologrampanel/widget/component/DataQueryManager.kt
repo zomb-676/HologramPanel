@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
+import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
 import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import net.minecraft.client.Minecraft
@@ -33,7 +34,7 @@ object DataQueryManager {
         fun receiveData(uuid: UUID, tag: CompoundTag) {
             val widget = syncs[uuid]
             if (widget == null) {
-                //todo
+                SyncClosePayload(uuid).sendToServer()
                 return
             }
             val context = maps[widget]!!

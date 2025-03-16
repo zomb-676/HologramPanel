@@ -1,7 +1,8 @@
 package com.github.zomb_676.hologrampanel.interaction
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.BuildInPlugin
+import com.github.zomb_676.hologrampanel.PluginManager
+import com.github.zomb_676.hologrampanel.addon.universial.BuildInPlugin
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
@@ -88,44 +89,17 @@ object RayTraceHelper {
         return widget
     }
 
-    private val map: MutableMap<Class<*>, List<ComponentProvider<*>>> = mutableMapOf()
-
     @Suppress("UNCHECKED_CAST")
     private fun <T : HologramContext> applyProvider(
         target: Any?, builder: HologramWidgetBuilder<T>, displayType: DisplayType
     ) {
         if (target == null) return
-        queryProvidersForClass(target::class.java).forEach { provider ->
+        PluginManager.queryProvidersForClass(target::class.java).forEach { provider ->
             builder.context.getRememberDataUnsafe<T>().providerScope(provider as ComponentProvider<T>) {
                 builder.currentProvider = provider
                 provider.appendComponent(builder, displayType)
                 builder.currentProvider = null
             }
-        }
-    }
-
-    private fun queryProvidersForClass(target: Class<*>): List<ComponentProvider<*>> {
-        val res = map[target]
-        if (res != null) return res
-
-        val maps = AllRegisters.ComponentHologramProviderRegistry.REGISTRY.associateBy { it.targetClass() }
-        val list = mutableListOf<ComponentProvider<*>>()
-        searchByInheritTree(target, maps, list)
-        map[target] = list
-        return list
-    }
-
-    private fun <V> searchByInheritTree(c: Class<*>, map: Map<Class<*>, V>, list: MutableList<V>) {
-        val target = map[c]
-        if (target != null) {
-            list.add(target)
-        }
-        c.interfaces.forEach {
-            searchByInheritTree(it, map, list)
-        }
-        val sup = c.superclass
-        if (sup != null) {
-            searchByInheritTree(sup, map, list)
         }
     }
 }
