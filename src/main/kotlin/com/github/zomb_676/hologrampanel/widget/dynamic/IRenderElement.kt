@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.MutableComponent
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
@@ -21,9 +22,7 @@ import net.neoforged.neoforge.client.textures.FluidSpriteCache
 import net.neoforged.neoforge.fluids.FluidType
 import org.joml.Quaternionf
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL46
 import kotlin.math.floor
-import kotlin.math.min
 
 interface IRenderElement {
 
@@ -40,6 +39,13 @@ interface IRenderElement {
 
     companion object {
         private fun Float.resetNan() = if (this.isNaN()) 0.0f else this
+
+        fun shortDescription(value: Float) = when {
+            value < 1e3 -> "%.2f".format(value)
+            value < 1e6 -> "%.2fK".format(value / 1e3)
+            value < 1e9 -> "%.2fM".format(value / 1e6)
+            else -> "%.2fB".format(value / 1e9)
+        }
     }
 
     data object EmptyElement : IRenderElement {
@@ -189,7 +195,7 @@ interface IRenderElement {
     }
 
     open class StringRenderElement(val component: Component) : RenderElement() {
-        constructor(string : String) : this(Component.literal(string))
+        constructor(string: String) : this(Component.literal(string))
 
         override fun measureContentSize(style: HologramStyle): Size {
             return style.measureString(component).scale()
@@ -261,7 +267,7 @@ interface IRenderElement {
         }
     }
 
-    abstract class ProgressBarElement(val progress: ProgressData, var barWidth: Float = 35f) : RenderElement() {
+    abstract class ProgressBarElement(val progress: ProgressData, var barWidth: Float = 98f) : RenderElement() {
 
         override fun measureContentSize(
             style: HologramStyle
@@ -296,53 +302,55 @@ interface IRenderElement {
                     right = barWidth.toFloat()
                 }
                 this.fillBar(style, left, right, height, percent)
-                if (this.requireLineDecorate()) {
-                    this.lineDecorate(style, left, right, height, percent)
-                }
             }
 
             val description = getDescription(percent)
             val width = style.measureString(description).width
-            style.drawString(description, (this.contentSize.width - width) / 2, 2)
-        }
-
-        abstract fun fillBar(style: HologramStyle, left: Float, right: Float, height: Float, percent: Float)
-        open fun getDescription(percent: Float): String = "%.1f%%".format(percent * 100)
-
-        open fun requireLineDecorate(): Boolean = false
-        open fun requireOutlineDecorate(): Boolean = false
-
-        fun lineDecorate(style: HologramStyle, left: Float, right: Float, height: Float, percent: Float) {
-            if (progress.LTR) {
-                var xx = left + 1
-                while (xx < right) {
-                    style.fill(xx, 0f, min(xx + 1, right), height, decorateLineColor)
-                    xx += 2.0f
-                }
-            } else {
-                var xx = right - 1
-                while (xx > left) {
-                    style.fill(xx, 0f, min(xx - 1, left), height, decorateLineColor)
-                    xx -= 2.0f
-                }
+            style.stack {
+                style.guiGraphics.pose().translate(0.0, 0.0, 1.0)
+                style.drawString(description, (this.contentSize.width - width) / 2, 2)
             }
         }
 
+        abstract fun fillBar(style: HologramStyle, left: Float, right: Float, height: Float, percent: Float)
+        open fun getDescription(percent: Float): Component = Component.literal("%.1f%%".format(percent * 100))
+
+        open fun requireOutlineDecorate(): Boolean = false
     }
 
-    class EnergyBarElement(progress: ProgressData) : ProgressBarElement(progress) {
-        override fun requireLineDecorate(): Boolean = true
+    class EnergyBarElement(progress: ProgressData, barWidth: Float = 60f) : ProgressBarElement(progress, barWidth) {
         override fun requireOutlineDecorate(): Boolean = true
 
         override fun fillBar(style: HologramStyle, left: Float, right: Float, height: Float, percent: Float) {
-            style.fill(left, 0f, right, height, 0xffFF5555.toInt())
+            style.fill(left, 0f, right, height, 0xffFF6B6B.toInt())
+            if (progress.LTR) {
+                style.fill(right, 0f, barWidth, height, 0xafDDDDDD.toInt())
+            } else {
+                style.fill(0f, left, barWidth, height, 0xafDDDDDD.toInt())
+            }
         }
 
-//        override fun getDescription(): String = "${progress.progressCurrent}/${progress.progressMax}"
+        override fun getDescription(percent: Float): Component {
+            val current = if (progress.progressCurrent < 1000) {
+                "${progress.progressCurrent}"
+            } else {
+                shortDescription(progress.progressCurrent.toFloat() / 1000)
+            }
+            val f = if (progress.progressCurrent == progress.progressMax) {
+                current
+            } else {
+                val max = if (progress.progressMax < 1000) {
+                    "${progress.progressMax}"
+                } else {
+                    shortDescription(progress.progressMax.toFloat() / 1000)
+                }
+                "$current/$max"
+            }
+            return Component.literal("").append(f).append("FE")
+        }
     }
 
     class FluidBarElement(progress: ProgressData, val fluid: FluidType) : ProgressBarElement(progress) {
-        override fun requireLineDecorate(): Boolean = false
         override fun requireOutlineDecorate(): Boolean = true
 
         override fun fillBar(style: HologramStyle, left: Float, right: Float, height: Float, percent: Float) {
@@ -366,7 +374,25 @@ interface IRenderElement {
             consumer.addVertex(matrix, right, 0f, 0f).setUv(maxU, sprite.v0).setColor(tintColor)
         }
 
-        override fun getDescription(progress: Float): String = "1"
+        override fun getDescription(percent: Float): Component {
+            val current = if (progress.progressCurrent < 1000) {
+                "${progress.progressCurrent}mB"
+            } else {
+                "${shortDescription(progress.progressCurrent.toFloat() / 1000)}B"
+            }
+            val f = if (progress.progressCurrent == progress.progressMax) {
+                current
+            } else {
+                val max = if (progress.progressMax < 1000) {
+                    "${progress.progressMax}mB"
+                } else {
+                    "${shortDescription(progress.progressMax.toFloat() / 1000)}B"
+                }
+                "$current/$max"
+            }
+            val fluidName = fluid.description
+            return Component.literal("").append(fluidName).append(" ").append(f)
+        }
     }
 
     class WorkingArrowProgressBarElement(progress: ProgressData, barWidth: Float = 15f) :
@@ -452,7 +478,6 @@ interface IRenderElement {
         override fun render(style: HologramStyle, partialTicks: Float) {
             val percent = progress.percent.resetNan()
 
-            GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, 0, "widget")
             style.stack {
                 val move = this.contentSize.width / 2f
                 style.translate(move, move)
@@ -464,7 +489,6 @@ interface IRenderElement {
                     style.drawCycle(outRadius, FILL_COLOR, beginRadian = Math.PI, endRadian = Math.PI - end)
                 }
             }
-            GL46.glPopDebugGroup()
         }
     }
 }

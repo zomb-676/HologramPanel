@@ -10,9 +10,15 @@ class CycleSelectorBuilder {
         val children: MutableList<CycleEntry> = mutableListOf()
         lateinit var render: GuiGraphics.() -> Unit
 
-        fun add(element: IRenderElement, onClick: () -> Unit) {
+        fun add(element: IRenderElement, clickOnClose: Boolean = true, onClick: () -> Unit) {
             val instance = object : CycleEntry.Single {
                 override fun onClick(callback: CycleEntry.SelectorCallback) = onClick.invoke()
+
+                override fun onClose() {
+                    if (clickOnClose) {
+                        onClick()
+                    }
+                }
 
                 override fun renderContent(style: HologramStyle, partialTick: Float, isHover: Boolean) {
                     element.render(style, partialTick)

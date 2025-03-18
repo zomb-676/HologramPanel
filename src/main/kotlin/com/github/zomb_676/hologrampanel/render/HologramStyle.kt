@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.normalizedInto2PI
+import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.BufferUploader
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
@@ -23,12 +24,34 @@ interface HologramStyle {
     val guiGraphics: GuiGraphics
     var contextColor: Int
 
-
+    /**
+     * @param contentSize [HologramWidgetComponent.Single.contentSize]
+     */
     fun mergeOutlineSizeForSingle(contentSize: Size): Size
+
+    /**
+     * @param contentSize [HologramWidgetComponent.Group.contentSize]
+     * @param collapse if the group is collapsed or not
+     */
     fun mergeOutlineSizeForGroup(contentSize: Size, descriptionSize: Size, collapse: Boolean): Size
+
+    /**
+     * @param size [HologramWidgetComponent.Single.visualSize]
+     */
     fun drawSingleOutline(size: Size, selected: SelectPathType, color: Int = contextColor)
-    fun drawGroupOutline(size: Size, selected: SelectPathType, collapse: Boolean, color: Int = contextColor)
-    fun moveToGroupDescription()
+
+    /**
+     * @param size [HologramWidgetComponent.Group.visualSize]
+     */
+    fun drawGroupOutline(
+        size: Size,
+        descriptionSize: Size,
+        selected: SelectPathType,
+        collapse: Boolean,
+        color: Int = contextColor
+    )
+
+    fun moveToGroupDescription(descriptionSize: Size)
     fun moveAfterDrawGroupOutline(descriptionSize: Size)
     fun moveAfterDrawSingleOutline()
     fun mergeOutlineSizeForSlot(contentSize: Size): Size
@@ -268,7 +291,7 @@ interface HologramStyle {
         fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when {
             selected.isUnSelect -> 0xff000000.toInt()
             selected.isAtTerminal -> 0xffffffff.toInt()
-            else  -> 0xff7f7f7f.toInt()
+            else -> 0xff7f7f7f.toInt()
         }
 
         fun brighter(color: Int): Int {
@@ -294,7 +317,13 @@ interface HologramStyle {
             )
         }
 
-        override fun drawGroupOutline(size: Size, selected: SelectPathType, collapse: Boolean, color: Int) {
+        override fun drawGroupOutline(
+            size: Size,
+            descriptionSize: Size,
+            selected: SelectPathType,
+            collapse: Boolean,
+            color: Int
+        ) {
             val height = if (selected.isAtHead) {
                 size.height
             } else {
@@ -304,15 +333,16 @@ interface HologramStyle {
 
             val matrix = guiGraphics.pose().last().pose()
             val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
+            val centerY = ((descriptionSize.height) / 2.0f) + 0.5f
             val left = 4.0f
             val right = 8.0f
-            val up = 4.0f
-            val down = 8.0f
+            val up = centerY - 2
+            val down = centerY + 2
 
-            consumer.addVertex(matrix, left, 5.5f, 0.0f).setColor(color)
-            consumer.addVertex(matrix, left, 6.5f, 0.0f).setColor(color)
-            consumer.addVertex(matrix, right, 6.5f, 0.0f).setColor(color)
-            consumer.addVertex(matrix, right, 5.5f, 0.0f).setColor(color)
+            consumer.addVertex(matrix, left, (centerY - 0.5f), 0.0f).setColor(color)
+            consumer.addVertex(matrix, left, (centerY + 0.5f), 0.0f).setColor(color)
+            consumer.addVertex(matrix, right, (centerY + 0.5f), 0.0f).setColor(color)
+            consumer.addVertex(matrix, right, (centerY - 0.5f), 0.0f).setColor(color)
             if (!collapse) {
                 consumer.addVertex(matrix, 5.5f, up, 0.0f).setColor(color)
                 consumer.addVertex(matrix, 5.5f, down, 0.0f).setColor(color)
@@ -321,7 +351,7 @@ interface HologramStyle {
             }
         }
 
-        override fun moveToGroupDescription() {
+        override fun moveToGroupDescription(descriptionSize: Size) {
             move(10, 2)
         }
 

@@ -92,15 +92,16 @@ interface HologramWidgetComponent<T : Any> {
             partialTicks: Float
         ) {
             val selectedType = path.forAny(this)
-            style.drawGroupOutline(this.visualSize, selectedType, this.collapse)
+            val descriptionSize = this.descriptionSize(target, style, displayType)
+            style.drawGroupOutline(this.visualSize, descriptionSize, selectedType, this.collapse)
             style.stack {
-                style.moveToGroupDescription()
+                style.moveToGroupDescription(descriptionSize)
                 this.renderGroupDescription(target, style, path, displayType, partialTicks)
             }
 
             if (!this.collapse) {
                 style.stack {
-                    style.moveAfterDrawGroupOutline(this.descriptionSize(target, style, displayType))
+                    style.moveAfterDrawGroupOutline(descriptionSize)
                     this.children.forEach { component ->
                         when (component) {
                             is Single<T> -> {

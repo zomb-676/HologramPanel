@@ -5,7 +5,7 @@ import com.github.zomb_676.hologrampanel.util.Size
 
 sealed interface CycleEntry {
     fun onClick(callback : SelectorCallback)
-    fun onClose()
+    fun onClose() {}
     fun renderContent(style: HologramStyle, partialTick: Float, isHover: Boolean)
     fun size(style: HologramStyle): Size
 
@@ -19,12 +19,12 @@ sealed interface CycleEntry {
 
     interface SelectorCallback {
         fun openGroup(group: Group)
-        fun recoveryToParent(child : CycleEntry)
+        fun recoveryToParent()
     }
 
     data object EmptyCallback : SelectorCallback {
         override fun openGroup(group: Group) {}
 
-        override fun recoveryToParent(child: CycleEntry) {}
+        override fun recoveryToParent() {}
     }
 }

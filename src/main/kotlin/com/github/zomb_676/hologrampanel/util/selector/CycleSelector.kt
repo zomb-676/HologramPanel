@@ -18,19 +18,35 @@ import kotlin.math.sqrt
 
 class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
+    /**
+     * used to trace open trace and return to parent
+     */
     private val openStack = mutableListOf<CycleEntry.Group>()
+
+    /**
+     * the current group that is interacted
+     */
     private var currentGroup = topEntry
+
+    /**
+     * the next group that will be used if not null
+     */
     private var nextGroup: CycleEntry.Group? = null
+
+    /**
+     * the current entry which mouse is over
+     */
     private var current: CycleEntry? = null
 
-    fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
+    private var canBackToParent = false
+
+    private fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
         trySetModeAndRestCursorPos()
 
         this.current = null
         run {
             val nextChildren = this.nextGroup
             if (nextChildren != null) {
-                this.openStack.addLast(this.currentGroup)
                 this.currentGroup = nextChildren
                 this.nextGroup = null
             }
@@ -50,18 +66,21 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         val handler = Minecraft.getInstance().mouseHandler
         val x = ((handler.xpos() / scale) - centerX)
         val y = ((handler.ypos() / scale) - centerY)
-        val d = Math.toDegrees(atan(x / y))
-        val degree = if (y < 0) {
-            180 + d
-        } else {
-            if (x < 0) {
-                d + 360
+        val degree = run {
+            val degree = Math.toDegrees(atan(x / y))
+            if (y < 0) {
+                180 + degree
             } else {
-                d
+                if (x < 0) {
+                    degree + 360
+                } else {
+                    degree
+                }
             }
         }
 
-        val canSelect = sqrt(x * x + y * y) > 20
+        val sqrt = sqrt(x * x + y * y)
+        val canSelect = sqrt > 20
 
         val currentRadian = Math.toRadians(degree)
         val degreeForEach = 360.0 / currentGroup.childrenCount()
@@ -91,6 +110,14 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
                 entry.renderContent(style, partialTick, isHover)
             }
         }
+
+        this.canBackToParent = !canSelect && sqrt < 20 * 0.8 && this.openStack.isNotEmpty()
+        if (this.canBackToParent) {
+            style.drawCycle(16f, colorOut = 0xffffff00.toInt(), colorIn = 0x7fffffff.toInt())
+        } else if (this.openStack.isNotEmpty()) {
+            style.drawCycle(16f, colorOut = 0x7fffffff.toInt())
+        }
+
         style.guiGraphics.flush()
         RenderSystem.disableBlend()
         style.guiGraphics.pose().popPose()
@@ -98,9 +125,10 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     override fun openGroup(group: CycleEntry.Group) {
         this.nextGroup = group
+        this.openStack.addLast(this.currentGroup)
     }
 
-    override fun recoveryToParent(child: CycleEntry) {
+    override fun recoveryToParent() {
         val next = this.openStack.removeLastOrNull()
         if (next != null) {
             this.nextGroup = next
@@ -108,7 +136,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
     }
 
     companion object {
-        fun trySetModeAndRestCursorPos() {
+        private fun trySetModeAndRestCursorPos() {
             val window = Minecraft.getInstance().window
             if (GLFW.glfwGetInputMode(window.window, GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_NORMAL) {
                 setCursorMode(GLFW.GLFW_CURSOR_NORMAL)
@@ -116,7 +144,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             }
         }
 
-        fun setCursorMode(cursorMode: Int) {
+        private fun setCursorMode(cursorMode: Int) {
             GLFW.glfwSetInputMode(Minecraft.getInstance().window.window, GLFW.GLFW_CURSOR, cursorMode)
         }
 
@@ -149,6 +177,8 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
         fun tryEnd() {
             if (this.instance != null) {
+                instance?.current?.onClose()
+
                 this.instance = null
                 if (Minecraft.getInstance().screen == null) {
                     setCursorMode(GLFW.GLFW_CURSOR_DISABLED)
@@ -160,10 +190,14 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
         fun onClick() {
             val selector = this.instance ?: return
-            val target = selector.current ?: return
-            target.onClick(selector)
+            if (selector.canBackToParent) {
+                selector.recoveryToParent()
+            } else {
+                val target = selector.current ?: return
+                target.onClick(selector)
+            }
         }
 
-        var instance: CycleSelector? = null
+        private var instance: CycleSelector? = null
     }
 }

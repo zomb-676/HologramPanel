@@ -6,7 +6,6 @@ import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramConte
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
-import net.minecraft.client.data.models.model.ModelLocationUtils
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
@@ -36,6 +35,9 @@ class LivingEntityPotionProvider : ServerDataProvider<EntityHologramContext> {
         return true
     }
 
+    /**
+     * copied from [net.minecraft.client.gui.screens.inventory.EffectsInInventory.getEffectName]
+     */
     private fun getEffectName(effect: MobEffectInstance): Component {
         val component = effect.effect.value().displayName.copy()
         if (effect.amplifier >= 1 && effect.amplifier <= 9) {
