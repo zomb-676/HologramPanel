@@ -41,8 +41,10 @@ object DataQueryManager {
 
             context.setServerUpdateDat(tag)
             context.getRememberData().onReceiveData(tag)
-            profilerStack("rebuild_hologram_component") {
-                widget.updateComponent()
+            if (context.getRememberData().needUpdate()) {
+                profilerStack("rebuild_hologram_component") {
+                    widget.updateComponent()
+                }
             }
         }
 
@@ -89,7 +91,9 @@ object DataQueryManager {
         private fun <T : HologramContext> append(payload: ComponentRequestDataPayload<T>, tag: CompoundTag): Boolean {
             var changed = false
             payload.providers.forEach { provider ->
-                changed = changed or provider.appendServerData(payload.additionDataTag, tag, payload.context)
+                val addTag = CompoundTag()
+                tag.put(provider.location().toString(), addTag)
+                changed = changed or provider.appendServerData(payload.additionDataTag, addTag, payload.context)
             }
             return changed
         }

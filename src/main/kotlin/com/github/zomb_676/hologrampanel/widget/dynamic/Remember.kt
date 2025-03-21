@@ -23,13 +23,13 @@ import kotlin.reflect.KProperty
  */
 class Remember<T : HologramContext> private constructor() {
     val uuid: UUID = UUID.randomUUID()
-    private val map: MutableMap<ComponentProvider<T,*>, MutableList<Holder<T, *>>> = mutableMapOf()
+    private val map: MutableMap<ComponentProvider<T, *>, MutableList<Holder<T, *>>> = mutableMapOf()
     private val requireMimicTick: MutableList<Holder<T, *>> = mutableListOf()
 
     @PublishedApi
     @ApiStatus.Internal
-    internal val dirtyMark: Object2BooleanOpenHashMap<ComponentProvider<T,*>> = Object2BooleanOpenHashMap()
-    private var provider: ComponentProvider<T,*>? = null
+    internal val dirtyMark: Object2BooleanOpenHashMap<ComponentProvider<T, *>> = Object2BooleanOpenHashMap()
+    private var provider: ComponentProvider<T, *>? = null
 
     private val servers: Int2ObjectOpenHashMap<Holder<T, *>> = Int2ObjectOpenHashMap()
     private val clients: Int2ObjectOpenHashMap<Holder<T, *>> = Int2ObjectOpenHashMap()
@@ -38,7 +38,7 @@ class Remember<T : HologramContext> private constructor() {
     lateinit var context: T
 
     class Holder<T : HologramContext, V>(
-        internal val provider: ComponentProvider<T,*>,
+        internal val provider: ComponentProvider<T, *>,
         private val remember: Remember<T>,
         private val updater: (CompoundTag) -> V,
         initial: V
@@ -93,11 +93,11 @@ class Remember<T : HologramContext> private constructor() {
         }
     }
 
-    private fun markDirty(provider: ComponentProvider<T,*>) {
+    private fun markDirty(provider: ComponentProvider<T, *>) {
         this.dirtyMark.put(provider, true)
     }
 
-    internal inline fun providerScope(provider: ComponentProvider<T,*>, code: () -> Unit) {
+    internal inline fun providerScope(provider: ComponentProvider<T, *>, code: () -> Unit) {
         this.provider = provider
         code.invoke()
         this.provider = null
@@ -153,7 +153,7 @@ class Remember<T : HologramContext> private constructor() {
      */
     fun <V> server(identity: Int, initial: V, code: (tag: CompoundTag) -> V): Holder<T, V> {
         val provider = this.provider ?: throw RuntimeException()
-        require(provider is ServerDataProvider<T,*>)
+        require(provider is ServerDataProvider<T, *>)
         val key = calculateKey(identity, provider)
         var res: Holder<T, *>? = servers.get(key)
         if (res == null) {
@@ -182,7 +182,9 @@ class Remember<T : HologramContext> private constructor() {
     }
 
     fun onReceiveData(tag: CompoundTag) {
-        this.servers.values.forEach { it.tryUpdate(tag) }
+        this.servers.values.forEach { holder ->
+            holder.tryUpdate(tag.getCompound(holder.provider.location().toString()))
+        }
     }
 
     companion object {
@@ -212,7 +214,7 @@ class Remember<T : HologramContext> private constructor() {
     /**
      * check if the provider is marked as dirty and need re-build, and clean dirty mark
      */
-    fun consumerRebuild(provider: ComponentProvider<T,*>): Boolean {
+    fun consumerRebuild(provider: ComponentProvider<T, *>): Boolean {
         val value = this.dirtyMark.getBoolean(provider)
         this.dirtyMark.put(provider, false)
         return value
@@ -222,10 +224,12 @@ class Remember<T : HologramContext> private constructor() {
      * return all providers that need server data
      */
     fun serverDataEntries() = this.servers
-        .values.asSequence().map { it.provider }.distinct().toList().unsafeCast<List<ServerDataProvider<T,*>>>()
+        .values.asSequence().map { it.provider }.distinct().toList().unsafeCast<List<ServerDataProvider<T, *>>>()
 
     /**
      * return all the providers that use the [Remember] object
      */
     fun providers() = this.dirtyMark.keys
+
+    fun needUpdate() = this.dirtyMark.values.contains(true)
 }
