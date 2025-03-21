@@ -12,6 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * record the MVP matrix when projection type is {@link com.mojang.blaze3d.ProjectionType#PERSPECTIVE}
+ */
 @Mixin(LevelRenderer.class)
 public class LevelRenderMixin {
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelTargetBundle;clear()V"))

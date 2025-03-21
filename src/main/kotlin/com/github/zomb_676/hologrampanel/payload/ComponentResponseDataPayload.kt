@@ -1,7 +1,6 @@
 package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.HologramPanel
-import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag

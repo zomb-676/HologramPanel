@@ -12,6 +12,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  */
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
+    /**
+     * require = 0, not throw when failed
+     */
     @Redirect(require = 0, method = "<init>", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;initRenderer(IZ)V"))
     private void initDebugWithSync(int debugVerbosity, boolean synchronous) {
         if (!FMLLoader.isProduction()) {

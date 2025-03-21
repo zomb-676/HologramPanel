@@ -1,6 +1,7 @@
-package com.github.zomb_676.hologrampanel.addon.universial
+package com.github.zomb_676.hologrampanel.addon.vanilla
 
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -12,7 +13,7 @@ import net.minecraft.world.level.block.JukeboxBlock
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity
 import kotlin.jvm.optionals.getOrNull
 
-class JukeBoxProvider : ServerDataProvider<BlockHologramContext> {
+data object  JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,
@@ -48,7 +49,10 @@ class JukeBoxProvider : ServerDataProvider<BlockHologramContext> {
         }
     }
 
-    override fun targetClass(): Class<*> = JukeboxBlock::class.java
+    override fun targetClass(): Class<JukeboxBlock> = JukeboxBlock::class.java
 
     override fun location(): ResourceLocation = HologramPanel.Companion.rl("juke_box")
+
+    override fun replaceProvider(target: ResourceLocation): Boolean =
+        target == UniversalContainerBlockProvider.location()
 }

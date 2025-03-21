@@ -5,7 +5,6 @@ import net.minecraft.client.Minecraft
 import net.minecraft.core.Vec3i
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f
-import org.joml.Vector3f
 import org.joml.Vector3fc
 import org.joml.Vector4f
 

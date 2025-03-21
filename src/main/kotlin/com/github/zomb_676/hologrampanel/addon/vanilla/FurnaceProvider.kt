@@ -1,19 +1,19 @@
-package com.github.zomb_676.hologrampanel.addon.universial
+package com.github.zomb_676.hologrampanel.addon.vanilla
 
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement.ProgressData
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.AbstractFurnaceBlock
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
 import net.minecraft.world.level.material.Fluids
 
-class FurnaceProvider : ServerDataProvider<BlockHologramContext>  {
+data object  FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
     override fun appendComponent(
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
@@ -26,7 +26,7 @@ class FurnaceProvider : ServerDataProvider<BlockHologramContext>  {
         val litTotalTime by remember.server(4, 0) { tag -> tag.getIntArray("furnace_progress_data")[1] }
         val cookingTimer by remember.server(5, 0) { tag -> tag.getIntArray("furnace_progress_data")[2] }
         val cookingTotalTime by remember.server(6, 0) { tag -> tag.getIntArray("furnace_progress_data")[3] }
-        val progressBar = remember.keep(7, IRenderElement::ProgressData)
+        val progressBar = remember.keep(7, ::ProgressData)
 
         progressBar.current(cookingTimer).max(cookingTotalTime)
 
@@ -38,24 +38,9 @@ class FurnaceProvider : ServerDataProvider<BlockHologramContext>  {
             }
             if (!item2.isEmpty) itemStack(item2)
         }
-        builder.single("fluid") {
-            fluid(progressBar, Fluids.WATER.fluidType)
-        }
-        builder.single("lava") {
-            fluid(progressBar, Fluids.LAVA.fluidType)
-        }
-        builder.single("arrow") {
-            workingArrowProgress(progressBar)
-        }
-        builder.single("cycle") {
-            workingCycleProgress(progressBar)
-        }
-        builder.single("torus") {
-            workingTorusProgress(progressBar)
-        }
     }
 
-    override fun targetClass(): Class<*> = AbstractFurnaceBlock::class.java
+    override fun targetClass(): Class<AbstractFurnaceBlock> = AbstractFurnaceBlock::class.java
 
     override fun location(): ResourceLocation = HologramPanel.Companion.rl("abstract_furnace_block")
 
@@ -76,4 +61,7 @@ class FurnaceProvider : ServerDataProvider<BlockHologramContext>  {
 
         return true
     }
+
+    override fun replaceProvider(target: ResourceLocation): Boolean =
+        target == UniversalContainerBlockProvider.location()
 }

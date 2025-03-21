@@ -19,9 +19,9 @@ object DataQueryManager {
         private val maps: MutableMap<DynamicBuildWidget<*>, HologramContext> = mutableMapOf()
 
         fun <T : HologramContext> query(
-            widget: DynamicBuildWidget<out T>,
+            widget: DynamicBuildWidget<T>,
             additionDataTag: CompoundTag,
-            providers: List<ServerDataProvider<T>>,
+            providers: List<ServerDataProvider<T,*>>,
             context: T
         ) {
             val uuid = context.getRememberData().uuid

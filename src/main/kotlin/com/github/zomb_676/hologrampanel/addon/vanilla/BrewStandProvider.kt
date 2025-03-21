@@ -1,6 +1,7 @@
-package com.github.zomb_676.hologrampanel.addon.universial
+package com.github.zomb_676.hologrampanel.addon.vanilla
 
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -10,7 +11,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.BrewingStandBlock
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity
 
-class BrewStandProvider: ServerDataProvider<BlockHologramContext> {
+data object  BrewStandProvider : ServerDataProvider<BlockHologramContext, BrewingStandBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,
@@ -54,6 +55,9 @@ class BrewStandProvider: ServerDataProvider<BlockHologramContext> {
         }
     }
 
-    override fun targetClass(): Class<*> = BrewingStandBlock::class.java
+    override fun targetClass(): Class<BrewingStandBlock> = BrewingStandBlock::class.java
     override fun location(): ResourceLocation = HologramPanel.Companion.rl("brewing_stand")
+
+    override fun replaceProvider(target: ResourceLocation): Boolean =
+        target == UniversalContainerBlockProvider.location()
 }

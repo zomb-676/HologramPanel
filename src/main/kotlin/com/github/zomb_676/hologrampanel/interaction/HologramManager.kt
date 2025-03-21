@@ -41,7 +41,7 @@ object HologramManager {
     }
 
     internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
-        val context = RayTraceHelper.findTarget(32, partialTicks)
+        val context = RayTraceHelper.findTarget(32.0, partialTicks)
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context)
             this.tryAddWidget(widget, context)

@@ -7,6 +7,9 @@ import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+/**
+ * prevent player face turn, or stop the effect of mouse move in the world
+ */
 @Mixin(MouseHandler.class)
 public class MouseHandleMixin {
     @WrapWithCondition(method = "turnPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;turn(DD)V"))

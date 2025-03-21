@@ -1,6 +1,7 @@
-package com.github.zomb_676.hologrampanel.addon.universial
+package com.github.zomb_676.hologrampanel.addon.vanilla
 
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -10,7 +11,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.CampfireBlock
 import net.minecraft.world.level.block.entity.CampfireBlockEntity
 
-class CampfireProvider: ServerDataProvider<BlockHologramContext> {
+data object  CampfireProvider : ServerDataProvider<BlockHologramContext, CampfireBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,
@@ -73,7 +74,10 @@ class CampfireProvider: ServerDataProvider<BlockHologramContext> {
         }
     }
 
-    override fun targetClass(): Class<*> = CampfireBlock::class.java
+    override fun targetClass(): Class<CampfireBlock> = CampfireBlock::class.java
 
     override fun location(): ResourceLocation = HologramPanel.Companion.rl("camp_fire")
+
+    override fun replaceProvider(target: ResourceLocation): Boolean =
+        target == UniversalContainerBlockProvider.location()
 }

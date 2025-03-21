@@ -1,6 +1,8 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.render.HologramStyle.Companion.ITEM_STACK_LENGTH
+import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
@@ -13,7 +15,6 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.MutableComponent
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.client.textures.FluidSpriteCache
 import net.neoforged.neoforge.fluids.FluidType
 import org.joml.Quaternionf
 import org.joml.Vector3f
+import kotlin.math.ceil
 import kotlin.math.floor
 
 interface IRenderElement {
@@ -52,8 +54,7 @@ interface IRenderElement {
         override fun measureContentSize(style: HologramStyle): Size = Size.ZERO
 
         override fun render(
-            style: HologramStyle,
-            partialTicks: Float
+            style: HologramStyle, partialTicks: Float
         ) {
         }
 
@@ -225,6 +226,51 @@ interface IRenderElement {
         }
     }
 
+    open class ItemsElement(val items: List<ItemStack>) : RenderElement() {
+        companion object {
+            const val ITEM_EACH_LINE = 6
+            const val PADDING = 1
+        }
+
+        val count = items.size
+        val lineCount = ceil(items.size.toDouble() / ITEM_EACH_LINE).toInt()
+
+        override fun measureContentSize(style: HologramStyle): Size {
+            val l = ITEM_STACK_LENGTH
+            val height = l * lineCount + PADDING * (lineCount + 1)
+            val width = if (lineCount > 1) {
+                l * ITEM_EACH_LINE + PADDING * (ITEM_EACH_LINE + 1)
+            } else {
+                l * count + PADDING * (count + 1)
+            }
+            return Size.of(width, height)
+        }
+
+        override fun render(style: HologramStyle, partialTicks: Float) {
+            val font = style.font
+            style.outline(this.contentSize)
+            style.stack {
+                style.move(PADDING, PADDING)
+                style.push()
+                var i = 0
+                items.forEachIndexed { index, item ->
+                    if (i == ITEM_EACH_LINE) {
+                        i = 0
+                        style.pop()
+                        style.move(0, ITEM_STACK_LENGTH + PADDING)
+                        style.push()
+                    }
+                    style.guiGraphics.renderItem(item, 0, 0)
+                    style.guiGraphics.renderItemDecorations(font, item, 0, 0)
+                    style.move(ITEM_STACK_LENGTH + PADDING, 0)
+                    i++
+                }
+                style.pop()
+            }
+        }
+
+    }
+
     class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderElement() {
         companion object {
             @Suppress("DEPRECATION")
@@ -250,20 +296,6 @@ interface IRenderElement {
         fun setRenderSize(width: Int, height: Int) {
             this.width = width
             this.height = height
-        }
-    }
-
-    class ProgressData(var progressCurrent: Int = 0, var progressMax: Int = 100, val LTR: Boolean = true) {
-        val percent get() = progressCurrent.toFloat() / progressMax
-
-        fun current(value: Int): ProgressData {
-            this.progressCurrent = value
-            return this
-        }
-
-        fun max(value: Int): ProgressData {
-            this.progressMax = value
-            return this
         }
     }
 

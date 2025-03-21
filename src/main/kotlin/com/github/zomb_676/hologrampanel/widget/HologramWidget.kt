@@ -4,7 +4,6 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * the basic hologram widget interface

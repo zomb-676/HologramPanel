@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import net.minecraft.client.Minecraft
@@ -19,7 +20,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     private val stack: Stack<MutableList<DynamicBuildComponentWidget<T>>> = Stack()
     private val helper = this.Helper()
     private var currentInSingle = false
-    internal var currentProvider: ComponentProvider<T>? = null
+    internal var currentProvider: ComponentProvider<T,*>? = null
 
     init {
         stack.add(mutableListOf())
@@ -45,7 +46,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     }
 
     internal inline fun rebuildScope(
-        provider: ComponentProvider<T>,
+        provider: ComponentProvider<T,*>,
         code: () -> Unit
     ): List<DynamicBuildComponentWidget<T>> {
         this.stack.push(mutableListOf())
@@ -111,8 +112,9 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
      * this provider can only and must produce exactly one single
      */
     internal fun build(
-        provider: ComponentProvider<T>,
-        displayType: DisplayType = DisplayType.NORMAL
+        provider: ComponentProvider<T,*>,
+        displayType: DisplayType = DisplayType.NORMAL,
+        providers : List<ComponentProvider<T, *>>
     ): DynamicBuildWidget<T> {
         val currentCount = this.stack.peek().size
         helper.begin()
@@ -131,10 +133,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         if (context.getRememberData().serverDataEntries().isNotEmpty()) {
             currentStack.add(DynamicBuildComponentWidget.requireServerData(context))
         }
-        val global = createGroupForElements(currentStack, desc, false, "lobal")!!
+        val global = createGroupForElements(currentStack, desc, false, "global")!!
         require(stack.isEmpty())
         this.currentProvider = null
-        return DynamicBuildWidget(context, global)
+        return DynamicBuildWidget(context, global, providers)
     }
 
     inner class Helper() {
@@ -176,6 +178,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.ItemStackElement(false, ItemStack(item)).attach()
         }
 
+        fun items(items: List<ItemStack>): IRenderElement.ItemsElement {
+            return IRenderElement.ItemsElement(items).attach()
+        }
+
         /**
          * this will call [net.minecraft.client.gui.GuiGraphics.renderItemDecorations]
          */
@@ -187,13 +193,13 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
         }
 
-        fun workingArrowProgress(progress: IRenderElement.ProgressData): IRenderElement.WorkingArrowProgressBarElement {
+        fun workingArrowProgress(progress: ProgressData): IRenderElement.WorkingArrowProgressBarElement {
             val element = IRenderElement.WorkingArrowProgressBarElement(progress)
             return element.attach()
         }
 
         fun workingCycleProgress(
-            progress: IRenderElement.ProgressData,
+            progress: ProgressData,
             radius: Float = 10.0f
         ): IRenderElement.WorkingCircleProgressElement {
             val element = IRenderElement.WorkingCircleProgressElement(progress, radius, 0.0f)
@@ -201,7 +207,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         }
 
         fun workingTorusProgress(
-            progress: IRenderElement.ProgressData,
+            progress: ProgressData,
             outRadius: Float = 10.0f,
             inRadius: Float = 8.0f
         ): IRenderElement.WorkingCircleProgressElement {
@@ -209,11 +215,11 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return element.attach()
         }
 
-        fun energyBar(progressBar: IRenderElement.ProgressData): IRenderElement.EnergyBarElement {
+        fun energyBar(progressBar: ProgressData): IRenderElement.EnergyBarElement {
             return IRenderElement.EnergyBarElement(progressBar).attach()
         }
 
-        fun fluid(progressBar: IRenderElement.ProgressData, fluid: FluidType): IRenderElement.FluidBarElement {
+        fun fluid(progressBar: ProgressData, fluid: FluidType): IRenderElement.FluidBarElement {
             return IRenderElement.FluidBarElement(progressBar, fluid).attach()
         }
 

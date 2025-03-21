@@ -7,6 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * to be notified when the window resizes, to resize things like frame buffer and attachment stuffs
+ */
 @Mixin(GameRenderer.class)
 public class GameRenderMixin {
     @Inject(method = "resize", at = @At("HEAD"))

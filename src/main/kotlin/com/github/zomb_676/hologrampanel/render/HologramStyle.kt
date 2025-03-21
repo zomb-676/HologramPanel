@@ -20,6 +20,9 @@ import net.minecraft.util.ARGB
 import net.minecraft.world.item.DyeColor
 import kotlin.math.*
 
+/**
+ * a wrapped [GuiGraphics] which is intended for convenience use and customize widget style
+ */
 interface HologramStyle {
     val guiGraphics: GuiGraphics
     var contextColor: Int
@@ -127,6 +130,9 @@ interface HologramStyle {
     fun scale(scale: Float) {
         this.scale(scale, scale)
     }
+
+    fun push() = this.guiGraphics.pose.pushPose()
+    fun pop() = this.guiGraphics.pose().popPose()
 
     val font: Font get() = Minecraft.getInstance().font
 

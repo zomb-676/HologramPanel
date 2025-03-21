@@ -9,7 +9,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
 
-class ItemEntityLifeSpanProvider : ServerDataProvider<EntityHologramContext> {
+data object ItemEntityLifeSpanProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendComponent(
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
@@ -25,7 +25,7 @@ class ItemEntityLifeSpanProvider : ServerDataProvider<EntityHologramContext> {
         }
     }
 
-    override fun targetClass(): Class<*> = ItemEntity::class.java
+    override fun targetClass(): Class<ItemEntity> = ItemEntity::class.java
 
     override fun location(): ResourceLocation = HologramPanel.Companion.rl("item_entity")
 

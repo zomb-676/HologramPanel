@@ -1,4 +1,4 @@
-package com.github.zomb_676.hologrampanel.addon.universial
+package com.github.zomb_676.hologrampanel.addon.vanilla
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.BeehiveBlock
 import net.minecraft.world.level.block.entity.BeehiveBlockEntity
 
-class BeeHiveProvider : ServerDataProvider<BlockHologramContext> {
+data object  BeeHiveProvider : ServerDataProvider<BlockHologramContext, BeehiveBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,
@@ -69,7 +69,7 @@ class BeeHiveProvider : ServerDataProvider<BlockHologramContext> {
         }
     }
 
-    override fun targetClass(): Class<*> = BeehiveBlock::class.java
+    override fun targetClass(): Class<BeehiveBlock> = BeehiveBlock::class.java
 
     override fun location(): ResourceLocation = HologramPanel.Companion.rl("bee_hive")
 }

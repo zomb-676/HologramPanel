@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
-import com.github.zomb_676.hologrampanel.addon.universial.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
-import com.github.zomb_676.hologrampanel.addon.universial.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
+import com.github.zomb_676.hologrampanel.addon.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
+import com.github.zomb_676.hologrampanel.addon.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
@@ -14,11 +14,11 @@ import net.minecraft.network.chat.Component
 import kotlin.math.max
 
 sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidgetComponent<T> {
-    fun getProvider(): ComponentProvider<T>
+    fun getProvider(): ComponentProvider<T,*>
     fun getIdentityName(): String
 
     open class Single<T : HologramContext>(
-        private val provider: ComponentProvider<T>, val elements: List<IRenderElement>, private val identityName: String
+        private val provider: ComponentProvider<T,*>, val elements: List<IRenderElement>, private val identityName: String
     ) : HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
         private var baseY: Int = 0
         private val padding = 1
@@ -70,7 +70,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             }
         }
 
-        override fun getProvider(): ComponentProvider<T> = provider
+        override fun getProvider(): ComponentProvider<T,*> = provider
         override fun getIdentityName(): String = this.identityName
     }
 
@@ -105,11 +105,11 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
     }
 
     private class SpecialProvider<T : HologramContext>(
-        provider: ComponentProvider<T>, element: IRenderElement, identityName: String
+        provider: ComponentProvider<T,*>, element: IRenderElement, identityName: String
     ) : Single<T>(provider, listOf(element), identityName)
 
     open class Group<T : HologramContext>(
-        private val provider: ComponentProvider<T>,
+        private val provider: ComponentProvider<T,*>,
         val descriptionWidget: Single<T>,
         override var children: List<DynamicBuildComponentWidget<T>>,
         private val identityName: String,
@@ -129,12 +129,12 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             descriptionWidget.render(target, style, path, displayType, partialTicks)
         }
 
-        override fun getProvider(): ComponentProvider<T> = provider
+        override fun getProvider(): ComponentProvider<T,*> = provider
         override fun getIdentityName(): String = identityName
     }
 
     class LazyGroup<T : HologramContext>(
-        provider: ComponentProvider<T>,
+        provider: ComponentProvider<T,*>,
         descriptionWidget: Single<T>,
         identityName: String,
         val initializer: () -> List<DynamicBuildComponentWidget<T>>

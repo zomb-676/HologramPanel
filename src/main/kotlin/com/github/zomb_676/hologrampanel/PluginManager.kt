@@ -2,7 +2,11 @@ package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.HologramPanel.Companion.LOGGER
 import com.github.zomb_676.hologrampanel.api.*
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.getClassOf
+import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.neoforged.fml.ModList
 import org.jetbrains.annotations.ApiStatus
 import java.lang.annotation.ElementType
@@ -12,12 +16,12 @@ import kotlin.streams.asSequence
 internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
     companion object {
         private var INSTANCE: PluginManager? = null
-        private val providerCache: MutableMap<Class<*>, List<ComponentProvider<*>>> = mutableMapOf()
-        private val classProvider: MutableMap<Class<*>, List<ComponentProvider<*>>> = mutableMapOf()
+        private val providerCache: MutableMap<Class<*>, List<ComponentProvider<*, *>>> = mutableMapOf()
+        private val classProvider: MutableMap<Class<*>, List<ComponentProvider<*, *>>> = mutableMapOf()
 
-        fun getInstance() = INSTANCE!!
+        internal fun getInstance() = INSTANCE!!
 
-        fun init() {
+        internal fun init() {
             if (INSTANCE != null) {
                 LOGGER.error("not init plugin manager more than once")
                 return
@@ -48,22 +52,68 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             INSTANCE = PluginManager(plugins)
         }
 
-        fun onLoadComplete() {
+        internal fun onLoadComplete() {
             classProvider.clear()
             classProvider.putAll(AllRegisters.ComponentHologramProviderRegistry.REGISTRY.groupBy { it.targetClass() })
         }
 
-        internal fun queryProvidersForClass(target: Class<*>): List<ComponentProvider<*>> {
-            val res = providerCache[target]
-            if (res != null) return res
-
-            val list = mutableListOf<ComponentProvider<*>>()
-            searchByInheritTree(target, classProvider, list)
-            providerCache[target] = list
-            return list
+        internal fun queryProviders(context: BlockHologramContext): List<ComponentProvider<BlockHologramContext, *>> {
+            val list: MutableList<ComponentProvider<BlockHologramContext, *>> = mutableListOf()
+            list.addAll(queryProvidersByType(context,context.getBlockState().block).unsafeCast())
+            list.addAll(queryProvidersByType(context,context.getFluidState().fluidType).unsafeCast())
+            list.addAll(queryProvidersByType(context,context.getBlockEntity()).unsafeCast())
+            return removeByPrevent(list)
         }
 
-        private fun <V> searchByInheritTree(c: Class<*>, map: Map<Class<*>, List<V>>, list: MutableList<V>) {
+        internal fun queryProviders(context: EntityHologramContext): List<ComponentProvider<EntityHologramContext, *>> {
+            val list: MutableList<ComponentProvider<EntityHologramContext, *>> = mutableListOf()
+            list.addAll(queryProvidersByType(context,context.getEntity()).unsafeCast())
+            return removeByPrevent(list)
+        }
+
+        private fun <T : Any?, C : HologramContext> queryProvidersByType(
+            context: C,
+            targetInstance: T
+        ): List<ComponentProvider<*, T>> {
+            if (targetInstance == null) return listOf()
+
+            val targetClass: Class<out T> = targetInstance::class.java
+            val res = providerCache[targetClass]
+            if (res != null) return res.unsafeCast()
+
+            val container = mutableListOf<ComponentProvider<C, T>>()
+            searchByInheritTree(targetClass, classProvider, container.unsafeCast())
+            container.removeIf { !it.appliesTo(context, targetInstance) }
+            val finalRes = if (container.isEmpty()) {
+                listOf()
+            } else if (container.size == 1) {
+                container
+            } else {
+                removeByPrevent(container)
+            }
+            providerCache[targetClass] = finalRes
+            return finalRes
+        }
+
+        private fun <T : ComponentProvider<*, *>> removeByPrevent(container: MutableList<T>): MutableList<T> {
+            val backup = container.toMutableList()
+            val iterator = container.listIterator()
+            while (iterator.hasNext()) {
+                val provider = iterator.next()
+                val location = provider.location()
+                if (backup.any { it.replaceProvider(location) }) {
+                    backup.remove(provider)
+                    iterator.remove()
+                }
+            }
+            return container
+        }
+
+        private fun <V> searchByInheritTree(
+            c: Class<*>,
+            map: Map<Class<*>, List<V>>,
+            list: MutableList<V>
+        ) where V : ComponentProvider<*, *> {
             val target = map[c]
             if (target != null) {
                 list.addAll(target)
@@ -78,13 +128,13 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
         }
     }
 
-    val commonRegistration: Map<IHologramPlugin, HologramCommonRegistration> =
+    internal val commonRegistration: Map<IHologramPlugin, HologramCommonRegistration> =
         plugins.associateWith { HologramCommonRegistration(it) }
-    val clientRegistration: Map<IHologramPlugin, HologramClientRegistration> =
+    internal val clientRegistration: Map<IHologramPlugin, HologramClientRegistration> =
         plugins.associateWith { HologramClientRegistration(it) }
 
-    val block: MutableList<PopupCallback.BlockPopupCallback> = mutableListOf()
-    val entity: MutableList<PopupCallback.EntityPopupCallback> = mutableListOf()
+    internal val block: MutableList<PopupCallback.BlockPopupCallback> = mutableListOf()
+    internal val entity: MutableList<PopupCallback.EntityPopupCallback> = mutableListOf()
 
     internal fun onClientRegisterEnd() {
         this.block.addAll(clientRegistration.values.asSequence().flatMap { it.blockPopup })

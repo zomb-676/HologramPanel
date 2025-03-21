@@ -2,13 +2,13 @@ package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
-import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
@@ -21,7 +21,7 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
 class ComponentRequestDataPayload<T : HologramContext>(
-    val uuid: UUID, val additionDataTag: CompoundTag, val providers: List<ServerDataProvider<T>>, val context: T
+    val uuid: UUID, val additionDataTag: CompoundTag, val providers: List<ServerDataProvider<T,*>>, val context: T
 ) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<out ComponentRequestDataPayload<*>> = TYPE
 
@@ -58,7 +58,7 @@ class ComponentRequestDataPayload<T : HologramContext>(
                     ByteBufCodecs.VAR_INT.encode(buffer, value.providers.size)
                     for (provider in value.providers) {
                         AllRegisters.ComponentHologramProviderRegistry.STREAM_CODEC.encode(
-                            buffer, provider as ComponentProvider<*>
+                            buffer, provider as ComponentProvider<*,*>
                         )
                     }
                     when (val context = value.context) {

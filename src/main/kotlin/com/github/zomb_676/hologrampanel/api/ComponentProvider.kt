@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation
  *
  * @param T the context whe widget is at
  */
-interface ComponentProvider<T : HologramContext> {
+interface ComponentProvider<T : HologramContext, V> {
 
     /**
      * this is called when any data changed or ar displayType change
@@ -27,11 +27,31 @@ interface ComponentProvider<T : HologramContext> {
      * must be the type represented by the corresponding context
      */
     @EfficientConst
-    fun targetClass(): Class<*>
+    fun targetClass(): Class<in V>
 
     /**
      * @return identity object for debug and customize
      */
     @EfficientConst
     fun location(): ResourceLocation
+
+    /**
+     * this will prevent the returned [ComponentProvider] if both you are in a same candidate list
+     *
+     * the replaced target will still apply replacement
+     *
+     * it is intended to replace a universal implementation to your customized implementation
+     *
+     * only called during collecting providers based on class
+     */
+    @EfficientConst
+    fun replaceProvider(target: ResourceLocation): Boolean = false
+
+    /**
+     * for performance implementation, if you know only some targets or some targets never need this
+     *
+     * only called during collecting providers based on class
+     */
+    @EfficientConst
+    fun appliesTo(context: T, check: V): Boolean = true
 }

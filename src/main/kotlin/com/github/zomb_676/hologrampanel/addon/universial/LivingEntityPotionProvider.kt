@@ -14,7 +14,7 @@ import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffectUtil
 import net.minecraft.world.entity.LivingEntity
 
-class LivingEntityPotionProvider : ServerDataProvider<EntityHologramContext> {
+data object  LivingEntityPotionProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,
@@ -71,16 +71,22 @@ class LivingEntityPotionProvider : ServerDataProvider<EntityHologramContext> {
                 val effectTextures = Minecraft.getInstance().mobEffectTextures
                 data.forEachIndexed { index, effect ->
                     builder.single("effect_$index") {
-                        sprite(effectTextures.get(effect.effect)).setRenderSize(9,9)
+                        sprite(effectTextures.get(effect.effect)).setRenderSize(9, 9)
                         component(getEffectName(effect))
-                        component(MobEffectUtil.formatDuration(effect, 1.0f, Minecraft.getInstance().level!!.tickRateManager().tickrate()))
+                        component(
+                            MobEffectUtil.formatDuration(
+                                effect,
+                                1.0f,
+                                Minecraft.getInstance().level!!.tickRateManager().tickrate()
+                            )
+                        )
                     }
                 }
             }
         }
     }
 
-    override fun targetClass(): Class<*> = LivingEntity::class.java
+    override fun targetClass(): Class<LivingEntity> = LivingEntity::class.java
 
     override fun location(): ResourceLocation = HologramPanel.rl("living_entity_potion")
 

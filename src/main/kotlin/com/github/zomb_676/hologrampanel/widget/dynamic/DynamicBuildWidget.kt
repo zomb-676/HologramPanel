@@ -15,7 +15,11 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponen
 /**
  * widget that support re-build partial when some [ComponentProvider] data have changed
  */
-class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicBuildComponentWidget.Group<T>) :
+class DynamicBuildWidget<T : HologramContext>(
+    target: T,
+    val container: DynamicBuildComponentWidget.Group<T>,
+    val providers: List<ComponentProvider<T, *>>
+) :
     HologramComponentWidget<T>(target, container) {
 
 //    private val mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty(container)
@@ -172,7 +176,7 @@ class DynamicBuildWidget<T : HologramContext>(target: T, val container: DynamicB
         }
     }
 
-    private var maps: Map<ComponentProvider<T>, List<DynamicBuildComponentWidget<T>>> =
+    private var maps: Map<ComponentProvider<T,*>, List<DynamicBuildComponentWidget<T>>> =
         target.getRememberDataUnsafe<T>().providers().associateWith { prov ->
             this.container.children.filter { it.getProvider() == prov }
         }
