@@ -96,6 +96,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
         }
 
         private fun <T : ComponentProvider<*, *>> removeByPrevent(container: MutableList<T>): MutableList<T> {
+            if (container.size <= 1) return container
             val backup = container.toMutableList()
             val iterator = container.listIterator()
             while (iterator.hasNext()) {

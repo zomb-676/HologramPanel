@@ -27,7 +27,7 @@ interface ComponentProvider<T : HologramContext, V> {
      * must be the type represented by the corresponding context
      */
     @EfficientConst
-    fun targetClass(): Class<in V>
+    fun targetClass(): Class<V>
 
     /**
      * @return identity object for debug and customize
