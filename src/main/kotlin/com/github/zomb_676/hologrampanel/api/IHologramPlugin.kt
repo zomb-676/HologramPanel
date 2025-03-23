@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.api
 
 import net.minecraft.resources.ResourceLocation
+import net.neoforged.neoforge.common.ModConfigSpec
 
 /**
  * implementation this interface for you class annotated by [HologramPlugin]
@@ -21,4 +22,6 @@ interface IHologramPlugin {
      * register and setup settings for the physical client only
      */
     fun registerClient(register: HologramClientRegistration) {}
+
+    fun registerClientConfig(register : ModConfigSpec.Builder) {}
 }

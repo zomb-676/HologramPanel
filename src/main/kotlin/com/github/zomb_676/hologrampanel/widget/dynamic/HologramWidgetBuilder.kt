@@ -20,7 +20,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     private val stack: Stack<MutableList<DynamicBuildComponentWidget<T>>> = Stack()
     private val helper = this.Helper()
     private var currentInSingle = false
-    internal var currentProvider: ComponentProvider<T,*>? = null
+    internal var currentProvider: ComponentProvider<T, *>? = null
 
     init {
         stack.add(mutableListOf())
@@ -46,7 +46,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     }
 
     internal inline fun rebuildScope(
-        provider: ComponentProvider<T,*>,
+        provider: ComponentProvider<T, *>,
         code: () -> Unit
     ): List<DynamicBuildComponentWidget<T>> {
         this.stack.push(mutableListOf())
@@ -112,9 +112,9 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
      * this provider can only and must produce exactly one single
      */
     internal fun build(
-        provider: ComponentProvider<T,*>,
-        displayType: DisplayType = DisplayType.NORMAL,
-        providers : List<ComponentProvider<T, *>>
+        provider: ComponentProvider<T, *>,
+        displayType: DisplayType,
+        providers: List<ComponentProvider<T, *>>
     ): DynamicBuildWidget<T> {
         val currentCount = this.stack.peek().size
         helper.begin()
@@ -128,7 +128,11 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         val desc =
             currentStack.removeLast().unsafeCast<DynamicBuildComponentWidget.Single<T>>("must be single not group")
         if (currentStack.isEmpty()) {
-            currentStack.add(DynamicBuildComponentWidget.onNoProvider(context))
+            if (providers.isEmpty()) {
+                currentStack.add(DynamicBuildComponentWidget.onNoApplicableProvider(context))
+            } else {
+                currentStack.add(DynamicBuildComponentWidget.onNoActiveProvider(context))
+            }
         }
         if (context.getRememberData().serverDataEntries().isNotEmpty()) {
             currentStack.add(DynamicBuildComponentWidget.requireServerData(context))
@@ -165,13 +169,18 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return res
         }
 
-        private fun <T : IRenderElement> T.attach(): T {
+        @PublishedApi
+        internal fun <T : IRenderElement> T.attach(): T {
             if (!suppress) {
                 elements
             } else {
                 isolateElements
             }.add(this)
             return this
+        }
+
+        inline fun <T : IRenderElement> renderable(code: () -> T): T {
+            return code.invoke().attach()
         }
 
         fun item(item: Item): IRenderElement.ItemStackElement {
@@ -233,6 +242,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
         fun component(str: Component): IRenderElement.StringRenderElement {
             return IRenderElement.StringRenderElement(str).attach()
+        }
+
+        fun screenTooltip(item: ItemStack): IRenderElement.ScreenTooltipElement {
+            return IRenderElement.ScreenTooltipElement(item).attach()
         }
 
         fun heart(): IRenderElement.TextureAtlasSpriteRenderElement {

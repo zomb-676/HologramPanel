@@ -45,4 +45,11 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_block")
 
+    override fun appliesTo(
+        context: BlockHologramContext,
+        check: BlockEntity
+    ): Boolean {
+        val level = context.getLevel()
+        return level.getCapability(Capabilities.EnergyStorage.BLOCK, check.blockPos, check.blockState, check, null) != null
+    }
 }

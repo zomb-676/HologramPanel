@@ -9,6 +9,8 @@ import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildComponentWidget
+import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
@@ -240,6 +242,12 @@ object HologramManager {
                 val remember = widget.context.getRememberData()
                 remember.tickMimicClientUpdate()
                 remember.tickClientValueUpdate()
+                if (widget.context.getRememberData().needUpdate()) {
+                    val widget = widget.widget
+                    if (widget is DynamicBuildWidget<*>) {
+                        widget.updateComponent()
+                    }
+                }
             } else {
                 forRemoved.add(widget)
             }

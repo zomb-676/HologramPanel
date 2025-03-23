@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "hologrampanel.refmap.json",
   "mixins": [
+    "GameDataMixin"
   ],
   "client": [
     "GameRenderMixin",

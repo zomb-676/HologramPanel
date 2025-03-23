@@ -68,4 +68,11 @@ data object  UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCon
     override fun targetClass(): Class<Entity> = Entity::class.java
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_entity")
+
+    override fun appliesTo(
+        context: EntityHologramContext,
+        check: Entity
+    ): Boolean {
+        return check.getCapability(Capabilities.FluidHandler.ENTITY, null) != null
+    }
 }

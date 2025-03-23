@@ -56,9 +56,6 @@ class BlockHologramContext(
     override fun getHitContext(): BlockHitResult? = hitResult
 
     @ApiStatus.Internal
-    override fun attachedServerData(): CompoundTag? = tag
-
-    @ApiStatus.Internal
     override fun setServerUpdateDat(tag: CompoundTag) {
         this.tag = tag
     }

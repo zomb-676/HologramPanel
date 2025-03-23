@@ -75,15 +75,23 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
     }
 
     companion object {
-        private val noActiveElement = IRenderElement.StringRenderElement(Component.literal("No Active Provider Found"))
+        private val noActiveProvider = IRenderElement.StringRenderElement(Component.literal("No Active Provider Found"))
+        private val noApplicableProvider = IRenderElement.StringRenderElement(Component.literal("No Applicable Provider"))
         private val requireServerDataElement =
             IRenderElement.StringRenderElement(Component.literal("Waiting for Server Packet"))
 
-        object NoProvider {
+        object NoActiveProvider {
             val block: Single<BlockHologramContext> =
-                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, noActiveElement, "no_provider")
+                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, noActiveProvider, "no_active_provider")
             val entity: Single<EntityHologramContext> =
-                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, noActiveElement, "no_provider")
+                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, noActiveProvider, "no_active)provider")
+        }
+
+        object NoApplicableProvider {
+            val block: Single<BlockHologramContext> =
+                SpecialProvider<BlockHologramContext>(DefaultBlockDescriptionProvider, noApplicableProvider, "no_applicable_provider")
+            val entity: Single<EntityHologramContext> =
+                SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, noApplicableProvider, "no_applicable_provider")
         }
 
         object RequireServerData {
@@ -93,9 +101,14 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 SpecialProvider<EntityHologramContext>(DefaultEntityDescriptionProvider, requireServerDataElement, "require_server_data")
         }
 
-        fun <T : HologramContext> onNoProvider(context: T): Single<T> = when (context) {
-            is BlockHologramContext -> NoProvider.block
-            is EntityHologramContext -> NoProvider.entity
+        fun <T : HologramContext> onNoActiveProvider(context: T): Single<T> = when (context) {
+            is BlockHologramContext -> NoActiveProvider.block
+            is EntityHologramContext -> NoActiveProvider.entity
+        }.unsafeCast()
+
+        fun <T : HologramContext> onNoApplicableProvider(context: T): Single<T> = when (context) {
+            is BlockHologramContext -> NoApplicableProvider.block
+            is EntityHologramContext -> NoApplicableProvider.entity
         }.unsafeCast()
 
         fun <T : HologramContext> requireServerData(context: T): Single<T> = when (context) {

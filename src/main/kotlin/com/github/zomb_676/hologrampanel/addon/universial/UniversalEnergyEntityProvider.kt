@@ -44,4 +44,11 @@ data object  UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramCo
     override fun targetClass(): Class<Entity> = Entity::class.java
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_entity")
+
+    override fun appliesTo(
+        context: EntityHologramContext,
+        check: Entity
+    ): Boolean {
+        return check.getCapability(Capabilities.EnergyStorage.ENTITY, null) != null
+    }
 }

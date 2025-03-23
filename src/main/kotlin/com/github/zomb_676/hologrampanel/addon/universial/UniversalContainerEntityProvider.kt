@@ -56,4 +56,11 @@ data object  UniversalContainerEntityProvider : ServerDataProvider<EntityHologra
     override fun targetClass(): Class<Entity> = Entity::class.java
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_container_entity")
+
+    override fun appliesTo(
+        context: EntityHologramContext,
+        check: Entity
+    ): Boolean {
+        return check.getCapability(Capabilities.ItemHandler.ENTITY, null) != null
+    }
 }

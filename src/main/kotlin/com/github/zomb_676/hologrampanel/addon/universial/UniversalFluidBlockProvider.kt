@@ -69,4 +69,12 @@ data object  UniversalFluidBlockProvider : ServerDataProvider<BlockHologramConte
     override fun targetClass(): Class<BlockEntity> = BlockEntity::class.java
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_block")
+
+    override fun appliesTo(
+        context: BlockHologramContext,
+        check: BlockEntity
+    ): Boolean {
+        val level = context.getLevel()
+        return level.getCapability(Capabilities.FluidHandler.BLOCK, check.blockPos, check.blockState, check, null) != null
+    }
 }

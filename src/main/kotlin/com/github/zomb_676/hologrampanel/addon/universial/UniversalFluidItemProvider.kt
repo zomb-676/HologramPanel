@@ -71,4 +71,11 @@ data object  UniversalFluidItemProvider : ServerDataProvider<EntityHologramConte
 
     override fun replaceProvider(target: ResourceLocation): Boolean =
         target == UniversalFluidEntityProvider.location()
+
+    override fun appliesTo(
+        context: EntityHologramContext,
+        check: ItemEntity
+    ): Boolean {
+        return check.item.getCapability(Capabilities.FluidHandler.ITEM) != null
+    }
 }

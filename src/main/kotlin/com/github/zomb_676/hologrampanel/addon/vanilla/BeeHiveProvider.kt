@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.BeehiveBlock
 import net.minecraft.world.level.block.entity.BeehiveBlockEntity
 
-data object  BeeHiveProvider : ServerDataProvider<BlockHologramContext, BeehiveBlock> {
+data object BeeHiveProvider : ServerDataProvider<BlockHologramContext, BeehiveBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,
@@ -21,14 +21,14 @@ data object  BeeHiveProvider : ServerDataProvider<BlockHologramContext, BeehiveB
         val beehive = context.getBlockEntity<BeehiveBlockEntity>() ?: return true
         val bees: List<BeehiveBlockEntity.BeeData> = beehive.stored
         val count = bees.size
-        targetData.putInt("bee_count", count)
+        val buffer = context.createRegistryFriendlyByteBuf()
+        buffer.writeShort(count)
         repeat(count) { index ->
             val data = bees[index]
-            val buffer = Unpooled.buffer()
-            targetData.putInt("bee_${index}_ticks_in_hive", data.ticksInHive)
+            buffer.writeVarInt(data.ticksInHive)
             BeehiveBlockEntity.Occupant.STREAM_CODEC.encode(buffer, data.occupant)
-            targetData.putByteArray("bee_$index", buffer.array())
         }
+        targetData.putByteArray("bee_data", buffer.array())
         return true
     }
 
@@ -39,25 +39,25 @@ data object  BeeHiveProvider : ServerDataProvider<BlockHologramContext, BeehiveB
         val context = builder.context
         val remember = context.getRememberData()
         val data by remember.server(1, listOf()) { tag ->
-            val count = tag.getInt("bee_count")
+            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("bee_data"))
+            val count = buffer.readShort().toInt()
             List(count) { index ->
-                val tick = tag.getInt("bee_${index}_ticks_in_hive")
-                val byteBuffer = Unpooled.wrappedBuffer(tag.getByteArray("bee_$index"))
-                val data = BeehiveBlockEntity.Occupant.STREAM_CODEC.decode(byteBuffer)
-                BeehiveBlockEntity.BeeData(data)
+                val tick = buffer.readVarInt()
+                val data = BeehiveBlockEntity.Occupant.STREAM_CODEC.decode(buffer)
+                val beeData = BeehiveBlockEntity.BeeData(data)
+                beeData.ticksInHive = tick
+                beeData
             }
         }
         val beeCount = data.size
         if (beeCount != 0) {
-            val tag = context.attachedServerData()!!
             builder.single("bee_count") {
                 text("Bee Count:$beeCount")
             }
-            repeat(beeCount) { index ->
-                val tick = tag.getInt("bee_${index}_ticks_in_hive")
-                val byteBuffer = Unpooled.wrappedBuffer(tag.getByteArray("bee_$index"))
-                val data = BeehiveBlockEntity.Occupant.STREAM_CODEC.decode(byteBuffer)
+            data.forEachIndexed { index, data ->
                 builder.lazyGroup("Bee$index", "Bee ${index + 1}") {
+                    val tick = data.ticksInHive
+                    val data = data.occupant
                     builder.single("in_hive") { text("inHive:$tick/${data.minTicksInHive()}") }
                     @Suppress("DEPRECATION") val pos = data.entityData().unsafe.get("flower_pos")
                     if (pos != null && pos.type == IntArrayTag.TYPE) {

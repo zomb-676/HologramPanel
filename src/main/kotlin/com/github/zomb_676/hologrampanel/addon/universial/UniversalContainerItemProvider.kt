@@ -59,4 +59,11 @@ data object  UniversalContainerItemProvider : ServerDataProvider<EntityHologramC
 
     override fun replaceProvider(target: ResourceLocation): Boolean =
         target == UniversalContainerEntityProvider.location()
+
+    override fun appliesTo(
+        context: EntityHologramContext,
+        check: ItemEntity
+    ): Boolean {
+        return check.item.getCapability(Capabilities.ItemHandler.ITEM) != null
+    }
 }

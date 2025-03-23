@@ -9,7 +9,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
 
-data object EntityProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
+data object EntityHealthProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
     override fun appendComponent(
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType

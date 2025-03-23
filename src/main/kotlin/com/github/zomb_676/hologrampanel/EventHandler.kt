@@ -258,12 +258,20 @@ object EventHandler {
         PluginManager.getInstance().clientRegistration.forEach { (plugin, reg) ->
             plugin.registerClient(reg)
         }
-        PluginManager.getInstance().onClientRegisterEnd()
     }
 
     private fun onLoadComplete(event: FMLLoadCompleteEvent) {
-        PluginManager.onLoadComplete()
+
     }
 
+    /**
+     * we use this event to know that all registries have frozen
+     */
+    fun onRegistryEnd(
+//        event: IdMappingEvent
+    ) {
+        PluginManager.onLoadComplete()
+        PluginManager.getInstance().onClientRegisterEnd()
+    }
 
 }

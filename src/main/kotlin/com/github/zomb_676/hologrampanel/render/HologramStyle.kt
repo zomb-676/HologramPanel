@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
 import net.minecraft.util.ARGB
+import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
 import kotlin.math.*
 
@@ -47,11 +48,7 @@ interface HologramStyle {
      * @param size [HologramWidgetComponent.Group.visualSize]
      */
     fun drawGroupOutline(
-        size: Size,
-        descriptionSize: Size,
-        selected: SelectPathType,
-        collapse: Boolean,
-        color: Int = contextColor
+        size: Size, descriptionSize: Size, selected: SelectPathType, collapse: Boolean, color: Int = contextColor
     )
 
     fun moveToGroupDescription(descriptionSize: Size)
@@ -67,6 +64,10 @@ interface HologramStyle {
     }
 
     fun drawString(string: Component, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
+        guiGraphics.drawString(font, string, x, y, color, false)
+    }
+
+    fun drawString(string: FormattedCharSequence, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
         guiGraphics.drawString(font, string, x, y, color, false)
     }
 
@@ -187,10 +188,7 @@ interface HologramStyle {
         while (true) {
             if (abs(radius - endRadian) > abs(step)) {
                 builder.addVertex(
-                    matrix,
-                    sin(radius).toFloat() * outRadius,
-                    cos(radius).toFloat() * outRadius,
-                    0.0f
+                    matrix, sin(radius).toFloat() * outRadius, cos(radius).toFloat() * outRadius, 0.0f
                 ).setColor(colorOut)
                 radius += step
             } else {
@@ -324,11 +322,7 @@ interface HologramStyle {
         }
 
         override fun drawGroupOutline(
-            size: Size,
-            descriptionSize: Size,
-            selected: SelectPathType,
-            collapse: Boolean,
-            color: Int
+            size: Size, descriptionSize: Size, selected: SelectPathType, collapse: Boolean, color: Int
         ) {
             val height = if (selected.isAtHead) {
                 size.height

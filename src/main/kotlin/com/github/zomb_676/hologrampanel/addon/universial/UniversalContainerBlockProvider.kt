@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.neoforged.neoforge.capabilities.BlockCapability
 import net.neoforged.neoforge.capabilities.Capabilities
 
 data object  UniversalContainerBlockProvider : ServerDataProvider<BlockHologramContext, BlockEntity> {
@@ -57,4 +58,12 @@ data object  UniversalContainerBlockProvider : ServerDataProvider<BlockHologramC
     override fun targetClass(): Class<BlockEntity> = BlockEntity::class.java
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_container_block")
+
+    override fun appliesTo(
+        context: BlockHologramContext,
+        check: BlockEntity
+    ): Boolean {
+        val level = context.getLevel()
+        return level.getCapability(Capabilities.ItemHandler.BLOCK, check.blockPos, check.blockState, check, null) != null
+    }
 }

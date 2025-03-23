@@ -8,16 +8,21 @@ import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import com.mojang.blaze3d.platform.Lighting
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
+import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
+import net.minecraft.core.component.DataComponents
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
+import net.neoforged.neoforge.client.ClientHooks
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions
 import net.neoforged.neoforge.client.textures.FluidSpriteCache
 import net.neoforged.neoforge.fluids.FluidType
@@ -25,6 +30,7 @@ import org.joml.Quaternionf
 import org.joml.Vector3f
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.max
 
 interface IRenderElement {
 
@@ -207,9 +213,80 @@ interface IRenderElement {
         }
     }
 
+    open class ScreenTooltipElement(val item: ItemStack) : RenderElement() {
+        var sprite = item.get(DataComponents.TOOLTIP_STYLE)
+        var tooltips: List<ClientTooltipComponent> = listOf()
+        override fun measureContentSize(style: HologramStyle): Size {
+            sprite = item.get(DataComponents.TOOLTIP_STYLE)
+            val window = Minecraft.getInstance().window
+            tooltips = ClientHooks.gatherTooltipComponents(
+                item,
+                Screen.getTooltipFromItem(Minecraft.getInstance(), item),
+                item.tooltipImage,
+                window.guiScaledWidth / 2,
+                window.guiScaledWidth,
+                window.guiScaledHeight,
+                style.font
+            )
+            var width = 0
+            var height = if (tooltips.size == 1) -1 else 0
+            tooltips.forEach { tooltip ->
+                width = max(width, tooltip.getWidth(style.font))
+                height += tooltip.getHeight(style.font)
+            }
+            return Size.of(width + 6, height + 6).scale()
+        }
+
+        override fun render(style: HologramStyle, partialTicks: Float) {
+            val texture = ClientHooks.onRenderTooltipTexture(
+                item,
+                style.guiGraphics,
+                0,
+                0,
+                style.font,
+                tooltips,
+                sprite
+            )
+            var height = 0
+            style.stack {
+                style.guiGraphics.pose().translate(2.0, 2.0, 400.0)
+                TooltipRenderUtil.renderTooltipBackground(
+                    style.guiGraphics,
+                    0,
+                    0,
+                    contentSize.width - 4,
+                    contentSize.height - 5,
+                    0,
+                    texture.texture
+                )
+                tooltips.forEachIndexed { index, tooltip ->
+                    tooltip.renderText(
+                        style.font,
+                        0,
+                        height,
+                        style.guiGraphics.pose().last().pose(),
+                        style.guiGraphics.bufferSource
+                    )
+                    height += tooltip.getHeight(style.font)
+                }
+                height = 0
+                tooltips.forEachIndexed { index, tooltip ->
+                    tooltip.renderImage(
+                        style.font,
+                        0,
+                        height,
+                        contentSize.width, contentSize.height, style.guiGraphics
+                    )
+                    height += tooltip.getHeight(style.font)
+                }
+            }
+        }
+
+    }
+
     open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement() {
 
-        override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize()
+        override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize().scale()
 
         override fun render(
             style: HologramStyle, partialTicks: Float
@@ -243,7 +320,7 @@ interface IRenderElement {
             } else {
                 l * count + PADDING * (count + 1)
             }
-            return Size.of(width, height)
+            return Size.of(width, height).scale()
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {

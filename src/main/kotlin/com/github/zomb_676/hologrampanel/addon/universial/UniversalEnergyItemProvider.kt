@@ -47,4 +47,11 @@ data object  UniversalEnergyItemProvider : ServerDataProvider<EntityHologramCont
 
     override fun replaceProvider(target: ResourceLocation): Boolean =
         target == UniversalEnergyEntityProvider.location()
+
+    override fun appliesTo(
+        context: EntityHologramContext,
+        check: ItemEntity
+    ): Boolean {
+        return check.item.getCapability(Capabilities.EnergyStorage.ITEM) != null
+    }
 }

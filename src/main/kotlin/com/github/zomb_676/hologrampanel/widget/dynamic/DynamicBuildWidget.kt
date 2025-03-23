@@ -201,7 +201,7 @@ class DynamicBuildWidget<T : HologramContext>(
         val oldChildren = this.container.children
         val res = maps.flatMap { (_, v) -> v }
         this.container.children =
-            if (res.isNotEmpty()) res else listOf(DynamicBuildComponentWidget.onNoProvider(target))
+            if (res.isNotEmpty()) res else listOf(DynamicBuildComponentWidget.onNoActiveProvider(target))
         this.getSelectedPath().tryRecover(this.container, oldChildren)
     }
 

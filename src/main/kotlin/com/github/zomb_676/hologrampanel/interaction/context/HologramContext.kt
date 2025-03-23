@@ -82,9 +82,6 @@ sealed interface HologramContext {
     fun getHitContext(): HitResult?
 
     @ApiStatus.Internal
-    fun attachedServerData() : CompoundTag?
-
-    @ApiStatus.Internal
     fun setServerUpdateDat(tag: CompoundTag)
 
 

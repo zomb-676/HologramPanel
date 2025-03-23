@@ -23,13 +23,16 @@ class BuildInPlugin : IHologramPlugin {
         register.registerBlockComponent(JukeBoxProvider)
         register.registerBlockComponent(BeeHiveProvider)
         register.registerBlockComponent(EnderChestProvider)
+        register.registerBlockComponent(LecternProvider)
+        register.registerBlockComponent(CauldronBlockProvider)
 
         register.registerBlockComponent(UniversalContainerBlockProvider)
         register.registerBlockComponent(UniversalFluidBlockProvider)
         register.registerBlockComponent(UniversalEnergyBlockProvider)
 
-        register.registerEntityComponent(EntityProvider)
+        register.registerEntityComponent(EntityHealthProvider)
         register.registerEntityComponent(ItemEntityLifeSpanProvider)
+        register.registerEntityComponent(ItemEntityTooltipProvider)
         register.registerEntityComponent(LivingEntityPotionProvider)
         register.registerEntityComponent(UniversalContainerEntityProvider)
         register.registerEntityComponent(UniversalContainerItemProvider)
@@ -74,7 +77,7 @@ class BuildInPlugin : IHologramPlugin {
 
             override fun targetClass(): Class<Entity> = Entity::class.java
 
-            override fun location(): ResourceLocation = HologramPanel.Companion.rl("default_block_description_provider")
+            override fun location(): ResourceLocation = HologramPanel.Companion.rl("default_entity_description_provider")
         }
     }
 }

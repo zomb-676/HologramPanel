@@ -41,7 +41,8 @@ class Remember<T : HologramContext> private constructor() {
         internal val provider: ComponentProvider<T, *>,
         private val remember: Remember<T>,
         private val updater: (CompoundTag) -> V,
-        initial: V
+        initial: V,
+        val equal: (V, V) -> Boolean
     ) {
         private var cachedValue: V = initial
         private var mimicTickValue: V = cachedValue
@@ -65,7 +66,7 @@ class Remember<T : HologramContext> private constructor() {
         internal fun tryUpdate(tag: CompoundTag) {
             val newValue = updater.invoke(tag)
             this.lastValueSynced = 0
-            if (newValue != this.cachedValue) {
+            if (!equal.invoke(newValue, this.cachedValue)) {
                 this.cachedValue = newValue
                 this.mimicTickValue = newValue
                 this.remember.markDirty(this.provider)
@@ -125,19 +126,23 @@ class Remember<T : HologramContext> private constructor() {
      * @param initial the initial value
      * @param code the function to update the value
      */
-    fun <V> client(identity: Int, initial: V, code: () -> V): Holder<T, V> {
+    fun <V> client(identity: Int, initial: V, equal: (V, V) -> Boolean = Objects::equals, code: () -> V): Holder<T, V> {
         val provider = this.provider ?: throw RuntimeException()
         val key = calculateKey(identity, provider)
         var res: Holder<T, *>? = clients.get(key)
         if (res == null) {
-            res = Holder(provider, this, { code.invoke() }, initial)
+            res = Holder(provider, this, { code.invoke() }, initial, equal)
             this.addHolder(key, res, DistType.CLIENT)
         }
         return res.unsafeCast()
     }
 
-    fun serverItemStack(identity: Int, keyName: String): Holder<T, ItemStack> {
-        return server(identity, ItemStack.EMPTY) { tag ->
+    fun serverItemStack(
+        identity: Int,
+        keyName: String,
+        equals: (ItemStack, ItemStack) -> Boolean = ItemStack::matches
+    ): Holder<T, ItemStack> {
+        return server(identity, ItemStack.EMPTY, equals) { tag ->
             ItemStack.parseOptional(
                 context.getLevel().registryAccess(), tag.getCompound(keyName)
             )
@@ -151,13 +156,18 @@ class Remember<T : HologramContext> private constructor() {
      * @param initial the initial value which works as a predicate to check is package has arrived or not
      * @param code decode actual data from server
      */
-    fun <V> server(identity: Int, initial: V, code: (tag: CompoundTag) -> V): Holder<T, V> {
+    fun <V> server(
+        identity: Int,
+        initial: V,
+        equal: (V, V) -> Boolean = Objects::equals,
+        code: (tag: CompoundTag) -> V
+    ): Holder<T, V> {
         val provider = this.provider ?: throw RuntimeException()
         require(provider is ServerDataProvider<T, *>)
         val key = calculateKey(identity, provider)
         var res: Holder<T, *>? = servers.get(key)
         if (res == null) {
-            res = Holder(provider, this, code, initial)
+            res = Holder(provider, this, code, initial, equal)
             this.addHolder(key, res, DistType.SERVER)
         }
         return res.unsafeCast()
