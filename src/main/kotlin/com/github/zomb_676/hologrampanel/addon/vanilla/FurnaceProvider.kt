@@ -34,7 +34,7 @@ data object  FurnaceProvider : ServerDataProvider<BlockHologramContext, Abstract
             if (!item0.isEmpty) itemStack(item0)
             if (!item1.isEmpty) itemStack(item1)
             if (litTimeRemaining != 0) {
-                energyBar(progressBar)
+                workingArrowProgress(progressBar).setPositionOffset(0, 2)
             }
             if (!item2.isEmpty) itemStack(item2)
         }

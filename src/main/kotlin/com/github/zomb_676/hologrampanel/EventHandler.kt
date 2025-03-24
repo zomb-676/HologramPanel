@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
+import com.github.zomb_676.hologrampanel.payload.EntityConversationPayload
 import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
 import com.github.zomb_676.hologrampanel.util.CommandDSL
@@ -26,6 +27,7 @@ import net.neoforged.neoforge.client.event.*
 import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.neoforged.neoforge.event.level.LevelEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
@@ -50,6 +52,7 @@ object EventHandler {
         modBus.addListener(::onLoadComplete)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
+            forgeBus.addListener(::onEntityJoinLevel)
         }
     }
 
@@ -189,6 +192,10 @@ object EventHandler {
             SyncClosePayload.TYPE,
             SyncClosePayload.STREAM_CODEC,
             SyncClosePayload.HANDLE
+        ).playToClient<EntityConversationPayload>(
+            EntityConversationPayload.TYPE,
+            EntityConversationPayload.STREAM_CODEC,
+            EntityConversationPayload.HANDLE
         )
     }
 
@@ -235,6 +242,7 @@ object EventHandler {
             HologramManager.clearHologram()
             InteractionModeManager.clearState()
             DataQueryManager.Client.closeAll()
+            EntityConversationPayload.clear()
         }
     }
 
@@ -274,4 +282,10 @@ object EventHandler {
         PluginManager.getInstance().onClientRegisterEnd()
     }
 
+    private fun onEntityJoinLevel(event : EntityJoinLevelEvent) {
+        val level = event.level
+        if (level.isClientSide) {
+            EntityConversationPayload.onEntityJoin(event.entity)
+        }
+    }
 }

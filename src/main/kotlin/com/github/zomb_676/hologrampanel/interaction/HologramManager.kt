@@ -1,6 +1,8 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
+import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.JomlMath
@@ -9,7 +11,6 @@ import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildComponentWidget
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
@@ -46,7 +47,9 @@ object HologramManager {
         val context = RayTraceHelper.findTarget(32.0, partialTicks)
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context)
-            this.tryAddWidget(widget, context)
+            if (widget != null) {
+                this.tryAddWidget(widget, context)
+            }
         }
 
         if (needArrange) {
@@ -227,11 +230,16 @@ object HologramManager {
     fun remove(widget: HologramWidget) {
         val state = this.states.remove(widget)
         if (state != null) {
-            this.widgets.remove(state.context.getIdentityObject())
+            state.removed = true
+            val context = state.context
+            this.widgets.remove(context.getIdentityObject())
             if (this.lookingWidget?.widget == widget) {
                 this.lookingWidget = null
             }
             InteractionModeManager.onWidgetRemoved(widget)
+            if (context is EntityHologramContext) {
+                (context.getEntity() as HologramHolder).setWidget(null)
+            }
         }
     }
 
@@ -256,4 +264,6 @@ object HologramManager {
             forRemoved.forEach { it.widget.closeWidget() }
         }
     }
+
+    fun queryHologramState(widget : HologramWidget?): HologramRenderState? = states[widget]
 }

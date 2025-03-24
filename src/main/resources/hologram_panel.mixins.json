@@ -5,6 +5,8 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "hologrampanel.refmap.json",
   "mixins": [
+    "ConversionTypeMixin",
+    "EntityMixin",
     "GameDataMixin"
   ],
   "client": [

@@ -34,6 +34,7 @@ class BuildInPlugin : IHologramPlugin {
         register.registerEntityComponent(ItemEntityLifeSpanProvider)
         register.registerEntityComponent(ItemEntityTooltipProvider)
         register.registerEntityComponent(LivingEntityPotionProvider)
+        register.registerEntityComponent(InventoryCarrierProvider)
         register.registerEntityComponent(UniversalContainerEntityProvider)
         register.registerEntityComponent(UniversalContainerItemProvider)
         register.registerEntityComponent(UniversalFluidEntityProvider)

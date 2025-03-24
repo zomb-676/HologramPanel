@@ -8,12 +8,15 @@ import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.getClassOf
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
 import net.neoforged.fml.ModList
 import net.neoforged.fml.config.ModConfig
 import net.neoforged.neoforge.common.ModConfigSpec
 import org.jetbrains.annotations.ApiStatus
 import java.lang.annotation.ElementType
+import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
 import kotlin.streams.asSequence
 
@@ -141,10 +144,19 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
 
     internal val hideBlocks: MutableSet<Block> = mutableSetOf()
 
+    internal val hideEntityTypes: MutableSet<EntityType<*>> = mutableSetOf()
+    internal val hideEntityCallback: MutableSet<Predicate<Entity>> = mutableSetOf()
+
     internal fun onClientRegisterEnd() {
         this.block.addAll(clientRegistration.values.asSequence().flatMap(HologramClientRegistration::blockPopup))
         this.entity.addAll(clientRegistration.values.asSequence().flatMap(HologramClientRegistration::entityPopup))
         this.hideBlocks.addAll(clientRegistration.values.asSequence().flatMap(HologramClientRegistration::hideBlocks))
+        this.hideEntityTypes.addAll(
+            clientRegistration.values.asSequence().flatMap(HologramClientRegistration::hideEntityTypes)
+        )
+        this.hideEntityCallback.addAll(
+            clientRegistration.values.asSequence().flatMap(HologramClientRegistration::hideEntityCallback)
+        )
 
         val configBuilder = ModConfigSpec.Builder()
         plugins.forEach { plugin ->
@@ -167,8 +179,10 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             }
         }
         val container = ModList.get().getModContainerById(HologramPanel.MOD_ID).getOrNull()!!
-        container.registerConfig(ModConfig.Type.CLIENT, configBuilder.build())
+        container.registerConfig(ModConfig.Type.CLIENT, configBuilder.build(), "hologram_panel_plugin_settings")
     }
 
-    fun hideBlock(block : Block) = this.hideBlocks.contains(block)
+    fun hideBlock(block: Block) = this.hideBlocks.contains(block)
+    fun hideEntity(entity: Entity) =
+        this.hideEntityTypes.contains(entity.type) || this.hideEntityCallback.any { it.test(entity) }
 }

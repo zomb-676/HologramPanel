@@ -20,6 +20,7 @@ class HologramRenderState(val widget: HologramWidget, val context: HologramConte
     var displaySize: Size = Size.ZERO
     var centerScreenPos: ScreenCoordinate = ScreenCoordinate.ZERO
     var displayScale: Double = 1.0
+    var removed : Boolean = false
 
     fun sourcePosition(partialTick : Float) = context.hologramCenterPosition(partialTick)
 

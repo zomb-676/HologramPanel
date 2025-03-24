@@ -13,6 +13,7 @@ object Config {
     fun registerConfig(container: FMLModContainer, modBus: IEventBus) {
         ModConfigSpec.Builder()
         container.registerConfig(ModConfig.Type.SERVER, Server.builder.build())
+        container.registerConfig(ModConfig.Type.CLIENT, Client.builder.build())
 
         container.registerExtensionPoint(IConfigScreenFactory::class.java, object : IConfigScreenFactory {
             override fun createScreen(container: ModContainer, modListScreen: Screen): Screen =
@@ -27,6 +28,16 @@ object Config {
         val updateInternal: ModConfigSpec.IntValue = builder
             .defineInRange("update_internal", 5, 1, 20)
 
+    }
+
+    object Client {
+        internal val builder = ModConfigSpec.Builder()
+
+        val dropNonApplicableWidget: ModConfigSpec.BooleanValue = builder
+            .define("drop_none_applicable_widget", true)
+
+        val transformerContextAfterMobConversation: ModConfigSpec.BooleanValue = builder
+            .define("transformer_context_after_mob_conversation", true)
     }
 
 
