@@ -44,7 +44,7 @@ object Config {
         private val builder = ModConfigSpec.Builder()
 
         val updateInternal: ModConfigSpec.IntValue = builder
-            .defineInRange("update_internal", 5, 1, 20)
+            .defineInRange("server_update_internal", 5, 1, 20)
 
         val space: ModConfigSpec = builder.build()
     }
@@ -71,7 +71,7 @@ object Config {
             .define("popup_all_nearby_block", true)
 
         val transformerContextAfterMobConversation: ModConfigSpec.BooleanValue = builder
-            .define("transformer_context_after_mob_conversation", true)
+            .define("transform_context_after_mob_conversation", true)
 
         val renderMaxDistance: ModConfigSpec.DoubleValue = builder
             .defineInRange("render_max_distance", 8.0, 0.1, 16.0)
