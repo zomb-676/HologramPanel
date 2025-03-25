@@ -50,12 +50,12 @@ object RayTraceHelper {
             return@run if (blockDistance < entityDistance) blockHit else entityHit
         }
 
-        if (result.type == HitResult.Type.MISS) return null
-        return when (result) {
+        if (result.type == HitResult.Type.MISS) return@profilerStack null
+        return@profilerStack when (result) {
             is BlockHitResult -> {
                 val context = BlockHologramContext.of(result, player)
                 if (PluginManager.getInstance().hideBlock(context.createTimeBlockState().block)) {
-                    return null
+                    return@profilerStack null
                 }
                 context
             }
@@ -63,7 +63,7 @@ object RayTraceHelper {
             is EntityHitResult -> {
                 val context = EntityHologramContext.of(result, player)
                 if (PluginManager.getInstance().hideEntity(context.getEntity())) {
-                    return null
+                    return@profilerStack null
                 }
                 context
             }
@@ -82,7 +82,7 @@ object RayTraceHelper {
             is EntityHologramContext -> {
                 val builder: HologramWidgetBuilder<EntityHologramContext> = HologramWidgetBuilder(context)
                 val providers: List<ComponentProvider<EntityHologramContext, *>> = PluginManager.queryProviders(context)
-                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get())  return null
+                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get())  return@profilerStack null
                 applyProvider(providers, builder, displayType)
                 val widget = builder.build(BuildInPlugin.Companion.DefaultEntityDescriptionProvider, displayType, providers)
                 (context.getEntity() as HologramHolder).setWidget(widget)
@@ -92,7 +92,7 @@ object RayTraceHelper {
             is BlockHologramContext -> {
                 val builder: HologramWidgetBuilder<BlockHologramContext> = HologramWidgetBuilder(context)
                 val providers: List<ComponentProvider<BlockHologramContext, *>> = PluginManager.queryProviders(context)
-                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get())  return null
+                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get())  return@profilerStack null
                 applyProvider(providers, builder, displayType)
                 builder.build(BuildInPlugin.Companion.DefaultBlockDescriptionProvider, displayType, providers)
             }
@@ -106,7 +106,7 @@ object RayTraceHelper {
             }
             DataQueryManager.Client.query(widget, tag, syncProviders, context)
         }
-        return widget
+        return@profilerStack widget
     }
 
     @Suppress("UNCHECKED_CAST")

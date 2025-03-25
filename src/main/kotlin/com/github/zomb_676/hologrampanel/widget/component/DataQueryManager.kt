@@ -6,6 +6,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
+import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import net.minecraft.client.Minecraft
@@ -66,23 +67,22 @@ object DataQueryManager {
 
     object Server {
         private val syncs: MutableMap<ServerPlayer, MutableMap<UUID, ComponentRequestDataPayload<*>>> = mutableMapOf()
-        private var lastSyncTick: Int = Config.Server.updateInternal.get()
+        private val tick = AutoTicker.by(Config.Server.updateInternal::get)
 
         fun <T : HologramContext> create(player: ServerPlayer, payload: ComponentRequestDataPayload<T>) {
             syncs.computeIfAbsent(player) { mutableMapOf() }[payload.uuid] = (payload)
         }
 
         fun tick() {
-            if (--lastSyncTick != 0) return
-            lastSyncTick = Config.Server.updateInternal.get()
-
-            syncs.forEach { (player, payloads) ->
-                for (payload in payloads.values) {
-                    val tag = CompoundTag()
-                    val changed = append(payload, tag)
-                    if (changed) {
-                        val payload = ComponentResponseDataPayload(payload.uuid, tag)
-                        player.connection.send(payload)
+            tick.tryConsume {
+                syncs.forEach { (player, payloads) ->
+                    for (payload in payloads.values) {
+                        val tag = CompoundTag()
+                        val changed = append(payload, tag)
+                        if (changed) {
+                            val payload = ComponentResponseDataPayload(payload.uuid, tag)
+                            player.connection.send(payload)
+                        }
                     }
                 }
             }

@@ -198,10 +198,6 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.ItemStackElement(true, itemStack).attach()
         }
 
-        fun energy() {
-
-        }
-
         fun workingArrowProgress(progress: ProgressData): IRenderElement.WorkingArrowProgressBarElement {
             val element = IRenderElement.WorkingArrowProgressBarElement(progress)
             return element.attach()

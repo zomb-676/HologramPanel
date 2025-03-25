@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
@@ -29,7 +30,7 @@ object HologramManager {
 
     private var needArrange = false
 
-    fun checkIdentityExist(any : Any): Boolean {
+    fun checkIdentityExist(any: Any): Boolean {
         return widgets.containsKey(any)
     }
 
@@ -60,6 +61,10 @@ object HologramManager {
         profiler.push("render_hologram")
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
+            if (!widget.needRender()) {
+                state.displayed = false
+                return@forEach
+            }
             val widgetSize = state.measure(DisplayType.NORMAL, style)
 
             if (!state.viewVectorDegreeCheckPass(partialTicks)) return@forEach
@@ -75,7 +80,10 @@ object HologramManager {
                     else -> JomlMath.clamp(0.0, 1.0, 1.0 - (distance - start) / (end - start))
                 }
 
-                val scale = calculateScale(distance, 1.0, 8.0)
+                val scale = calculateScale(
+                    distance, Config.Client.renderMinDistance.get(),
+                    Config.Client.renderMaxDistance.get()
+                )
 
                 state.displayed = if (scale * widgetSize.width < 5 || scale * widgetSize.height < 3) {
                     false
@@ -100,7 +108,12 @@ object HologramManager {
         profiler.pop()
     }
 
-    private fun renderHologramStateTip(style: HologramStyle, target: HologramRenderState?, color: Int, baseOffset: Int) {
+    private fun renderHologramStateTip(
+        style: HologramStyle,
+        target: HologramRenderState?,
+        color: Int,
+        baseOffset: Int
+    ) {
         val target = target ?: return
         if (!target.displayed) return
         style.stack {
@@ -174,7 +187,10 @@ object HologramManager {
         return this.lookingWidget
     }
 
-    fun getSubsequentDisplayedCandidate(state: HologramRenderState?, exact: Exact.SelectHologram): HologramRenderState? {
+    fun getSubsequentDisplayedCandidate(
+        state: HologramRenderState?,
+        exact: Exact.SelectHologram
+    ): HologramRenderState? {
         return when (exact) {
             Exact.SelectHologram.SELECT_HOLOGRAM -> getLookingHologram()
             Exact.SelectHologram.SWITCH_HOLOGRAM_UP -> null
@@ -265,5 +281,5 @@ object HologramManager {
         }
     }
 
-    fun queryHologramState(widget : HologramWidget?): HologramRenderState? = states[widget]
+    fun queryHologramState(widget: HologramWidget?): HologramRenderState? = states[widget]
 }

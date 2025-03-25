@@ -124,6 +124,7 @@ class Remember<T : HologramContext> private constructor() {
      *
      * @param identity used to locate identity during multi call
      * @param initial the initial value
+     * @param equal the equal function, by default, [Objects.equals], support box primary type
      * @param code the function to update the value
      */
     fun <V> client(identity: Int, initial: V, equal: (V, V) -> Boolean = Objects::equals, code: () -> V): Holder<T, V> {
@@ -137,6 +138,9 @@ class Remember<T : HologramContext> private constructor() {
         return res.unsafeCast()
     }
 
+    /**
+     * @param equals use [ItemStack.matches], consider [net.minecraft.core.component.DataComponentType] data
+     */
     fun serverItemStack(
         identity: Int,
         keyName: String,
@@ -154,6 +158,7 @@ class Remember<T : HologramContext> private constructor() {
      *
      * @param identity used to locate identity during multi call
      * @param initial the initial value which works as a predicate to check is package has arrived or not
+     * @param equal the equal function, by default, [Objects.equals], support box primary type
      * @param code decode actual data from server
      */
     fun <V> server(

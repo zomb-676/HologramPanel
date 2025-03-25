@@ -8,8 +8,10 @@ import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.getClassOf
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
+import net.minecraft.core.BlockPos
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.neoforged.fml.ModList
 import net.neoforged.fml.config.ModConfig
@@ -132,6 +134,10 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
                 searchByInheritTree(sup, map, list)
             }
         }
+
+        fun <T, V> flatten(source: Map<*, T>, f: (T) -> Collection<V>): Sequence<V> =
+            source.values.asSequence().flatMap(f)
+
     }
 
     internal val commonRegistration: Map<IHologramPlugin, HologramCommonRegistration> =
@@ -148,15 +154,11 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     internal val hideEntityCallback: MutableSet<Predicate<Entity>> = mutableSetOf()
 
     internal fun onClientRegisterEnd() {
-        this.block.addAll(clientRegistration.values.asSequence().flatMap(HologramClientRegistration::blockPopup))
-        this.entity.addAll(clientRegistration.values.asSequence().flatMap(HologramClientRegistration::entityPopup))
-        this.hideBlocks.addAll(clientRegistration.values.asSequence().flatMap(HologramClientRegistration::hideBlocks))
-        this.hideEntityTypes.addAll(
-            clientRegistration.values.asSequence().flatMap(HologramClientRegistration::hideEntityTypes)
-        )
-        this.hideEntityCallback.addAll(
-            clientRegistration.values.asSequence().flatMap(HologramClientRegistration::hideEntityCallback)
-        )
+        this.block.addAll(flatten(clientRegistration, HologramClientRegistration::blockPopup))
+        this.entity.addAll(flatten(clientRegistration, HologramClientRegistration::entityPopup))
+        this.hideBlocks.addAll(flatten(clientRegistration, HologramClientRegistration::hideBlocks))
+        this.hideEntityTypes.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityTypes))
+        this.hideEntityCallback.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityCallback))
 
         val configBuilder = ModConfigSpec.Builder()
         plugins.forEach { plugin ->
@@ -185,4 +187,20 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     fun hideBlock(block: Block) = this.hideBlocks.contains(block)
     fun hideEntity(entity: Entity) =
         this.hideEntityTypes.contains(entity.type) || this.hideEntityCallback.any { it.test(entity) }
+
+    fun popUpBlock(pos: BlockPos, level: Level): PopupType? {
+        if (this.block.isEmpty() && Config.Client.popupAllNearByBlock.get()) {
+            if (level.getBlockState(pos).hasBlockEntity()) {
+                return PopupType.AutoPopup(Config.Client.popUpDistance.get().toDouble())
+            }
+        }
+        return this.block.firstNotNullOfOrNull { it.popup(pos, level) }
+    }
+
+    fun popUpEntity(entity: Entity): PopupType? {
+        if (this.entity.isEmpty() && Config.Client.popupAllNearbyEntity.get()) {
+            return PopupType.AutoPopup(Config.Client.popUpDistance.get().toDouble())
+        }
+        return this.entity.firstNotNullOfOrNull { it.popup(entity) }
+    }
 }

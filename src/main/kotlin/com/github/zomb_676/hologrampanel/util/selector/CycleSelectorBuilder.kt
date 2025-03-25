@@ -3,12 +3,10 @@ package com.github.zomb_676.hologrampanel.util.selector
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
-import net.minecraft.client.gui.GuiGraphics
 
 class CycleSelectorBuilder {
     class GroupEntryBuilder {
         val children: MutableList<CycleEntry> = mutableListOf()
-        lateinit var render: GuiGraphics.() -> Unit
 
         fun add(element: IRenderElement, clickOnClose: Boolean = true, onClick: () -> Unit) {
             val instance = object : CycleEntry.Single {
@@ -30,10 +28,6 @@ class CycleSelectorBuilder {
                 }
             }
             children.add(instance)
-        }
-
-        fun display(code: GuiGraphics.() -> Unit) {
-            this.render = code
         }
 
         inline fun addGroup(element: IRenderElement, code: GroupEntryBuilder.() -> Unit) {

@@ -23,21 +23,24 @@ fun <T> Any.unsafeCast(errorString: String): T {
     }
 }
 
-inline fun PoseStack.stack(code: () -> Unit) {
+/**
+ * @param code must be crossinline to call the paired pop
+ */
+inline fun PoseStack.stack(crossinline code: () -> Unit) {
     this.pushPose()
     code.invoke()
     this.popPose()
 }
 
-inline fun GuiGraphics.stack(code: () -> Unit) {
+inline fun GuiGraphics.stack(crossinline code: () -> Unit) {
     this.pose().stack(code)
 }
 
-inline fun HologramStyle.stack(code: () -> Unit) {
+inline fun HologramStyle.stack(crossinline code: () -> Unit) {
     this.guiGraphics.stack(code)
 }
 
-inline fun HologramStyle.stackIf(check: Boolean, addition: () -> Unit, code: () -> Unit) {
+inline fun HologramStyle.stackIf(check: Boolean, crossinline addition: () -> Unit, crossinline code: () -> Unit) {
     if (check) {
         this.stack {
             addition.invoke()
@@ -70,7 +73,10 @@ inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> 
 
 inline val profiler: ProfilerFiller get() = Profiler.get()
 
-inline fun <T> profilerStack(name: String, code: () -> T): T {
+/**
+ * @param code must be crossinline, as the paired pop must be called
+ */
+inline fun <T> profilerStack(name: String, crossinline code: () -> T): T {
     profiler.push(name)
     val res = code.invoke()
     profiler.pop()
@@ -89,13 +95,13 @@ inline val Double.normalizedInto2PI: Double
         }
     }
 
-inline fun glDebugStack(debugLabelName: String, id: Int = 0, code: () -> Unit) {
+inline fun glDebugStack(debugLabelName: String, id: Int = 0, crossinline code: () -> Unit) {
     GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, id, debugLabelName)
     code.invoke()
     GL46.glPopDebugGroup()
 }
 
-inline fun ModConfigSpec.Builder.stack(name: String, f: () -> Unit) {
+inline fun ModConfigSpec.Builder.stack(name: String, crossinline f: () -> Unit) {
     this.push(name)
     f.invoke()
     this.pop()

@@ -3,10 +3,8 @@ package com.github.zomb_676.hologrampanel.api
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
-@ApiStatus.Experimental
 class HologramClientRegistration(internal val plugin: IHologramPlugin) {
     internal val blockPopup: MutableList<PopupCallback.BlockPopupCallback> = mutableListOf()
     internal val entityPopup: MutableList<PopupCallback.EntityPopupCallback> = mutableListOf()

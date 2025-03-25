@@ -132,7 +132,7 @@ interface HologramStyle {
         this.scale(scale, scale)
     }
 
-    fun push() = this.guiGraphics.pose.pushPose()
+    fun push() = this.guiGraphics.pose().pushPose()
     fun pop() = this.guiGraphics.pose().popPose()
 
     val font: Font get() = Minecraft.getInstance().font

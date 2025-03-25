@@ -22,7 +22,7 @@ class DynamicBuildWidget<T : HologramContext>(
 ) :
     HologramComponentWidget<T>(target, container) {
 
-//    private val mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty(container)
+    //    private val mimicPath: SelectedPath<HologramWidgetComponent<T>> = SelectedPath.Empty(container)
     private val path: SelectedPath<HologramWidgetComponent<T>> = object : SelectedPath<HologramWidgetComponent<T>> {
         val stack: MutableList<DynamicBuildComponentWidget.Group<T>> = mutableListOf()
 
@@ -176,7 +176,7 @@ class DynamicBuildWidget<T : HologramContext>(
         }
     }
 
-    private var maps: Map<ComponentProvider<T,*>, List<DynamicBuildComponentWidget<T>>> =
+    private var maps: Map<ComponentProvider<T, *>, List<DynamicBuildComponentWidget<T>>> =
         target.getRememberDataUnsafe<T>().providers().associateWith { prov ->
             this.container.children.filter { it.getProvider() == prov }
         }
@@ -211,4 +211,9 @@ class DynamicBuildWidget<T : HologramContext>(
     }
 
     override fun getSelectedPath(): SelectedPath<HologramWidgetComponent<T>> = this.path
+
+    override fun needRender(): Boolean {
+        val children = this.container.children
+        return children.size > 2 || children[0] !is DynamicBuildComponentWidget.SpecialSingle<*>
+    }
 }

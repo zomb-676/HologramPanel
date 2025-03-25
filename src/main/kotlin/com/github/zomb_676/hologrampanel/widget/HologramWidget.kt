@@ -30,4 +30,6 @@ interface HologramWidget {
 
     fun onRemove() {}
     fun onAdd() {}
+
+    fun needRender() : Boolean = true
 }

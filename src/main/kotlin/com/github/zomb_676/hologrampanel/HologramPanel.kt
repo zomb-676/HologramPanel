@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel
 
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.util.valueproviders.ConstantInt
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.common.Mod
@@ -37,5 +38,6 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
         EventHandler.initEvents(dist, modBus)
         AllRegisters.initEvents(dist, modBus)
+        Config.initEvents(dist, modBus)
     }
 }

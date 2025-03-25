@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.api.PopupType
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
@@ -235,6 +236,9 @@ object EventHandler {
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {
         HologramManager.clientTick()
+        if (Config.Client.enablePopUp.get()) {
+            PopupManager.tickPopup()
+        }
     }
 
     private fun levelUnload(event: LevelEvent.Unload) {
