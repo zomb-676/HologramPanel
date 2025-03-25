@@ -52,10 +52,10 @@ class EntityConversationPayload(val oldEntityID: Int, val newEntityID: Int, val 
         fun onEntityJoin(entity: Entity) {
             require(entity.level().isClientSide)
             if (!paddingEntities.containsKey(entity.id)) return
-            val oldState = paddingEntities.remove(entity.id)
+            val oldState = paddingEntities.remove(entity.id) ?: return
             val newContext = EntityHologramContext(entity, Minecraft.getInstance().player!!, null)
-            val newWidget = RayTraceHelper.createHologramWidget(newContext) ?: return
-            HologramManager.tryAddWidget(newWidget, newContext)
+            val newWidget = RayTraceHelper.createHologramWidget(newContext, oldState.displayType) ?: return
+            HologramManager.tryAddWidget(newWidget, newContext, oldState.displayType)
         }
 
         fun clear() {

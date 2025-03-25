@@ -1,12 +1,15 @@
 package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
+import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.RayTraceHelper
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.profilerStack
+import com.github.zomb_676.hologrampanel.util.unsafeCast
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import net.minecraft.client.Minecraft
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.core.BlockPos
@@ -27,23 +30,25 @@ object PopupManager {
             val manager = PluginManager.getInstance()
             for (pos in BlockPos.betweenClosed(aabb)) {
                 if (HologramManager.checkIdentityExist(pos)) continue
-                val popup = manager.popUpBlock(pos, level) ?: continue
+                val ticket = manager.popUpBlock(pos, level) ?: continue
                 val context = BlockHologramContext(pos.immutable(), player, null)
-                tryAdd(context)
+                val state = tryAdd(context, DisplayType.NORMAL)
+                state?.hologramTicks?.add(ticket.unsafeCast())
             }
             for (entity in level.getEntities(null, aabb)) {
                 if (entity == Minecraft.getInstance().player) continue
                 if (HologramManager.checkIdentityExist(entity.uuid)) continue
-                val popup = manager.popUpEntity(entity) ?: continue
+                val ticket = manager.popUpEntity(entity) ?: continue
                 val context = EntityHologramContext(entity, player, null)
-                tryAdd(context)
+                val state = tryAdd(context, DisplayType.NORMAL)
+                state?.hologramTicks?.add(ticket.unsafeCast())
             }
         }
     }
 
-    private fun tryAdd(context: HologramContext) {
-        val widget = RayTraceHelper.createHologramWidget(context) ?: return
-        HologramManager.tryAddWidget(widget, context)
+    private fun tryAdd(context: HologramContext, displayType: DisplayType): HologramRenderState? {
+        val widget = RayTraceHelper.createHologramWidget(context, displayType) ?: return null
+        return HologramManager.tryAddWidget(widget, context, DisplayType.NORMAL)
     }
 
 }

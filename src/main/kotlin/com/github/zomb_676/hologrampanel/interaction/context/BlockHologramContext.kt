@@ -86,7 +86,7 @@ class BlockHologramContext(
     }
 
     /**
-     * when the block(not block state) change, we think the widget si invalid
+     * when the block(not block state) change, we think the widget is invalid
      **/
     override fun stillValid(): Boolean = getBlockState().block == originalBlock.block
 

@@ -1,28 +1,67 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.HologramTicket
+import com.github.zomb_676.hologrampanel.api.TicketAdder
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.JomlMath
-import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
-import com.github.zomb_676.hologrampanel.util.ScreenCoordinate
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import net.minecraft.client.Minecraft
 import org.joml.Vector3f
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
-class HologramRenderState(val widget: HologramWidget, val context: HologramContext) {
+class HologramRenderState(val widget: HologramWidget, val context: HologramContext, displayType1: DisplayType) {
     var displayed: Boolean = false
 
     var size: Size = Size.ZERO
     var displaySize: Size = Size.ZERO
     var centerScreenPos: ScreenCoordinate = ScreenCoordinate.ZERO
     var displayScale: Double = 1.0
-    var removed : Boolean = false
+    var removed: Boolean = false
+    var displayType: DisplayType = DisplayType.NORMAL
+        set(value) {
+            if (value != field) {
+                field = value
+                if (widget is DynamicBuildWidget<*>) {
+                    widget.updateComponent(value)
+                }
+            }
+        }
 
-    fun sourcePosition(partialTick : Float) = context.hologramCenterPosition(partialTick)
+    internal val hologramTicks: MutableList<HologramTicket<HologramContext>> = run {
+        @Suppress("UNCHECKED_CAST")
+        fun <T : HologramContext> f(context: T): MutableList<HologramTicket<T>> {
+            val list = mutableListOf<HologramTicket<T>>()
+            val adder = TicketAdder(list)
+            if (widget is DynamicBuildWidget<*>) {
+                (widget.providers as List<ComponentProvider<T, *>>).forEach {
+                    it.attachTicket(context.unsafeCast(), adder)
+                }
+            }
+            return list
+        }
+        f(context)
+    }
+
+    fun stillValid(): Boolean {
+        if (!context.stillValid()) return false
+        if (hologramTicks.isEmpty()) return false
+        hologramTicks.forEach { ticket ->
+            val pass = ticket.stillValid(this.context)
+            if (ticket.isCritical()) {
+                if (!pass) return false
+            } else {
+                if (pass) return true
+            }
+        }
+        return true
+    }
+
+    fun sourcePosition(partialTick: Float) = context.hologramCenterPosition(partialTick)
 
     fun viewVectorDegreeCheckPass(partialTick: Float): Boolean {
         val camera = Minecraft.getInstance().gameRenderer.mainCamera

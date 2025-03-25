@@ -181,10 +181,7 @@ class DynamicBuildWidget<T : HologramContext>(
             this.container.children.filter { it.getProvider() == prov }
         }
 
-    fun updateComponent() {
-        //todo
-        val displayType = DisplayType.NORMAL
-
+    fun updateComponent(displayType: DisplayType) {
         val remember = target.getRememberDataUnsafe<T>()
         val builder = HologramWidgetBuilder(target)
         maps = maps.mapValues { (provider, list) ->
@@ -212,8 +209,8 @@ class DynamicBuildWidget<T : HologramContext>(
 
     override fun getSelectedPath(): SelectedPath<HologramWidgetComponent<T>> = this.path
 
-    override fun needRender(): Boolean {
+    override fun hasNoneOrdinaryContent(): Boolean {
         val children = this.container.children
-        return children.size > 2 || children[0] !is DynamicBuildComponentWidget.SpecialSingle<*>
+        return children.size > 2 || children.any { it !is DynamicBuildComponentWidget.OrdinarySingle }
     }
 }

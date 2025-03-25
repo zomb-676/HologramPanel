@@ -34,22 +34,26 @@ object HologramManager {
         return widgets.containsKey(any)
     }
 
-    fun tryAddWidget(widget: HologramWidget, context: HologramContext) {
+    fun tryAddWidget(widget: HologramWidget, context: HologramContext, displayType: DisplayType): HologramRenderState? {
         if (!widgets.containsKey(context.getIdentityObject())) {
             widgets[context.getIdentityObject()] = widget
-            states[widget] = HologramRenderState(widget, context)
+            val state = HologramRenderState(widget, context, displayType)
+            states[widget] = state
             this.needArrange = true
 
             widget.onAdd()
+
+            return state
         }
+        return null
     }
 
     internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
         val context = RayTraceHelper.findTarget(32.0, partialTicks)
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
-            val widget = RayTraceHelper.createHologramWidget(context)
+            val widget = RayTraceHelper.createHologramWidget(context, DisplayType.NORMAL)
             if (widget != null) {
-                this.tryAddWidget(widget, context)
+                this.tryAddWidget(widget, context, DisplayType.NORMAL)
             }
         }
 
@@ -61,11 +65,12 @@ object HologramManager {
         profiler.push("render_hologram")
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
-            if (!widget.needRender()) {
+            if (Config.Client.skipHologramIfEmpty.get() && !widget.hasNoneOrdinaryContent()) {
                 state.displayed = false
                 return@forEach
             }
-            val widgetSize = state.measure(DisplayType.NORMAL, style)
+            val displayType  = state.displayType
+            val widgetSize = state.measure(displayType, style)
 
             if (!state.viewVectorDegreeCheckPass(partialTicks)) return@forEach
             style.stack {
@@ -97,7 +102,7 @@ object HologramManager {
                 style.scale(scale, scale)
                 style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
                 style.fill(0, 0, widgetSize.width, widgetSize.height, 0x7fffffff)
-                widget.render(state, style, DisplayType.NORMAL, partialTicks)
+                widget.render(state, style, displayType, partialTicks)
             }
         }
         this.updateLookingAt()
@@ -261,19 +266,19 @@ object HologramManager {
 
     fun clientTick() {
         val forRemoved = ArrayList<HologramRenderState>(0)
-        this.states.values.forEach { widget ->
-            if (widget.context.stillValid()) {
-                val remember = widget.context.getRememberData()
+        this.states.forEach { (widget, state) ->
+            val context = state.context
+            if (state.stillValid()) {
+                val remember = context.getRememberData()
                 remember.tickMimicClientUpdate()
                 remember.tickClientValueUpdate()
-                if (widget.context.getRememberData().needUpdate()) {
-                    val widget = widget.widget
+                if (remember.needUpdate()) {
                     if (widget is DynamicBuildWidget<*>) {
-                        widget.updateComponent()
+                        widget.updateComponent(state.displayType)
                     }
                 }
             } else {
-                forRemoved.add(widget)
+                forRemoved.add(state)
             }
         }
         if (forRemoved.isNotEmpty()) {

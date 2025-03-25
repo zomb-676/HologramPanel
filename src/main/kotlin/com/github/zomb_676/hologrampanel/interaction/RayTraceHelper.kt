@@ -23,7 +23,6 @@ import net.minecraft.world.entity.projectile.ProjectileUtil
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
-import org.apache.http.pool.ConnPool
 
 object RayTraceHelper {
     /**
@@ -75,16 +74,16 @@ object RayTraceHelper {
      * create the widget by the context
      */
     fun <T : HologramContext> createHologramWidget(
-        context: T, displayType: DisplayType = DisplayType.NORMAL
+        context: T, displayType: DisplayType
     ): HologramWidget? = profilerStack("create_hologram") {
-
         val widget: DynamicBuildWidget<T> = when (context) {
             is EntityHologramContext -> {
                 val builder: HologramWidgetBuilder<EntityHologramContext> = HologramWidgetBuilder(context)
                 val providers: List<ComponentProvider<EntityHologramContext, *>> = PluginManager.queryProviders(context)
-                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get())  return@profilerStack null
+                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
                 applyProvider(providers, builder, displayType)
-                val widget = builder.build(BuildInPlugin.Companion.DefaultEntityDescriptionProvider, displayType, providers)
+                val widget =
+                    builder.build(BuildInPlugin.Companion.DefaultEntityDescriptionProvider, displayType, providers)
                 (context.getEntity() as HologramHolder).setWidget(widget)
                 widget
             }
@@ -92,13 +91,12 @@ object RayTraceHelper {
             is BlockHologramContext -> {
                 val builder: HologramWidgetBuilder<BlockHologramContext> = HologramWidgetBuilder(context)
                 val providers: List<ComponentProvider<BlockHologramContext, *>> = PluginManager.queryProviders(context)
-                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get())  return@profilerStack null
+                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
                 applyProvider(providers, builder, displayType)
                 builder.build(BuildInPlugin.Companion.DefaultBlockDescriptionProvider, displayType, providers)
             }
         }.unsafeCast()
-        val syncProviders: List<ServerDataProvider<T, *>> =
-            context.getRememberDataUnsafe<T>().serverDataEntries()
+        val syncProviders: List<ServerDataProvider<T, *>> = context.getRememberDataUnsafe<T>().serverDataEntries()
         if (syncProviders.isNotEmpty()) {
             val tag = CompoundTag()
             syncProviders.forEach { provider ->

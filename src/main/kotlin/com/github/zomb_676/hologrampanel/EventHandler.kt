@@ -1,14 +1,9 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.api.PopupType
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
-import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
-import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
-import com.github.zomb_676.hologrampanel.payload.EntityConversationPayload
-import com.github.zomb_676.hologrampanel.payload.ServerHandShakePayload
-import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
+import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
@@ -25,6 +20,7 @@ import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent
 import net.neoforged.neoforge.client.event.*
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers
 import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
@@ -165,7 +161,11 @@ object EventHandler {
         }
 
         private fun registerLayer(event: RegisterGuiLayersEvent) {
-            event.registerAboveAll(HologramPanel.rl("interaction_mode_layer"), InteractionLayer.getLayer())
+            event.registerBelow(
+                VanillaGuiLayers.CROSSHAIR,
+                HologramPanel.rl("interaction_mode_layer"),
+                InteractionLayer.getLayer()
+            )
             event.registerAboveAll(HologramPanel.rl("cycle_selector"), object : LayeredDraw.Layer {
                 override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
                     CycleSelector.render(guiGraphics, deltaTracker)
@@ -286,7 +286,7 @@ object EventHandler {
         PluginManager.getInstance().onClientRegisterEnd()
     }
 
-    private fun onEntityJoinLevel(event : EntityJoinLevelEvent) {
+    private fun onEntityJoinLevel(event: EntityJoinLevelEvent) {
         val level = event.level
         if (level.isClientSide) {
             EntityConversationPayload.onEntityJoin(event.entity)

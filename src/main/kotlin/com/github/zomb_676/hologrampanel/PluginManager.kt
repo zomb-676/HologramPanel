@@ -188,18 +188,18 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     fun hideEntity(entity: Entity) =
         this.hideEntityTypes.contains(entity.type) || this.hideEntityCallback.any { it.test(entity) }
 
-    fun popUpBlock(pos: BlockPos, level: Level): PopupType? {
+    fun popUpBlock(pos: BlockPos, level: Level): HologramTicket<BlockHologramContext>? {
         if (this.block.isEmpty() && Config.Client.popupAllNearByBlock.get()) {
             if (level.getBlockState(pos).hasBlockEntity()) {
-                return PopupType.AutoPopup(Config.Client.popUpDistance.get().toDouble())
+                return HologramTicket.ByDistance(Config.Client.popUpDistance.get().toDouble())
             }
         }
         return this.block.firstNotNullOfOrNull { it.popup(pos, level) }
     }
 
-    fun popUpEntity(entity: Entity): PopupType? {
+    fun popUpEntity(entity: Entity): HologramTicket<EntityHologramContext>? {
         if (this.entity.isEmpty() && Config.Client.popupAllNearbyEntity.get()) {
-            return PopupType.AutoPopup(Config.Client.popUpDistance.get().toDouble())
+            return HologramTicket.ByDistance(Config.Client.popUpDistance.get().toDouble())
         }
         return this.entity.firstNotNullOfOrNull { it.popup(entity) }
     }

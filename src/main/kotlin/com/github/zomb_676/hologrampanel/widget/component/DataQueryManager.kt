@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel.widget.component
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
@@ -44,7 +45,8 @@ object DataQueryManager {
             context.getRememberData().onReceiveData(tag)
             if (context.getRememberData().needUpdate()) {
                 profilerStack("rebuild_hologram_component") {
-                    widget.updateComponent()
+                    val state = HologramManager.queryHologramState(widget) ?: return@profilerStack
+                    widget.updateComponent(state.displayType)
                 }
             }
         }
