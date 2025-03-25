@@ -12,7 +12,8 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.neoforged.neoforge.capabilities.Capabilities
 
-data object  UniversalFluidEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
+data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
+    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,

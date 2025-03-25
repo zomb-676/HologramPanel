@@ -9,14 +9,12 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.capabilities.Capabilities
 
-data object  UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
+data object UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
+    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun appendServerData(
-        additionData: CompoundTag,
-        targetData: CompoundTag,
-        context: EntityHologramContext
+        additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity()
         val cap = entity.getCapability(Capabilities.EnergyStorage.ENTITY, null) ?: return false
@@ -26,8 +24,7 @@ data object  UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramCo
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<EntityHologramContext>,
-        displayType: DisplayType
+        builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
         val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
@@ -46,8 +43,7 @@ data object  UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramCo
     override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_entity")
 
     override fun appliesTo(
-        context: EntityHologramContext,
-        check: Entity
+        context: EntityHologramContext, check: Entity
     ): Boolean {
         return check.getCapability(Capabilities.EnergyStorage.ENTITY, null) != null
     }

@@ -9,14 +9,11 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
-import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.capabilities.Capabilities
 
-data object  UniversalEnergyItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
+data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendServerData(
-        additionData: CompoundTag,
-        targetData: CompoundTag,
-        context: EntityHologramContext
+        additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity<ItemEntity>() ?: return false
         val cap = entity.item.getCapability(Capabilities.EnergyStorage.ITEM) ?: return false
@@ -26,8 +23,7 @@ data object  UniversalEnergyItemProvider : ServerDataProvider<EntityHologramCont
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<EntityHologramContext>,
-        displayType: DisplayType
+        builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
         val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
@@ -45,12 +41,10 @@ data object  UniversalEnergyItemProvider : ServerDataProvider<EntityHologramCont
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_item")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
-        target == UniversalEnergyEntityProvider.location()
+    override fun replaceProvider(target: ResourceLocation): Boolean = target == UniversalEnergyEntityProvider.location()
 
     override fun appliesTo(
-        context: EntityHologramContext,
-        check: ItemEntity
+        context: EntityHologramContext, check: ItemEntity
     ): Boolean {
         return check.item.getCapability(Capabilities.EnergyStorage.ITEM) != null
     }

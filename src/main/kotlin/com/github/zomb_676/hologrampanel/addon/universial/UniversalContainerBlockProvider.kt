@@ -9,14 +9,12 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
-import net.neoforged.neoforge.capabilities.BlockCapability
 import net.neoforged.neoforge.capabilities.Capabilities
 
-data object  UniversalContainerBlockProvider : ServerDataProvider<BlockHologramContext, BlockEntity> {
+data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramContext, BlockEntity> {
+    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun appendServerData(
-        additionData: CompoundTag,
-        targetData: CompoundTag,
-        context: BlockHologramContext
+        additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val be = context.getBlockEntity() ?: return false
         val cap = be.level?.getCapability(Capabilities.ItemHandler.BLOCK, be.blockPos, be.blockState, be, null)
@@ -36,8 +34,7 @@ data object  UniversalContainerBlockProvider : ServerDataProvider<BlockHologramC
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<BlockHologramContext>,
-        displayType: DisplayType
+        builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
     ) {
         val context = builder.context
         val remember = builder.context.getRememberData()
@@ -60,10 +57,11 @@ data object  UniversalContainerBlockProvider : ServerDataProvider<BlockHologramC
     override fun location(): ResourceLocation = HologramPanel.rl("universal_container_block")
 
     override fun appliesTo(
-        context: BlockHologramContext,
-        check: BlockEntity
+        context: BlockHologramContext, check: BlockEntity
     ): Boolean {
         val level = context.getLevel()
-        return level.getCapability(Capabilities.ItemHandler.BLOCK, check.blockPos, check.blockState, check, null) != null
+        return level.getCapability(
+            Capabilities.ItemHandler.BLOCK, check.blockPos, check.blockState, check, null
+        ) != null
     }
 }

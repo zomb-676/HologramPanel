@@ -12,10 +12,9 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.capabilities.Capabilities
 
 data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramContext, BlockEntity> {
+    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun appendServerData(
-        additionData: CompoundTag,
-        targetData: CompoundTag,
-        context: BlockHologramContext
+        additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val be = context.getBlockEntity() ?: return false
         val cap = be.level?.getCapability(Capabilities.EnergyStorage.BLOCK, be.blockPos, be.blockState, be, null)
@@ -26,8 +25,7 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<BlockHologramContext>,
-        displayType: DisplayType
+        builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
         val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
@@ -46,10 +44,11 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
     override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_block")
 
     override fun appliesTo(
-        context: BlockHologramContext,
-        check: BlockEntity
+        context: BlockHologramContext, check: BlockEntity
     ): Boolean {
         val level = context.getLevel()
-        return level.getCapability(Capabilities.EnergyStorage.BLOCK, check.blockPos, check.blockState, check, null) != null
+        return level.getCapability(
+            Capabilities.EnergyStorage.BLOCK, check.blockPos, check.blockState, check, null
+        ) != null
     }
 }
