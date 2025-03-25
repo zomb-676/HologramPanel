@@ -11,8 +11,8 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.neoforged.neoforge.capabilities.Capabilities
 
+@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
-    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {

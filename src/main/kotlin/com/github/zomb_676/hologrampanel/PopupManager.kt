@@ -32,16 +32,18 @@ object PopupManager {
                 if (HologramManager.checkIdentityExist(pos)) continue
                 val ticket = manager.popUpBlock(pos, level) ?: continue
                 val context = BlockHologramContext(pos.immutable(), player, null)
-                val state = tryAdd(context, DisplayType.NORMAL)
-                state?.hologramTicks?.add(ticket.unsafeCast())
+                val state = tryAdd(context, DisplayType.NORMAL) ?: continue
+                state.hologramTicks.add(ticket.unsafeCast())
+                DebugHelper.recordPopup(state)
             }
             for (entity in level.getEntities(null, aabb)) {
                 if (entity == Minecraft.getInstance().player) continue
                 if (HologramManager.checkIdentityExist(entity.uuid)) continue
                 val ticket = manager.popUpEntity(entity) ?: continue
                 val context = EntityHologramContext(entity, player, null)
-                val state = tryAdd(context, DisplayType.NORMAL)
-                state?.hologramTicks?.add(ticket.unsafeCast())
+                val state = tryAdd(context, DisplayType.NORMAL) ?: continue
+                state.hologramTicks.add(ticket.unsafeCast())
+                DebugHelper.recordPopup(state)
             }
         }
     }

@@ -61,6 +61,6 @@ data object  UniversalContainerEntityProvider : ServerDataProvider<EntityHologra
         context: EntityHologramContext,
         check: Entity
     ): Boolean {
-        return check.getCapability(Capabilities.ItemHandler.ENTITY, null) != null
+        return check.getCapability(Capabilities.ItemHandler.ENTITY) != null
     }
 }

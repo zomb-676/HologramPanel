@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
 import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
@@ -19,6 +20,8 @@ object DataQueryManager {
     object Client {
         private val syncs: MutableMap<UUID, DynamicBuildWidget<*>> = mutableMapOf()
         private val maps: MutableMap<DynamicBuildWidget<*>, HologramContext> = mutableMapOf()
+
+        fun syncCount() = syncs.size
 
         fun <T : HologramContext> query(
             widget: DynamicBuildWidget<T>,
@@ -49,6 +52,7 @@ object DataQueryManager {
                     widget.updateComponent(state.displayType)
                 }
             }
+            DebugHelper.onDataReceived(widget)
         }
 
         fun closeForWidget(widget: DynamicBuildWidget<*>) {
@@ -70,6 +74,8 @@ object DataQueryManager {
     object Server {
         private val syncs: MutableMap<ServerPlayer, MutableMap<UUID, ComponentRequestDataPayload<*>>> = mutableMapOf()
         private val tick = AutoTicker.by(Config.Server.updateInternal::get)
+
+        fun syncCount() = syncs.values.sumOf { it.size }
 
         fun <T : HologramContext> create(player: ServerPlayer, payload: ComponentRequestDataPayload<T>) {
             syncs.computeIfAbsent(player) { mutableMapOf() }[payload.uuid] = (payload)

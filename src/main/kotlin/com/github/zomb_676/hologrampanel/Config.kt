@@ -82,6 +82,9 @@ object Config {
         val skipHologramIfEmpty: ModConfigSpec.BooleanValue = builder
             .define("skip_hologram_if_empty", true)
 
+        val renderDebugLayer : ModConfigSpec.BooleanValue = builder
+            .define("render_debug_value", false)
+
         fun tryValidate() {
             if (renderMaxDistance.get() <= renderMinDistance.get()) {
                 renderMinDistance.set(1.0)

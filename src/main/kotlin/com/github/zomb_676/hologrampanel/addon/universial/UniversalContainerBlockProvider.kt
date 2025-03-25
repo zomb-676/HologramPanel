@@ -11,8 +11,8 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.capabilities.Capabilities
 
+@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramContext, BlockEntity> {
-    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {

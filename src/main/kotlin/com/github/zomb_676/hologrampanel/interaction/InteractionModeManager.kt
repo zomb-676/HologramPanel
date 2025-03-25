@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Raw
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
@@ -111,7 +112,7 @@ object InteractionModeManager {
             }
         }
 
-        InteractionLayer.updateExactCommand(exactCommand)
+        DebugHelper.updateExactCommand(exactCommand)
         this.processCommand(raw, exactCommand, lookingTarget)
     }
 

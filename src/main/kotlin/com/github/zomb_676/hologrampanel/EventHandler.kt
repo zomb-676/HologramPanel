@@ -9,6 +9,7 @@ import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.blaze3d.platform.InputConstants
+import com.mojang.brigadier.arguments.BoolArgumentType
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
@@ -66,6 +67,7 @@ object EventHandler {
             forgeBus.addListener(::onClientTickPost)
             forgeBus.addListener(::onRenderGUI)
             forgeBus.addListener(::onPlayerLogout)
+            forgeBus.addListener(::onRenderLevelStage)
         }
 
         val switchModeKey by lazy {
@@ -105,15 +107,10 @@ object EventHandler {
         }
 
         private fun onClientTickPre(event: ClientTickEvent.Pre) {
-            InteractionLayer.tick(event)
+            DebugHelper.tick(event)
         }
 
         private fun onRenderGUI(event: RenderGuiEvent.Post) {
-            val font = Minecraft.getInstance().font
-            InteractionLayer.renderCommand(
-                10, 10, event.guiGraphics, event.partialTick.getGameTimeDeltaPartialTick(false)
-            )
-            event.guiGraphics.drawString(font, InteractionModeManager.mode.toString(), 10, 20, -1)
         }
 
         fun onWindowResize(width: Int, height: Int) {
@@ -171,10 +168,15 @@ object EventHandler {
                     CycleSelector.render(guiGraphics, deltaTracker)
                 }
             })
+            event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.getLayer())
         }
 
         private fun onPlayerLogout(event: ClientPlayerNetworkEvent.LoggingOut) {
             HologramPanel.serverInstalled = false
+        }
+
+        fun onRenderLevelStage(event: RenderLevelStageEvent) {
+            DebugHelper.renderLevelLast(event)
         }
     }
 
@@ -203,7 +205,12 @@ object EventHandler {
     private fun registerCommand(event: RegisterCommandsEvent) {
         CommandDSL(event.dispatcher).apply {
             HologramPanel.MOD_ID {
-
+                "debug_layer"(BoolArgumentType.bool()) {
+                    execute {
+                        val value = BoolArgumentType.getBool(this, "debug_layer")
+                        Config.Client.renderDebugLayer.set(value)
+                    }
+                }
             }
         }
     }

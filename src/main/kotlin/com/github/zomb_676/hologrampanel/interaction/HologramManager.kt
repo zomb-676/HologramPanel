@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.interaction
 
 import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
@@ -19,7 +20,7 @@ import net.minecraft.client.gui.GuiGraphics
 
 object HologramManager {
     private val widgets = mutableMapOf<Any, HologramWidget>()
-    private val states = mutableMapOf<HologramWidget, HologramRenderState>()
+    internal val states = mutableMapOf<HologramWidget, HologramRenderState>()
     private var lookingWidget: HologramRenderState? = null
 
     fun clearHologram() {
@@ -69,7 +70,7 @@ object HologramManager {
                 state.displayed = false
                 return@forEach
             }
-            val displayType  = state.displayType
+            val displayType = state.displayType
             val widgetSize = state.measure(displayType, style)
 
             if (!state.viewVectorDegreeCheckPass(partialTicks)) return@forEach
@@ -261,6 +262,7 @@ object HologramManager {
             if (context is EntityHologramContext) {
                 (context.getEntity() as HologramHolder).setWidget(null)
             }
+            DebugHelper.recordRemove(state)
         }
     }
 
@@ -287,4 +289,6 @@ object HologramManager {
     }
 
     fun queryHologramState(widget: HologramWidget?): HologramRenderState? = states[widget]
+
+    fun widgetCount(): Int = states.size
 }

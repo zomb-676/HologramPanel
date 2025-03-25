@@ -12,12 +12,10 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.neoforged.neoforge.capabilities.Capabilities
 
+@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
-    @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun appendServerData(
-        additionData: CompoundTag,
-        targetData: CompoundTag,
-        context: EntityHologramContext
+        additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity()
         val cap = entity.getCapability(Capabilities.FluidHandler.ENTITY, null) ?: return false
@@ -37,8 +35,7 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<EntityHologramContext>,
-        displayType: DisplayType
+        builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
     ) {
         val context = builder.context
         val remember = builder.context.getRememberData()
@@ -71,8 +68,7 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
     override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_entity")
 
     override fun appliesTo(
-        context: EntityHologramContext,
-        check: Entity
+        context: EntityHologramContext, check: Entity
     ): Boolean {
         return check.getCapability(Capabilities.FluidHandler.ENTITY, null) != null
     }
