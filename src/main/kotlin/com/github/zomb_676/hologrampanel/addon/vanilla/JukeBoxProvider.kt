@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.util.saveOptional
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.core.component.DataComponents
@@ -33,7 +34,7 @@ data object  JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxB
         val remember = context.getRememberData()
 
         val songItem by remember.serverItemStack(0, "song_item")
-        val songStarted by remember.server(1, 0) { tag -> tag.getLong("song_started") }
+        val songStarted by remember.server(1, 0) { tag -> tag.getLong("song_started").orElse(0) }
 
         if (!songItem.isEmpty) {
             val playable = songItem.components.get(DataComponents.JUKEBOX_PLAYABLE) ?: return

@@ -56,7 +56,7 @@ data object  LivingEntityPotionProvider : ServerDataProvider<EntityHologramConte
         val entity = context.getEntity<LivingEntity>()
         val remember = context.getRememberData()
         val data by remember.server(0, listOf()) { tag ->
-            val data = context.warpRegistryFriendlyByteBuf(tag.getByteArray("potions"))
+            val data = context.warpRegistryFriendlyByteBuf(tag.getByteArray("potions").get())
             val count = data.readVarInt()
             if (count != 0) {
                 List(count) {

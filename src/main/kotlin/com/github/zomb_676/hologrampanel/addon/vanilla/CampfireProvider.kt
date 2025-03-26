@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.util.saveOptional
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
@@ -38,11 +39,11 @@ data object  CampfireProvider : ServerDataProvider<BlockHologramContext, Campfir
         val cookingProgress by remember.server(
             0,
             intArrayOf(0, 0, 0, 0)
-        ) { tag -> tag.getIntArray("cooking_progress") }
+        ) { tag -> tag.getIntArray("cooking_progress").get() }
         val cookingTime by remember.server(
             1,
             intArrayOf(0, 0, 0, 0)
-        ) { tag -> tag.getIntArray("cooking_time") }
+        ) { tag -> tag.getIntArray("cooking_time").get() }
         val item0 by remember.serverItemStack(2, "item0")
         val item1 by remember.serverItemStack(3, "item1")
         val item2 by remember.serverItemStack(4, "item2")

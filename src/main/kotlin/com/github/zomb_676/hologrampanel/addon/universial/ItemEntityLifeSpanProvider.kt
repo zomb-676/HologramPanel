@@ -17,8 +17,8 @@ data object ItemEntityLifeSpanProvider : ServerDataProvider<EntityHologramContex
         val context = builder.context
         val remember = context.getRememberData()
 
-        val lifeSpan by remember.server(0, 0) { tag -> tag.getInt("life_span") }
-        val age by remember.server(1, -1) { tag -> tag.getInt("age") }
+        val lifeSpan by remember.server(0, 0) { tag -> tag.getInt("life_span").orElse(0) }
+        val age by remember.server(1, -1) { tag -> tag.getInt("age").orElse(0) }
 
         if (age != -1) {
             builder.single("item_life_span") { text("remain:${lifeSpan - age} Ticks") }

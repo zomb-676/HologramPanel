@@ -28,8 +28,8 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
         builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
-        val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
-        val energyStored by remember.server(0, 0) { tag -> tag.getInt("energy_stored") }
+        val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max").orElse(0) }
+        val energyStored by remember.server(0, 0) { tag -> tag.getInt("energy_stored").orElse(0) }
         val progress = remember.keep(0, ::ProgressData)
         if (energyMax > 0) {
             builder.single("energy") {

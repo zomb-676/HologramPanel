@@ -60,8 +60,6 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         style.guiGraphics.pose().pushPose()
         style.move(centerX, centerY)
 
-        RenderSystem.enableBlend()
-
         val scale = window.guiScale
         val handler = Minecraft.getInstance().mouseHandler
         val x = ((handler.xpos() / scale) - centerX)
@@ -119,7 +117,6 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         style.guiGraphics.flush()
-        RenderSystem.disableBlend()
         style.guiGraphics.pose().popPose()
     }
 

@@ -39,8 +39,8 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         val context = builder.context
         val remember = builder.context.getRememberData()
         val items by remember.server(0, listOf()) { tag ->
-            val count = tag.getInt("item_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("item_data"))
+            val count = tag.getInt("item_count").orElse(0)
+            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("item_data").get())
             List(count) {
                 ItemStack.STREAM_CODEC.decode(buffer)
             }

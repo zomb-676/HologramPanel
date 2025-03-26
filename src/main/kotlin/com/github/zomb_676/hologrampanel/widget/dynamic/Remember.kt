@@ -12,6 +12,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 import kotlin.reflect.KProperty
 
 /**
@@ -147,9 +148,9 @@ class Remember<T : HologramContext> private constructor() {
         equals: (ItemStack, ItemStack) -> Boolean = ItemStack::matches
     ): Holder<T, ItemStack> {
         return server(identity, ItemStack.EMPTY, equals) { tag ->
-            ItemStack.parseOptional(
-                context.getLevel().registryAccess(), tag.getCompound(keyName)
-            )
+            val tag = tag.getCompound(keyName).getOrNull() ?: return@server ItemStack.EMPTY
+            if (tag.isEmpty) return@server ItemStack.EMPTY
+            ItemStack.parse(context.getLevel().registryAccess(), tag).orElse(ItemStack.EMPTY)
         }
     }
 
@@ -198,7 +199,8 @@ class Remember<T : HologramContext> private constructor() {
 
     fun onReceiveData(tag: CompoundTag) {
         this.servers.values.forEach { holder ->
-            holder.tryUpdate(tag.getCompound(holder.provider.location().toString()))
+            val tag = tag.getCompound(holder.provider.location().toString()).getOrNull() ?: return
+            holder.tryUpdate(tag)
         }
     }
 

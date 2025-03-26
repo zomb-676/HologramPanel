@@ -1,14 +1,16 @@
 package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.core.HolderLookup
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.Tag
 import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
-import net.neoforged.neoforge.client.GlStateBackup
+import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.common.ModConfigSpec
 import org.lwjgl.opengl.GL46
 
@@ -65,12 +67,6 @@ inline fun <reified T> requireInstanceOf(claz: Class<*>): Class<out T> {
 inline fun <reified T> getClassOf(className: String): Class<out T> =
     requireInstanceOf<T>(Class.forName(className))
 
-inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> Unit) {
-    RenderSystem.backupGlState(state)
-    code.invoke()
-    RenderSystem.restoreGlState(state)
-}
-
 inline val profiler: ProfilerFiller get() = Profiler.get()
 
 /**
@@ -106,3 +102,7 @@ inline fun ModConfigSpec.Builder.stack(name: String, crossinline f: () -> Unit) 
     f.invoke()
     this.pop()
 }
+
+fun ItemStack.saveOptional(levelRegistryAccess: HolderLookup.Provider): Tag = if (this.isEmpty) {
+    CompoundTag()
+} else this.save(levelRegistryAccess)

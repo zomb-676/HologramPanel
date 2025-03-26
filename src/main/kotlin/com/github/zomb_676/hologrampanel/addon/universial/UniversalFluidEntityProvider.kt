@@ -11,6 +11,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.neoforged.neoforge.capabilities.Capabilities
+import kotlin.jvm.optionals.getOrDefault
+import kotlin.jvm.optionals.getOrElse
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
@@ -40,8 +42,8 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
         val context = builder.context
         val remember = builder.context.getRememberData()
         val fluids by remember.server(0, listOf()) { tag ->
-            val count = tag.getInt("fluid_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("fluid_data"))
+            val count = tag.getInt("fluid_count").orElse(0)
+            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("fluid_data").get())
             List(count) {
                 FluidDataSyncEntry.STREAM_CODEC.decode(buffer)
             }

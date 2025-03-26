@@ -6,19 +6,18 @@ import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.normalizedInto2PI
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.BufferUploader
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
 import net.minecraft.util.ARGB
 import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
+import net.neoforged.fml.earlydisplay.ElementShader
 import kotlin.math.*
 
 /**
@@ -176,9 +175,10 @@ interface HologramStyle {
             }
         }
 
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-        val tesselator = Tesselator.getInstance()
-        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
+//        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+        val builder = guiGraphics.bufferSource.getBuffer(RenderType.debugTriangleFan())
+//        val tesselator = Tesselator.getInstance()
+//        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
 
         val matrix = guiGraphics.pose().last().pose()
         builder.addVertex(matrix, 0f, 0f, 0f).setColor(colorIn)
@@ -197,8 +197,8 @@ interface HologramStyle {
         }
         builder.addVertex(matrix, sin(endRadian).toFloat() * outRadius, cos(endRadian).toFloat() * outRadius, 0.0f)
             .setColor(colorOut)
-
-        BufferUploader.drawWithShader(builder.buildOrThrow())
+        guiGraphics.bufferSource.endLastBatch()
+//        BufferUploader.drawWithShader(builder.buildOrThrow())
     }
 
     fun drawTorus(
@@ -232,10 +232,10 @@ interface HologramStyle {
                 endRadian += Math.PI * 2
             }
         }
-
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-        val tesselator = Tesselator.getInstance()
-        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+        val builder = guiGraphics.bufferSource.getBuffer(RenderType.DEBUG_FILLED_BOX)
+//        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+//        val tesselator = Tesselator.getInstance()
+//        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
 
         val matrix = guiGraphics.pose().last().pose()
 
@@ -258,8 +258,8 @@ interface HologramStyle {
                 break
             }
         }
-
-        BufferUploader.drawWithShader(builder.buildOrThrow())
+        guiGraphics.bufferSource.endLastBatch()
+//        BufferUploader.drawWithShader(builder.buildOrThrow())
     }
 
     companion object {

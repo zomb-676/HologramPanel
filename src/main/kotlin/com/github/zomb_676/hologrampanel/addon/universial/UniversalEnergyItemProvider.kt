@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
 import net.neoforged.neoforge.capabilities.Capabilities
+import kotlin.jvm.optionals.getOrDefault
 
 data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendServerData(
@@ -26,8 +27,8 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
         builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
-        val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
-        val energyStored by remember.server(0, 0) { tag -> tag.getInt("energy_stored") }
+        val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max").orElse(0) }
+        val energyStored by remember.server(0, 0) { tag -> tag.getInt("energy_stored").orElse(0) }
         val progress = remember.keep(0, ::ProgressData)
         if (energyMax > 0) {
             builder.single("energy") {

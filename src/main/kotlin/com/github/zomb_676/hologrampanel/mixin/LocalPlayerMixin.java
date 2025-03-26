@@ -29,7 +29,8 @@ public class LocalPlayerMixin {
     @Unique
     private static void hologramPanel$reset(ClientInput input) {
         input.keyPresses = Input.EMPTY;
-        input.leftImpulse = 0.0f;
-        input.forwardImpulse = 0.0f;
+//        input.leftImpulse = 0.0f;
+//        input.forwardImpulse = 0.0f;
+
     }
 }

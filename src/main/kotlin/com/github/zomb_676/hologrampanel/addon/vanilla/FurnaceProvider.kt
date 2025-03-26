@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBloc
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.util.ProgressData
+import com.github.zomb_676.hologrampanel.util.saveOptional
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
@@ -22,10 +23,10 @@ data object  FurnaceProvider : ServerDataProvider<BlockHologramContext, Abstract
         val item0 by remember.serverItemStack(0, "furnace_slot_0")
         val item1 by remember.serverItemStack(1, "furnace_slot_1")
         val item2 by remember.serverItemStack(2, "furnace_slot_2")
-        val litTimeRemaining by remember.server(3, 0) { tag -> tag.getIntArray("furnace_progress_data")[0] }
-        val litTotalTime by remember.server(4, 0) { tag -> tag.getIntArray("furnace_progress_data")[1] }
-        val cookingTimer by remember.server(5, 0) { tag -> tag.getIntArray("furnace_progress_data")[2] }
-        val cookingTotalTime by remember.server(6, 0) { tag -> tag.getIntArray("furnace_progress_data")[3] }
+        val litTimeRemaining by remember.server(3, 0) { tag -> tag.getIntArray("furnace_progress_data").get()[0] }
+        val litTotalTime by remember.server(4, 0) { tag -> tag.getIntArray("furnace_progress_data").get()[1] }
+        val cookingTimer by remember.server(5, 0) { tag -> tag.getIntArray("furnace_progress_data").get()[2] }
+        val cookingTotalTime by remember.server(6, 0) { tag -> tag.getIntArray("furnace_progress_data").get()[3] }
         val progressBar = remember.keep(7, ::ProgressData)
 
         progressBar.current(cookingTimer).max(cookingTotalTime)

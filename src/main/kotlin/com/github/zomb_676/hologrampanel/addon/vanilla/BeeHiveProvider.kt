@@ -39,7 +39,7 @@ data object BeeHiveProvider : ServerDataProvider<BlockHologramContext, BeehiveBl
         val context = builder.context
         val remember = context.getRememberData()
         val data by remember.server(1, listOf()) { tag ->
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("bee_data"))
+            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("bee_data").get())
             val count = buffer.readShort().toInt()
             List(count) { index ->
                 val tick = buffer.readVarInt()

@@ -17,7 +17,7 @@ data object EntityHealthProvider : ServerDataProvider<EntityHologramContext, Liv
         val context = builder.context
         val entity = context.getEntity<LivingEntity>() ?: return
         val remember = context.getRememberData()
-        val currentHealth by remember.server(0, -1.0f) { tag -> tag.getFloat("current_health") }
+        val currentHealth by remember.server(0, -1.0f) { tag -> tag.getFloat("current_health").orElse(0.0f) }
         builder.single("health") {
             heart()
             text("health:${currentHealth}/${entity.maxHealth}")

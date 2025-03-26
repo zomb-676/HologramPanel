@@ -4,16 +4,15 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
+import com.github.zomb_676.hologrampanel.render.RenderStuff
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.util.ARGB
 import net.neoforged.neoforge.client.event.ClientTickEvent
@@ -71,7 +70,7 @@ object DebugHelper {
         }
     }
 
-    fun fill(pos: Vector3fc, color: Int, poseStack: PoseStack, builder: BufferBuilder) {
+    fun fill(pos: Vector3fc, color: Int, poseStack: PoseStack, builder: VertexConsumer) {
         val r = ARGB.redFloat(color)
         val g = ARGB.greenFloat(color)
         val b = ARGB.blueFloat(color)
@@ -101,10 +100,8 @@ object DebugHelper {
         if (queryUpdateData.isEmpty()) return
 
         val pose = event.poseStack
-        val builder =
-            Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-        RenderSystem.disableDepthTest()
+        val bufferSource = Minecraft.getInstance().renderBuffers().bufferSource()
+        val builder = bufferSource.getBuffer(RenderStuff.Type.DEBUG_FILLED_BOX_DISABLE_DEPTH)
 
         val camPos = event.camera.position
         pose.translate(-camPos.x, -camPos.y, -camPos.z)
@@ -135,8 +132,7 @@ object DebugHelper {
                 fill(next.key.sourcePosition(partialTick), color, pose, builder)
             }
         }
-        BufferUploader.drawWithShader(builder.buildOrThrow())
-        RenderSystem.enableDepthTest()
+        bufferSource.endLastBatch()
     }
 
     fun getLayer() = object : LayeredDraw.Layer {

@@ -11,6 +11,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
 import net.neoforged.neoforge.capabilities.Capabilities
+import kotlin.jvm.optionals.getOrNull
 
 data object  UniversalFluidItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendServerData(
@@ -42,8 +43,8 @@ data object  UniversalFluidItemProvider : ServerDataProvider<EntityHologramConte
         val context = builder.context
         val remember = builder.context.getRememberData()
         val fluids by remember.server(0, listOf()) { tag ->
-            val count = tag.getInt("fluid_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("fluid_data"))
+            val count = tag.getInt("fluid_count").orElse(0)
+            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("fluid_data").get())
             List(count) {
                 FluidDataSyncEntry.STREAM_CODEC.decode(buffer)
             }
