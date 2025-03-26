@@ -262,7 +262,7 @@ object HologramManager {
             if (context is EntityHologramContext) {
                 (context.getEntity() as HologramHolder).setWidget(null)
             }
-            DebugHelper.recordRemove(state)
+            DebugHelper.Client.recordRemove(state)
         }
     }
 

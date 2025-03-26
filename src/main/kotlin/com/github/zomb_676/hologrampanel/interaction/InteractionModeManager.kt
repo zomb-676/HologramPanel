@@ -4,7 +4,6 @@ import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Raw
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 import org.lwjgl.glfw.GLFW
 
@@ -112,7 +111,7 @@ object InteractionModeManager {
             }
         }
 
-        DebugHelper.updateExactCommand(exactCommand)
+        DebugHelper.Client.updateExactCommand(exactCommand)
         this.processCommand(raw, exactCommand, lookingTarget)
     }
 

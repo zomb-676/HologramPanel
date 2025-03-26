@@ -34,7 +34,7 @@ object PopupManager {
                 val context = BlockHologramContext(pos.immutable(), player, null)
                 val state = tryAdd(context, DisplayType.NORMAL) ?: continue
                 state.hologramTicks.add(ticket.unsafeCast())
-                DebugHelper.recordPopup(state)
+                DebugHelper.Client.recordPopup(state)
             }
             for (entity in level.getEntities(null, aabb)) {
                 if (entity == Minecraft.getInstance().player) continue
@@ -43,7 +43,7 @@ object PopupManager {
                 val context = EntityHologramContext(entity, player, null)
                 val state = tryAdd(context, DisplayType.NORMAL) ?: continue
                 state.hologramTicks.add(ticket.unsafeCast())
-                DebugHelper.recordPopup(state)
+                DebugHelper.Client.recordPopup(state)
             }
         }
     }

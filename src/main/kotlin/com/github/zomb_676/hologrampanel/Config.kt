@@ -46,6 +46,9 @@ object Config {
         val updateInternal: ModConfigSpec.IntValue = builder
             .defineInRange("server_update_internal", 5, 1, 20)
 
+        val updateAtUnloaded: ModConfigSpec.BooleanValue = builder
+            .define("update_at_unloaded", false)
+
         val space: ModConfigSpec = builder.build()
     }
 

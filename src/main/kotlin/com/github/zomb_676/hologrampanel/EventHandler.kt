@@ -37,17 +37,18 @@ object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
 
         val forgeBus = NeoForge.EVENT_BUS
-        modBus.addListener(::registerPayload)
-        forgeBus.addListener(::registerCommand)
-        forgeBus.addListener(::tickClientPostEvent)
-        forgeBus.addListener(::tickServerPostEvent)
-        forgeBus.addListener(::onPlayerChangeDimension)
-        forgeBus.addListener(::onPlayerLogin)
-        forgeBus.addListener(::onPlayerLogout)
-        forgeBus.addListener(::levelUnload)
-        modBus.addListener(::onRegistryEvent)
-        modBus.addListener(::onClientSetup)
-        modBus.addListener(::onLoadComplete)
+        modBus.addListener(EventHandler::registerPayload)
+        forgeBus.addListener(EventHandler::registerCommand)
+        forgeBus.addListener(EventHandler::registerClientCommand)
+        forgeBus.addListener(EventHandler::tickClientPostEvent)
+        forgeBus.addListener(EventHandler::tickServerPostEvent)
+        forgeBus.addListener(EventHandler::onPlayerChangeDimension)
+        forgeBus.addListener(EventHandler::onPlayerLogin)
+        forgeBus.addListener(EventHandler::onPlayerLogout)
+        forgeBus.addListener(EventHandler::levelUnload)
+        modBus.addListener(EventHandler::onRegistryEvent)
+        modBus.addListener(EventHandler::onClientSetup)
+        modBus.addListener(EventHandler::onLoadComplete)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
             forgeBus.addListener(::onEntityJoinLevel)
@@ -57,17 +58,18 @@ object EventHandler {
     object ClientOnly {
         fun initEvents(modBus: IEventBus) {
             val forgeBus = NeoForge.EVENT_BUS
-            modBus.addListener(::registerLayer)
-            modBus.addListener(::registerKey)
-            forgeBus.addListener(::onKey)
-            forgeBus.addListener(::onMouseButton)
-            forgeBus.addListener(::onMouseScroll)
-            forgeBus.addListener(::onInteraction)
-            forgeBus.addListener(::onClientTickPre)
-            forgeBus.addListener(::onClientTickPost)
-            forgeBus.addListener(::onRenderGUI)
-            forgeBus.addListener(::onPlayerLogout)
-            forgeBus.addListener(::onRenderLevelStage)
+            modBus.addListener(ClientOnly::registerLayer)
+            modBus.addListener(ClientOnly::registerKey)
+            forgeBus.addListener(ClientOnly::onKey)
+            forgeBus.addListener(ClientOnly::onMouseButton)
+            forgeBus.addListener(ClientOnly::onMouseScroll)
+            forgeBus.addListener(ClientOnly::onInteraction)
+            forgeBus.addListener(ClientOnly::onClientTickPre)
+            forgeBus.addListener(ClientOnly::onClientTickPost)
+            forgeBus.addListener(ClientOnly::onRenderGUI)
+            forgeBus.addListener(ClientOnly::onPlayerLogin)
+            forgeBus.addListener(ClientOnly::onPlayerLogout)
+            forgeBus.addListener(ClientOnly::onRenderLevelStage)
         }
 
         val switchModeKey by lazy {
@@ -106,8 +108,12 @@ object EventHandler {
             }
         }
 
+        private fun onPlayerLogin(event: ClientPlayerNetworkEvent.LoggingIn) {
+            DebugHelper.Client.onJoinLevel()
+        }
+
         private fun onClientTickPre(event: ClientTickEvent.Pre) {
-            DebugHelper.tick(event)
+            DebugHelper.Client.tick(event)
         }
 
         private fun onRenderGUI(event: RenderGuiEvent.Post) {
@@ -168,15 +174,20 @@ object EventHandler {
                     CycleSelector.render(guiGraphics, deltaTracker)
                 }
             })
-            event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.getLayer())
+            event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.Client.getLayer())
         }
+
+        private fun onPlayerLogIn(event: ClientPlayerNetworkEvent.LoggingIn) {
+
+        }
+
 
         private fun onPlayerLogout(event: ClientPlayerNetworkEvent.LoggingOut) {
             HologramPanel.serverInstalled = false
         }
 
         fun onRenderLevelStage(event: RenderLevelStageEvent) {
-            DebugHelper.renderLevelLast(event)
+            DebugHelper.Client.renderLevelLast(event)
         }
     }
 
@@ -199,16 +210,30 @@ object EventHandler {
             EntityConversationPayload.TYPE,
             EntityConversationPayload.STREAM_CODEC,
             EntityConversationPayload.HANDLE
+        ).playToServer<QueryDebugStatisticsPayload>(
+            QueryDebugStatisticsPayload.TYPE,
+            QueryDebugStatisticsPayload.STREAM_CODEC,
+            QueryDebugStatisticsPayload.HANDLE
+        ).playToClient<DebugStatisticsPayload>(
+            DebugStatisticsPayload.TYPE,
+            DebugStatisticsPayload.STREAM_CODEC,
+            DebugStatisticsPayload.HANDLE
         )
     }
 
     private fun registerCommand(event: RegisterCommandsEvent) {
+
+    }
+
+    private fun registerClientCommand(event : RegisterClientCommandsEvent) {
         CommandDSL(event.dispatcher).apply {
             HologramPanel.MOD_ID {
-                "debug_layer"(BoolArgumentType.bool()) {
-                    execute {
-                        val value = BoolArgumentType.getBool(this, "debug_layer")
-                        Config.Client.renderDebugLayer.set(value)
+                "debug_layer" {
+                    "debug_layer"(BoolArgumentType.bool()) {
+                        execute {
+                            val value = BoolArgumentType.getBool(this, "debug_layer")
+                            Config.Client.renderDebugLayer.set(value)
+                        }
                     }
                 }
             }
@@ -225,6 +250,7 @@ object EventHandler {
         val player = event.entity as ServerPlayer
 
         DataQueryManager.Server.clearForPlayer(player)
+        DebugHelper.Server.onPlayerLogout(player)
     }
 
     /**
@@ -239,6 +265,7 @@ object EventHandler {
 
     private fun tickServerPostEvent(event: ServerTickEvent.Post) {
         DataQueryManager.Server.tick()
+        DebugHelper.Server.serverTick()
     }
 
     private fun tickClientPostEvent(event: ClientTickEvent.Post) {

@@ -4,6 +4,8 @@ import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
@@ -52,7 +54,7 @@ object DataQueryManager {
                     widget.updateComponent(state.displayType)
                 }
             }
-            DebugHelper.onDataReceived(widget)
+            DebugHelper.Client.onDataReceived(widget)
         }
 
         fun closeForWidget(widget: DynamicBuildWidget<*>) {
@@ -76,6 +78,8 @@ object DataQueryManager {
         private val tick = AutoTicker.by(Config.Server.updateInternal::get)
 
         fun syncCount() = syncs.values.sumOf { it.size }
+        fun syncCountForPlayer(serverPlayer: ServerPlayer) =
+            syncs[serverPlayer]?.size ?: 0
 
         fun <T : HologramContext> create(player: ServerPlayer, payload: ComponentRequestDataPayload<T>) {
             syncs.computeIfAbsent(player) { mutableMapOf() }[payload.uuid] = (payload)
@@ -85,6 +89,14 @@ object DataQueryManager {
             tick.tryConsume {
                 syncs.forEach { (player, payloads) ->
                     for (payload in payloads.values) {
+                        if (!Config.Server.updateAtUnloaded.get()) {
+                            val pos = when(val context = payload.context) {
+                                is BlockHologramContext -> context.pos
+                                is EntityHologramContext -> context.getEntity().blockPosition()
+                            }
+                            if (!payload.context.getLevel().isLoaded(pos)) continue
+                        }
+
                         val tag = CompoundTag()
                         val changed = append(payload, tag)
                         if (changed) {

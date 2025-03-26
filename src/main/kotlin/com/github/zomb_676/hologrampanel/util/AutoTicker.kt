@@ -6,6 +6,7 @@ import java.util.function.IntSupplier
 class AutoTicker private constructor(val interval: IntSupplier) {
     companion object {
         fun by(interval: IntSupplier) = AutoTicker(interval)
+        fun by(interval: Int) = AutoTicker({ interval })
     }
 
     @PublishedApi
@@ -19,5 +20,5 @@ class AutoTicker private constructor(val interval: IntSupplier) {
         }
     }
 
-    inline operator fun invoke(f : () -> Unit) = tryConsume(f)
+    inline operator fun invoke(f: () -> Unit) = tryConsume(f)
 }
