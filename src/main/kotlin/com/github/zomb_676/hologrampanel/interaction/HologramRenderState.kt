@@ -14,7 +14,12 @@ import org.joml.Vector3f
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
-class HologramRenderState(val widget: HologramWidget, val context: HologramContext, displayType1: DisplayType) {
+class HologramRenderState(
+    val widget: HologramWidget,
+    val context: HologramContext,
+    displayType: DisplayType,
+    additionTicket: List<HologramTicket<*>>
+) {
     var displayed: Boolean = false
 
     var size: Size = Size.ZERO
@@ -22,7 +27,7 @@ class HologramRenderState(val widget: HologramWidget, val context: HologramConte
     var centerScreenPos: ScreenCoordinate = ScreenCoordinate.ZERO
     var displayScale: Double = 1.0
     var removed: Boolean = false
-    var displayType: DisplayType = DisplayType.NORMAL
+    var displayType: DisplayType = displayType
         set(value) {
             if (value != field) {
                 field = value
@@ -35,7 +40,7 @@ class HologramRenderState(val widget: HologramWidget, val context: HologramConte
     internal val hologramTicks: MutableList<HologramTicket<HologramContext>> = run {
         @Suppress("UNCHECKED_CAST")
         fun <T : HologramContext> f(context: T): MutableList<HologramTicket<T>> {
-            val list = mutableListOf<HologramTicket<T>>()
+            val list: MutableList<HologramTicket<T>> = additionTicket.toMutableList().unsafeCast()
             val adder = TicketAdder(list)
             if (widget is DynamicBuildWidget<*>) {
                 (widget.providers as List<ComponentProvider<T, *>>).forEach {
@@ -51,7 +56,7 @@ class HologramRenderState(val widget: HologramWidget, val context: HologramConte
         if (!context.stillValid()) return false
         if (hologramTicks.isEmpty()) return false
         hologramTicks.forEach { ticket ->
-            val pass = ticket.stillValid(this.context)
+            val pass = ticket.stillValid(this.context, this)
             if (ticket.isCritical()) {
                 if (!pass) return false
             } else {

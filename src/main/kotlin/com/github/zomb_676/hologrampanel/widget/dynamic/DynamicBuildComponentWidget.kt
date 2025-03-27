@@ -1,8 +1,11 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.addon.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
 import com.github.zomb_676.hologrampanel.addon.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.HologramInteractive
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
@@ -53,7 +56,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             displayType: DisplayType,
             partialTicks: Float
         ) {
-            val pathType = path.forAny(this)
+            val inMouse = style.checkMouseInSize(this.contentSize)
             if (baseY != 0) {
                 style.move(0, baseY)
             }
@@ -62,10 +65,16 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 if (offset != ScreenPosition.ZERO) {
                     style.move(offset)
                 }
+                val size = element.contentSize
                 style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
+                    if (inMouse  && style.checkMouseInSize(size)) {
+                        DebugHelper.Client.recordHoverElement(element)
+                        if (element is HologramInteractive) {
+                            HologramManager.submitInteractive(element)
+                        }
+                    }
                     element.render(style, partialTicks)
                 }
-                val size = element.contentSize
                 style.move(size.width + padding, -offset.y)
             }
         }

@@ -3,6 +3,8 @@ package com.github.zomb_676.hologrampanel.interaction
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
+import com.github.zomb_676.hologrampanel.api.HologramInteractive
+import com.github.zomb_676.hologrampanel.api.HologramTicket
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
@@ -13,6 +15,7 @@ import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
@@ -22,11 +25,12 @@ object HologramManager {
     private val widgets = mutableMapOf<Any, HologramWidget>()
     internal val states = mutableMapOf<HologramWidget, HologramRenderState>()
     private var lookingWidget: HologramRenderState? = null
+    private var interactiveTarget: HologramInteractive? = null
 
-    fun clearHologram() {
-        this.widgets.clear()
-        this.states.clear()
-        this.lookingWidget = null
+    fun clearAllHologram() {
+        while (states.isNotEmpty()) {
+            states.entries.first().key.closeWidget()
+        }
     }
 
     private var needArrange = false
@@ -35,10 +39,15 @@ object HologramManager {
         return widgets.containsKey(any)
     }
 
-    fun tryAddWidget(widget: HologramWidget, context: HologramContext, displayType: DisplayType): HologramRenderState? {
+    fun tryAddWidget(
+        widget: HologramWidget,
+        context: HologramContext,
+        displayType: DisplayType,
+        ticket: List<HologramTicket<*>>,
+    ): HologramRenderState? {
         if (!widgets.containsKey(context.getIdentityObject())) {
             widgets[context.getIdentityObject()] = widget
-            val state = HologramRenderState(widget, context, displayType)
+            val state = HologramRenderState(widget, context, displayType, ticket)
             states[widget] = state
             this.needArrange = true
 
@@ -54,7 +63,7 @@ object HologramManager {
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context, DisplayType.NORMAL)
             if (widget != null) {
-                this.tryAddWidget(widget, context, DisplayType.NORMAL)
+                this.tryAddWidget(widget, context, DisplayType.NORMAL, listOf(HologramTicket.ByTickAfterNotSee(80)))
             }
         }
 
@@ -64,6 +73,8 @@ object HologramManager {
         }
 
         profiler.push("render_hologram")
+        this.interactiveTarget = null
+        DebugHelper.Client.clearRenderRelatedInfo()
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
             if (Config.Client.skipHologramIfEmpty.get() && !widget.hasNoneOrdinaryContent()) {
@@ -103,7 +114,13 @@ object HologramManager {
                 style.scale(scale, scale)
                 style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
                 style.fill(0, 0, widgetSize.width, widgetSize.height, 0x7fffffff)
+
+                val interactiveSet = this.getInteractiveTarget() != null
                 widget.render(state, style, displayType, partialTicks)
+                val currentInteractive = this.getInteractiveTarget()
+                if (!interactiveSet && currentInteractive != null) {
+                    currentInteractive.renderInteractive(style)
+                }
             }
         }
         this.updateLookingAt()
@@ -249,6 +266,9 @@ object HologramManager {
         } ?: state
     }
 
+    /**
+     * this will do all the staffs if a widget should be removed from client
+     */
     fun remove(widget: HologramWidget) {
         val state = this.states.remove(widget)
         if (state != null) {
@@ -262,6 +282,11 @@ object HologramManager {
             if (context is EntityHologramContext) {
                 (context.getEntity() as HologramHolder).setWidget(null)
             }
+
+            if (widget is DynamicBuildWidget<*>) {
+                DataQueryManager.Client.closeForWidget(widget)
+            }
+
             DebugHelper.Client.recordRemove(state)
         }
     }
@@ -291,4 +316,10 @@ object HologramManager {
     fun queryHologramState(widget: HologramWidget?): HologramRenderState? = states[widget]
 
     fun widgetCount(): Int = states.size
+
+    fun submitInteractive(interactive: HologramInteractive) {
+        this.interactiveTarget = interactive
+    }
+
+    fun getInteractiveTarget(): HologramInteractive? = this.interactiveTarget
 }

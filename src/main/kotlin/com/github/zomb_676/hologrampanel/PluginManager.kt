@@ -188,19 +188,27 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     fun hideEntity(entity: Entity) =
         this.hideEntityTypes.contains(entity.type) || this.hideEntityCallback.any { it.test(entity) }
 
-    fun popUpBlock(pos: BlockPos, level: Level): HologramTicket<BlockHologramContext>? {
+    fun popUpBlock(pos: BlockPos, level: Level): List<HologramTicket<BlockHologramContext>> {
         if (this.block.isEmpty() && Config.Client.popupAllNearByBlock.get()) {
             if (level.getBlockState(pos).hasBlockEntity()) {
-                return HologramTicket.ByDistance(Config.Client.popUpDistance.get().toDouble())
+                return listOf(HologramTicket.byPopUpDistance())
             }
         }
-        return this.block.firstNotNullOfOrNull { it.popup(pos, level) }
+        for (popupCallback in this.block) {
+            val list = popupCallback.popup(pos, level)
+            if (list.isNotEmpty()) return list
+        }
+        return listOf()
     }
 
-    fun popUpEntity(entity: Entity): HologramTicket<EntityHologramContext>? {
+    fun popUpEntity(entity: Entity): List<HologramTicket<EntityHologramContext>> {
         if (this.entity.isEmpty() && Config.Client.popupAllNearbyEntity.get()) {
-            return HologramTicket.ByDistance(Config.Client.popUpDistance.get().toDouble())
+            return listOf(HologramTicket.byPopUpDistance())
         }
-        return this.entity.firstNotNullOfOrNull { it.popup(entity) }
+        for (popupCallback in this.entity) {
+            val list = popupCallback.popup(entity)
+            if (list.isNotEmpty()) return list
+        }
+        return listOf()
     }
 }

@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
 import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
@@ -126,6 +127,14 @@ object EventHandler {
         private fun onKey(event: InputEvent.Key) {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
+
+            val interactiveTarget = HologramManager.getInteractiveTarget()
+            if (interactiveTarget != null) {
+                val player = Minecraft.getInstance().player ?: return
+                val res = interactiveTarget.onKey(player, HologramInteractive.Key.create(event))
+                if (res) return
+            }
+
             if (InteractionModeManager.mode.isDisable()) return
             InteractionCommand.Raw.Key.create(event).post()
         }
@@ -133,6 +142,17 @@ object EventHandler {
         private fun onMouseScroll(event: InputEvent.MouseScrollingEvent) {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
+
+            val interactiveTarget = HologramManager.getInteractiveTarget()
+            if (interactiveTarget != null) {
+                val player = Minecraft.getInstance().player ?: return
+                val res = interactiveTarget.onMouseScroll(player, HologramInteractive.MouseScroll.create(event))
+                if (res) {
+                    event.isCanceled = true
+                    return
+                }
+            }
+
             if (InteractionModeManager.mode.isDisable()) return
             event.isCanceled = true
             InteractionCommand.Raw.MouseScroll.create(event).post()
@@ -149,6 +169,17 @@ object EventHandler {
 
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
+
+            val interactiveTarget = HologramManager.getInteractiveTarget()
+            if (interactiveTarget != null) {
+                val player = Minecraft.getInstance().player ?: return
+                val res = interactiveTarget.onMouseClick(player, HologramInteractive.MouseButton.create(event))
+                if (res) {
+                    event.isCanceled = true
+                    return
+                }
+            }
+
             if (InteractionModeManager.mode.isDisable()) return
             if (InteractionModeManager.shouldRestPlayerClientInput() && event.action != GLFW.GLFW_RELEASE) {
                 event.isCanceled = true
@@ -236,6 +267,11 @@ object EventHandler {
                         }
                     }
                 }
+                "clear_all_widget" {
+                    execute {
+                        HologramManager.clearAllHologram()
+                    }
+                }
             }
         }
     }
@@ -277,10 +313,7 @@ object EventHandler {
 
     private fun levelUnload(event: LevelEvent.Unload) {
         if (event.level.isClientSide) {
-            HologramManager.clearHologram()
-            InteractionModeManager.clearState()
-            DataQueryManager.Client.closeAll()
-            EntityConversationPayload.clear()
+            HologramManager.clearAllHologram()
         }
     }
 

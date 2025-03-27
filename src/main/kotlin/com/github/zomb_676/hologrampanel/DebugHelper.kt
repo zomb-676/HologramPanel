@@ -9,6 +9,7 @@ import com.github.zomb_676.hologrampanel.payload.QueryDebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
+import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -23,13 +24,13 @@ import net.minecraft.util.ARGB
 import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.server.ServerLifecycleHooks
 import org.joml.Vector3fc
+import kotlin.math.max
 
 object DebugHelper {
     object Client {
         const val COMMAND_LASTING_TIME = 3
-        private val UPDATE_TINE: Int get() = Config.Server.updateInternal.get()
+        private val UPDATE_TINE: Int get() = max(Config.Server.updateInternal.get(), 20)
         private const val POPUP_TIME = 30
         private const val REMOVE_TIME = 30
 
@@ -42,6 +43,8 @@ object DebugHelper {
         private val queryUpdateData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
         private val popUpData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
         private val removeData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
+
+        private var lookingRenderElement: IRenderElement? = null
 
         private fun tick(target: Object2IntOpenHashMap<*>) {
             val iterator = target.object2IntEntrySet().fastIterator()
@@ -107,7 +110,7 @@ object DebugHelper {
         fun renderLevelLast(event: RenderLevelStageEvent) {
             if (!Config.Client.renderDebugLayer.get()) return
             if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
-            if (queryUpdateData.isEmpty()) return
+            if (queryUpdateData.isEmpty() && popUpData.isEmpty() && removeData.isEmpty()) return
 
             val pose = event.poseStack
             val builder =
@@ -118,7 +121,7 @@ object DebugHelper {
             val camPos = event.camera.position
             pose.translate(-camPos.x, -camPos.y, -camPos.z)
             val partialTick = event.partialTick.getGameTimeDeltaPartialTick(true)
-            run {
+            if (queryUpdateData.isNotEmpty()) {
                 val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
                 while (iterator.hasNext()) {
                     val next = iterator.next()
@@ -126,7 +129,7 @@ object DebugHelper {
                     fill(next.key.sourcePosition(partialTick), color, pose, builder)
                 }
             }
-            run {
+            if (popUpData.isNotEmpty()) {
                 val iterator = popUpData.object2IntEntrySet().fastIterator()
                 while (iterator.hasNext()) {
                     val next = iterator.next()
@@ -135,7 +138,7 @@ object DebugHelper {
                     fill(next.key.sourcePosition(partialTick), color, pose, builder)
                 }
             }
-            run {
+            if (removeData.isNotEmpty()) {
                 val iterator = removeData.object2IntEntrySet().fastIterator()
                 while (iterator.hasNext()) {
                     val next = iterator.next()
@@ -162,6 +165,12 @@ object DebugHelper {
                 guiGraphics.drawString(
                     font, "displayed:${HologramManager.states.values.count { it.displayed }}", 10, 50, -1
                 )
+                guiGraphics.drawString(font, "lookingRenderElement:${lookingRenderElement}", 10, 60, -1)
+                guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}", 10, 70, -1)
+                val lookingHologram = HologramManager.getLookingHologram() ?: return
+                guiGraphics.drawString(font, "lookingHologramContext:${lookingHologram.context}", 10, 80, -1)
+                val tickets = lookingHologram.hologramTicks.joinToString()
+                guiGraphics.drawString(font, "lookTicket:$tickets", 10, 90, -1)
             }
         }
 
@@ -176,14 +185,7 @@ object DebugHelper {
         fun querySyncString(): String {
             val builder = StringBuilder("sync:")
             builder.append("client:${DataQueryManager.Client.syncCount()},")
-            val server = ServerLifecycleHooks.getCurrentServer()
-            if (server == null) {
-                builder.append("server:(${DebugStatisticsPayload.SYNC_COUNT_FOR_PLAYER}/${DebugStatisticsPayload.TOTAL_SYNC_COUNT})")
-            } else {
-                val local = Minecraft.getInstance().player ?: return "?"
-                val player = server.playerList.getPlayer(local.uuid) ?: return "?"
-                builder.append("server:(${DataQueryManager.Server.syncCountForPlayer(player)}/${DataQueryManager.Server.syncCount()})")
-            }
+            builder.append("server:(${DebugStatisticsPayload.SYNC_COUNT_FOR_PLAYER}/${DebugStatisticsPayload.TOTAL_SYNC_COUNT})")
             return builder.toString()
         }
 
@@ -201,6 +203,14 @@ object DebugHelper {
         fun recordRemove(state: HologramRenderState) {
             if (!Config.Client.renderDebugLayer.get()) return
             removeData.put(state, REMOVE_TIME)
+        }
+
+        fun recordHoverElement(element: IRenderElement) {
+            this.lookingRenderElement = element
+        }
+
+        fun clearRenderRelatedInfo() {
+            this.lookingRenderElement = null
         }
     }
 

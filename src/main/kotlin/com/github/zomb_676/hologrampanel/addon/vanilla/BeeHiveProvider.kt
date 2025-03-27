@@ -5,7 +5,6 @@ import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import io.netty.buffer.Unpooled
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.IntArrayTag
 import net.minecraft.resources.ResourceLocation

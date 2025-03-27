@@ -103,6 +103,8 @@ sealed interface HologramContext {
      * if the trace object is still alive or exist
      *
      * in this case, we think the tracing object is no longer valid
+     *
+     * this is considered as [com.github.zomb_676.hologrampanel.api.HologramTicket.isCritical] true
      */
     fun stillValid() : Boolean
 
@@ -113,14 +115,23 @@ sealed interface HologramContext {
         (this.getPlayer() as ServerPlayer).connection
     }
 
+    /**
+     * helper function to get a [RegistryAccess] or [net.minecraft.core.HolderLookup.Provider]
+     */
     @ApiStatus.NonExtendable
     fun getRegistryAccess(): RegistryAccess = this.getLevel().registryAccess()
 
+    /**
+     * helper function to create a [RegistryFriendlyByteBuf]
+     */
     @ApiStatus.NonExtendable
     fun createRegistryFriendlyByteBuf(): RegistryFriendlyByteBuf {
         return RegistryFriendlyByteBuf(Unpooled.buffer(), this.getRegistryAccess(), getConnection().connectionType)
     }
 
+    /**
+     * helper function to create a [RegistryFriendlyByteBuf] from a [java.nio.ByteBuffer]
+     */
     @ApiStatus.NonExtendable
     fun warpRegistryFriendlyByteBuf(data : ByteArray): RegistryFriendlyByteBuf {
         return RegistryFriendlyByteBuf(Unpooled.wrappedBuffer(data), getRegistryAccess(), getConnection().connectionType)

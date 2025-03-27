@@ -12,4 +12,10 @@ class ProgressData(var progressCurrent: Int = 0, var progressMax: Int = 100, val
         this.progressMax = value
         return this
     }
+
+    override fun toString(): String {
+        return "(current=$progressCurrent, max=$progressMax, LTR=$LTR)"
+    }
+
+
 }

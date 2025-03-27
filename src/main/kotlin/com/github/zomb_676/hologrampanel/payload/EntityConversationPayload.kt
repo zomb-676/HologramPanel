@@ -55,7 +55,7 @@ class EntityConversationPayload(val oldEntityID: Int, val newEntityID: Int, val 
             val oldState = paddingEntities.remove(entity.id) ?: return
             val newContext = EntityHologramContext(entity, Minecraft.getInstance().player!!, null)
             val newWidget = RayTraceHelper.createHologramWidget(newContext, oldState.displayType) ?: return
-            HologramManager.tryAddWidget(newWidget, newContext, oldState.displayType)
+            HologramManager.tryAddWidget(newWidget, newContext, oldState.displayType, oldState.hologramTicks)
         }
 
         fun clear() {

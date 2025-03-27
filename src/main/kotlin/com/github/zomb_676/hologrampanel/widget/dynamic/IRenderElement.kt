@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.render.HologramStyle.Companion.ITEM_STACK_LENGTH
 import com.github.zomb_676.hologrampanel.util.ProgressData
@@ -12,6 +13,7 @@ import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil
+import net.minecraft.client.player.LocalPlayer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
@@ -159,6 +161,9 @@ interface IRenderElement {
             graphics.vLine((centerX + halfWidth).toInt(), -1000, +1000, colorWhite)
         }
 
+        override fun toString(): String {
+            return "EntityRenderElement(entity=${entity.javaClass.simpleName}, entityScale=$entityScale)"
+        }
     }
 
     @Deprecated("use the entity variant", replaceWith = ReplaceWith("EntityRenderElement"), DeprecationLevel.HIDDEN)
@@ -210,6 +215,10 @@ interface IRenderElement {
 
         override fun render(style: HologramStyle, partialTicks: Float) {
             style.drawString(component)
+        }
+
+        override fun toString(): String {
+            return "String(component=$component)"
         }
     }
 
@@ -282,9 +291,12 @@ interface IRenderElement {
             }
         }
 
+        override fun toString(): String {
+            return "ScreenTooltip(item=$item)"
+        }
     }
 
-    open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement() {
+    open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement() , HologramInteractive {
 
         override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize().scale()
 
@@ -300,6 +312,18 @@ interface IRenderElement {
         fun smallItem(): ItemStackElement {
             this.setScale(0.5)
             return this
+        }
+
+        override fun onMouseClick(
+            player: LocalPlayer,
+            data: HologramInteractive.MouseButton
+        ): Boolean {
+            player.displayClientMessage(itemStack.displayName, true)
+            return true
+        }
+
+        override fun toString(): String {
+            return "ItemStack(renderDecoration=$renderDecoration, itemStack=$itemStack)"
         }
     }
 
@@ -346,6 +370,9 @@ interface IRenderElement {
             }
         }
 
+        override fun toString(): String {
+            return "Items(count=$count, items=${items.joinToString().take(30)})"
+        }
     }
 
     class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderElement() {
@@ -373,6 +400,10 @@ interface IRenderElement {
         fun setRenderSize(width: Int, height: Int) {
             this.width = width
             this.height = height
+        }
+
+        override fun toString(): String {
+            return "TextureAtlasSprite(sprite=$sprite, width=$width, height=$height)"
         }
     }
 
@@ -425,6 +456,10 @@ interface IRenderElement {
         open fun getDescription(percent: Float): Component = Component.literal("%.1f%%".format(percent * 100))
 
         open fun requireOutlineDecorate(): Boolean = false
+
+        override fun toString(): String {
+            return "ProgressBar(progress=$progress, barWidth=$barWidth)"
+        }
     }
 
     class EnergyBarElement(progress: ProgressData, barWidth: Float = 60f) : ProgressBarElement(progress, barWidth) {
@@ -456,6 +491,10 @@ interface IRenderElement {
                 "$current/$max"
             }
             return Component.literal("").append(f).append("FE")
+        }
+
+        override fun toString(): String {
+            return "EnergyBar,${super.toString()}"
         }
     }
 
@@ -501,6 +540,10 @@ interface IRenderElement {
             }
             val fluidName = fluid.description
             return Component.literal("").append(fluidName).append(" ").append(f)
+        }
+
+        override fun toString(): String {
+            return "FluidBar(fluid:${fluid.description},${super.toString()})"
         }
     }
 
@@ -571,6 +614,10 @@ interface IRenderElement {
                 consumer.addVertex(pose, right, halfHeight - remain, 0.0f).setColor(FILL_COLOR)
             }
         }
+
+        override fun toString(): String {
+            return "(style=Arrow,${super.toString()})"
+        }
     }
 
     class WorkingCircleProgressElement(val progress: ProgressData, val outRadius: Float, val inRadius: Float) :
@@ -598,6 +645,10 @@ interface IRenderElement {
                     style.drawCycle(outRadius, FILL_COLOR, beginRadian = Math.PI, endRadian = Math.PI - end)
                 }
             }
+        }
+
+        override fun toString(): String {
+            return "(style=Circle,${super.toString()})"
         }
     }
 }

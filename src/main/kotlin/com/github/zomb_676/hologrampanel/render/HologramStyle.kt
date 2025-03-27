@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.util.ARGB
 import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
+import org.joml.Vector4f
 import kotlin.math.*
 
 /**
@@ -149,6 +150,29 @@ interface HologramStyle {
 
     fun outline(size: Size, color: Int = contextColor) {
         guiGraphics.renderOutline(0, 0, size.width, size.height, color)
+    }
+
+    fun checkMouseInSize(size: Size): Boolean {
+        if (size == Size.ZERO) return  false
+
+        val window = Minecraft.getInstance().window
+        val mouseX = window.guiScaledWidth / 2
+        val mouseY = window.guiScaledHeight / 2
+
+        val pose = guiGraphics.pose().last().pose()
+        val checkVector = Vector4f(0f,0f,0f,1f)
+        pose.transform(checkVector)
+        run {
+            val x = checkVector.x
+            val y = checkVector.y
+            if (x >= mouseX || y >= mouseY) return false
+        }
+
+        checkVector.set(size.width.toFloat(), size.height.toFloat(), 0f, 1f)
+        pose.transform(checkVector)
+        val x = checkVector.x
+        val y = checkVector.y
+        return x > mouseX && y > mouseY
     }
 
     fun drawCycle(
