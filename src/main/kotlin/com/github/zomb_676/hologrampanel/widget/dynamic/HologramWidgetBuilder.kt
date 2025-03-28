@@ -191,6 +191,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.ItemsElement(items).attach()
         }
 
+        fun itemsInteractive(items: List<ItemStack>, input : Boolean): IRenderElement.InteractiveItemsElement {
+            return IRenderElement.InteractiveItemsElement(items, input).attach()
+        }
+
         /**
          * this will call [net.minecraft.client.gui.GuiGraphics.renderItemDecorations]
          */

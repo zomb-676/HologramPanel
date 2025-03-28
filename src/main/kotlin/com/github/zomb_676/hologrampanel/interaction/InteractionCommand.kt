@@ -58,10 +58,6 @@ sealed interface InteractionCommand {
     }
 
     sealed interface Exact : InteractionCommand {
-        enum class SelectComponent : Exact {
-            SELECT_NEXT, SELECT_BEFORE, SELECT_GROUP_FIRST_CHILD, SELECT_PARENT
-        }
-
         enum class CycleDetail : Exact {
             CYCLE_DISPLAY_DETAIL_MORE, CYCLE_DISPLAY_DETAIL_LESS,
         }

@@ -83,15 +83,7 @@ object InteractionModeManager {
                     is Raw.Key -> if (raw.action == GLFW.GLFW_PRESS) {
                         when (raw.key) {
                             GLFW.GLFW_KEY_TAB -> Exact.OperateCommand.SWITCH_COLLAPSE
-                            else -> if (this.shouldRestPlayerClientInput()) {
-                                when (raw.key) {
-                                    GLFW.GLFW_KEY_W -> Exact.SelectComponent.SELECT_BEFORE
-                                    GLFW.GLFW_KEY_S -> Exact.SelectComponent.SELECT_NEXT
-                                    GLFW.GLFW_KEY_A -> Exact.SelectComponent.SELECT_PARENT
-                                    GLFW.GLFW_KEY_D -> Exact.SelectComponent.SELECT_GROUP_FIRST_CHILD
-                                    else -> null
-                                }
-                            } else null
+                            else ->  null
                         }
                     } else null
 
@@ -102,11 +94,7 @@ object InteractionModeManager {
                         }
                     } else null
                     is Raw.MouseMove -> null
-                    is Raw.MouseScroll -> when {
-                        raw.scrollDeltaY > 0 -> Exact.SelectComponent.SELECT_BEFORE
-                        raw.scrollDeltaY < 0 -> Exact.SelectComponent.SELECT_NEXT
-                        else -> null
-                    }
+                    is Raw.MouseScroll -> null
                 }
             }
         }
@@ -141,22 +129,13 @@ object InteractionModeManager {
                 }
             }
 
-            is Exact.SelectComponent -> {
-                val select = this.selectedHologram ?: return
-                val widget = select.widget
-                if (widget is HologramComponentWidget<*>) {
-                    widget.selectComponent(select, exact)
-                }
-                return
-            }
-
             is Exact.OperateCommand -> {
                 when (exact) {
                     Exact.OperateCommand.SWITCH_COLLAPSE -> {
                         val select = this.selectedHologram ?: return
                         val widget = select.widget
                         if (widget is HologramComponentWidget<*>) {
-                            widget.operateCommand(select, exact)
+//                            widget.operateCommand(select, exact)
                         }
                         return
                     }

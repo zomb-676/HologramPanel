@@ -1,16 +1,11 @@
 package com.github.zomb_676.hologrampanel.render
 
 import com.github.zomb_676.hologrampanel.util.ScreenPosition
-import com.github.zomb_676.hologrampanel.util.SelectPathType
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.normalizedInto2PI
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.BufferUploader
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.PoseStack
-import com.mojang.blaze3d.vertex.Tesselator
-import com.mojang.blaze3d.vertex.VertexFormat
+import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
@@ -45,13 +40,13 @@ interface HologramStyle {
     /**
      * @param size [HologramWidgetComponent.Single.visualSize]
      */
-    fun drawSingleOutline(size: Size, selected: SelectPathType, color: Int = contextColor)
+    fun drawSingleOutline(size: Size, color: Int = contextColor)
 
     /**
      * @param size [HologramWidgetComponent.Group.visualSize]
      */
     fun drawGroupOutline(
-        size: Size, descriptionSize: Size, selected: SelectPathType, collapse: Boolean, color: Int = contextColor
+        size: Size, descriptionSize: Size, collapse: Boolean, color: Int = contextColor
     )
 
     fun moveToGroupDescription(descriptionSize: Size)
@@ -158,14 +153,14 @@ interface HologramStyle {
     }
 
     fun checkMouseInSize(size: Size): Boolean {
-        if (size == Size.ZERO) return  false
+        if (size == Size.ZERO) return false
 
         val window = Minecraft.getInstance().window
         val mouseX = window.guiScaledWidth / 2
         val mouseY = window.guiScaledHeight / 2
 
         val pose = guiGraphics.pose().last().pose()
-        val checkVector = Vector4f(0f,0f,0f,1f)
+        val checkVector = Vector4f(0f, 0f, 0f, 1f)
         pose.transform(checkVector)
         run {
             val x = checkVector.x
@@ -315,17 +310,17 @@ interface HologramStyle {
             }
         }
 
-        override fun drawSingleOutline(size: Size, selected: SelectPathType, color: Int) {
-            if (selected.isAtTerminal) {
-                outline(size.shrinkHeight(2), brightColorBySelectedType(color, selected))
-            }
+        override fun drawSingleOutline(size: Size, color: Int) {
+//            if (selected.isAtTerminal) {
+            outline(size.shrinkHeight(2), 0xff7f7f7f.toInt())
+//            }
         }
 
-        fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when {
-            selected.isUnSelect -> 0xff000000.toInt()
-            selected.isAtTerminal -> 0xffffffff.toInt()
-            else -> 0xff7f7f7f.toInt()
-        }
+//        fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when {
+//            selected.isUnSelect -> 0xff000000.toInt()
+//            selected.isAtTerminal -> 0xffffffff.toInt()
+//            else -> 0xff7f7f7f.toInt()
+//        }
 
         fun brighter(color: Int): Int {
             val factor = 0.7
@@ -351,14 +346,15 @@ interface HologramStyle {
         }
 
         override fun drawGroupOutline(
-            size: Size, descriptionSize: Size, selected: SelectPathType, collapse: Boolean, color: Int
+            size: Size, descriptionSize: Size, collapse: Boolean, color: Int
         ) {
-            val height = if (selected.isAtHead) {
-                size.height
-            } else {
+            val height =
+//                if (selected.isAtHead) {
+//                size.height
+//            } else {
                 size.height - 2
-            }
-            guiGraphics.renderOutline(0, 0, size.width, height, brightColorBySelectedType(color, selected))
+//            }
+            guiGraphics.renderOutline(0, 0, size.width, height, 0xff7f7f7f.toInt())
 
             val matrix = guiGraphics.pose().last().pose()
             val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())

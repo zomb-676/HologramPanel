@@ -93,16 +93,20 @@ class EntityHologramContext(
         val STREAM_CODE: StreamCodec<FriendlyByteBuf, EntityHologramContext> =
             object : StreamCodec<FriendlyByteBuf, EntityHologramContext> {
                 override fun decode(buffer: FriendlyByteBuf): EntityHologramContext {
-                    val levelKey = AllRegisters.Codecs.LEVEL_STREAM_CODE.decode(buffer)
-                    val server = ServerLifecycleHooks.getCurrentServer()!!
-                    val level = server.getLevel(levelKey)!!
-                    val entity = level.getEntity(buffer.readVarInt())!!
-                    val player = server.playerList.getPlayer(UUIDUtil.STREAM_CODEC.decode(buffer))!!
-                    val location = buffer.readOptional(Vec3.STREAM_CODEC).getOrNull()
-                    val hit = if (location != null) {
-                        EntityHitResult(entity, location)
-                    } else null
-                    return EntityHologramContext(entity, player, hit)
+                    try {
+                        val levelKey = AllRegisters.Codecs.LEVEL_STREAM_CODE.decode(buffer)
+                        val server = ServerLifecycleHooks.getCurrentServer()!!
+                        val level = server.getLevel(levelKey)!!
+                        val entity = level.getEntity(buffer.readVarInt())!!
+                        val player = server.playerList.getPlayer(UUIDUtil.STREAM_CODEC.decode(buffer))!!
+                        val location = buffer.readOptional(Vec3.STREAM_CODEC).getOrNull()
+                        val hit = if (location != null) {
+                            EntityHitResult(entity, location)
+                        } else null
+                        return EntityHologramContext(entity, player, hit)
+                    } catch (e : Exception) {
+                        throw e
+                    }
                 }
 
                 override fun encode(buffer: FriendlyByteBuf, value: EntityHologramContext) {

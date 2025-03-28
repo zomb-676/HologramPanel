@@ -54,7 +54,6 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         override fun render(
             target: T,
             style: HologramStyle,
-            path: SelectedPath<HologramWidgetComponent<T>>,
             displayType: DisplayType,
             partialTicks: Float
         ) {
@@ -170,11 +169,10 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         override fun renderGroupDescription(
             target: T,
             style: HologramStyle,
-            path: SelectedPath<HologramWidgetComponent<T>>,
             displayType: DisplayType,
             partialTicks: Float
         ) {
-            descriptionWidget.render(target, style, path, displayType, partialTicks)
+            descriptionWidget.render(target, style, displayType, partialTicks)
         }
 
         override fun getProvider(): ComponentProvider<T, *> = provider
@@ -217,21 +215,19 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         override fun renderGroupDescription(
             target: T,
             style: HologramStyle,
-            path: SelectedPath<HologramWidgetComponent<T>>,
             displayType: DisplayType,
             partialTicks: Float
         ) {
-            super.renderGroupDescription(target, style, path, displayType, partialTicks)
+            super.renderGroupDescription(target, style, displayType, partialTicks)
         }
 
         override fun render(
             target: T,
             style: HologramStyle,
-            path: SelectedPath<HologramWidgetComponent<T>>,
             displayType: DisplayType,
             partialTicks: Float
         ) {
-            super.render(target, style, path, displayType, partialTicks)
+            super.render(target, style, displayType, partialTicks)
         }
     }
 }

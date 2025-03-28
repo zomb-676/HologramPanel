@@ -9,7 +9,8 @@
   "hologram_panel.configuration.server_update_internal": "data updater interval on server",
   "hologram_panel.configuration.server_update_internal.tooltip": "measured in ticks",
 
-
+  "hologram_panel.configuration.update_at_unloaded":"data syncer work at chunk which is not loaded",
+  "hologram_panel.configuration.update_at_unloaded.tooltip":"should be false in most case",
 
   "hologram_panel.configuration.section.hologram.panel.client.toml.title": "Client Universal Configuration",
   "hologram_panel.configuration.section.hologram.panel.client.toml": "Client Universal Configuration",
@@ -44,9 +45,11 @@
   "hologram_panel.configuration.skip_hologram_if_empty": "skip render empty hologram",
   "hologram_panel.configuration.skip_hologram_if_empty.tooltip": "widget currently have no meaningful information",
 
-  "hologram_panel.configuration.render_debug_value": "render debug layer",
-  "hologram_panel.configuration.render_debug_value.tooltip": "render debug layer",
+  "hologram_panel.configuration.render_debug_layer": "render debug layer",
+  "hologram_panel.configuration.render_debug_layer.tooltip": "render debug layer",
 
+  "hologram_panel.configuration.render_debug_box" : "render popup/update/remove box for widget",
+  "hologram_panel.configuration.render_debug_box.tooltip" : "require debug_layer enabled",
 
   "hologram_panel.configuration.section.hologram.panel.plugin.settings": "Plugin Settings"
 

@@ -86,7 +86,7 @@ object Config {
             .define("skip_hologram_if_empty", true)
 
         val renderDebugLayer : ModConfigSpec.BooleanValue = builder
-            .define("render_debug_value", false)
+            .define("render_debug_layer", false)
 
         val renderDebugBox: ModConfigSpec.BooleanValue = builder
             .define("render_debug_box", true)

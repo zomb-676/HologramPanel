@@ -47,7 +47,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         }
         if (items.isNotEmpty()) {
             builder.single("items") {
-                items(items)
+                itemsInteractive(items, true)
             }
         }
     }

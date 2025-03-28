@@ -405,6 +405,88 @@ interface IRenderElement {
         }
     }
 
+    open class InteractiveItemsElement(items: List<ItemStack>, val input: Boolean) : ItemsElement(items),
+        HologramInteractive {
+        protected fun decodeIndex(mouseX: Int, mouseY: Int): Int {
+            val length = ITEM_STACK_LENGTH
+            val padding = PADDING
+            val index = mouseX / (length + padding) + max(mouseY / (length + padding), 0) * ITEM_EACH_LINE
+            return if ((index in 0..<items.size) || (input && index == items.size)) {
+                index
+            } else {
+                -1
+            }
+        }
+
+        override fun onMouseClick(
+            player: LocalPlayer,
+            data: HologramInteractive.MouseButton,
+            context: HologramContext,
+            interactiveSize: Size,
+            mouseX: Int,
+            mouseY: Int
+        ): Boolean {
+            val index = decodeIndex(mouseX, mouseY)
+            val shiftDown = data.modifiers and GLFW.GLFW_MOD_SHIFT != 0
+            if (index >= 0) {
+                if (index == items.size) {
+                    if (data.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                        val mainHand = player.mainHandItem
+                        if (mainHand.isEmpty) return true
+                        val count = if (shiftDown) mainHand.count else 1
+                        ItemInteractivePayload.store(mainHand, count, context)
+                    }
+                } else {
+                    val itemStack = items[index]
+                    val isShiftDown = data.modifiers and GLFW.GLFW_MOD_SHIFT != 0
+                    when (data.button) {
+                        GLFW.GLFW_MOUSE_BUTTON_LEFT -> {
+                            val count = if (isShiftDown) itemStack.count else 1
+                            if (!itemStack.isEmpty) {
+                                ItemInteractivePayload.query(itemStack, count, context, index)
+                            }
+                        }
+
+                        GLFW.GLFW_MOUSE_BUTTON_RIGHT -> {
+                            if (itemStack.isEmpty) {
+                                val mainHand = player.mainHandItem
+                                if (!mainHand.isEmpty) {
+                                    ItemInteractivePayload.store(mainHand, mainHand.count, context, index)
+                                }
+                            } else {
+                                val count = if (isShiftDown) itemStack.maxStackSize - itemStack.count else 1
+                                ItemInteractivePayload.store(itemStack, count, context, index)
+                            }
+                        }
+                    }
+                }
+            }
+            return true
+        }
+
+        override fun renderInteractive(
+            style: HologramStyle,
+            context: HologramContext,
+            widgetSize: Size,
+            interactiveSize: Size,
+            mouseX: Int,
+            mouseY: Int
+        ) {
+            style.stack {
+                style.move(widgetSize.width, 0)
+                val index = decodeIndex(mouseX, mouseY)
+                if (index >= 0) {
+                    if (index == items.size) {
+                        style.drawString("click to try input")
+                    } else {
+                        style.guiGraphics.renderItem(items[index], 0, 0)
+                        style.guiGraphics.renderItemDecorations(style.font, items[index], 0, 0)
+                    }
+                }
+            }
+        }
+    }
+
     class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderElement() {
         companion object {
             @Suppress("DEPRECATION")

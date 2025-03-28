@@ -1,7 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.SelectedPath
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -27,7 +26,6 @@ interface HologramWidgetComponent<T : Any> {
     fun render(
         target: T,
         style: HologramStyle,
-        path: SelectedPath<HologramWidgetComponent<T>>,
         displayType: DisplayType,
         partialTicks: Float
     )
@@ -87,16 +85,14 @@ interface HologramWidgetComponent<T : Any> {
         override fun render(
             target: T,
             style: HologramStyle,
-            path: SelectedPath<HologramWidgetComponent<T>>,
             displayType: DisplayType,
             partialTicks: Float
         ) {
-            val selectedType = path.forAny(this)
             val descriptionSize = this.descriptionSize(target, style, displayType)
-            style.drawGroupOutline(this.visualSize, descriptionSize, selectedType, this.collapse)
+            style.drawGroupOutline(this.visualSize, descriptionSize, this.collapse)
             style.stack {
                 style.moveToGroupDescription(descriptionSize)
-                this.renderGroupDescription(target, style, path, displayType, partialTicks)
+                this.renderGroupDescription(target, style, displayType, partialTicks)
             }
 
             if (!this.collapse) {
@@ -106,16 +102,16 @@ interface HologramWidgetComponent<T : Any> {
                         when (component) {
                             is Single<T> -> {
                                 style.drawSingleOutline(
-                                    component.visualSize, path.forAny(component)
+                                    component.visualSize
                                 )
                                 style.stack {
                                     style.moveAfterDrawSingleOutline()
-                                    component.render(target, style, path, displayType, partialTicks)
+                                    component.render(target, style, displayType, partialTicks)
                                 }
                             }
 
                             is Group<T> -> {
-                                component.render(target, style, path, displayType, partialTicks)
+                                component.render(target, style, displayType, partialTicks)
                             }
                         }
                         style.move(0, component.visualSize.height)
@@ -137,7 +133,6 @@ interface HologramWidgetComponent<T : Any> {
         abstract fun renderGroupDescription(
             target: T,
             style: HologramStyle,
-            path: SelectedPath<HologramWidgetComponent<T>>,
             displayType: DisplayType,
             partialTicks: Float
         )
