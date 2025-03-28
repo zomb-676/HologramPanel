@@ -109,6 +109,7 @@ object DebugHelper {
 
         fun renderLevelLast(event: RenderLevelStageEvent) {
             if (!Config.Client.renderDebugLayer.get()) return
+            if (!Config.Client.renderDebugBox.get()) return
             if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
             if (queryUpdateData.isEmpty() && popUpData.isEmpty() && removeData.isEmpty()) return
 
@@ -158,8 +159,9 @@ object DebugHelper {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
                 val font = Minecraft.getInstance().font
-                renderCommand(10, 10, guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false))
-                guiGraphics.drawString(font, InteractionModeManager.mode.toString(), 10, 20, -1)
+                renderCommand(10, 5, guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false))
+                guiGraphics.drawString(font, InteractionModeManager.mode.toString(), 10, 10, -1)
+                guiGraphics.drawString(font, "syncRate:${Config.Server.updateInternal.get()}Tick", 10, 20, -1)
                 guiGraphics.drawString(font, "current widget count : ${HologramManager.widgetCount()}", 10, 30, -1)
                 guiGraphics.drawString(font, querySyncString(), 10, 40, -1)
                 guiGraphics.drawString(

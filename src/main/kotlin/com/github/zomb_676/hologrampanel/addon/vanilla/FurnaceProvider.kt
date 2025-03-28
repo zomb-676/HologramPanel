@@ -11,9 +11,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.AbstractFurnaceBlock
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
-import net.minecraft.world.level.material.Fluids
 
-data object  FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
+data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
     override fun appendComponent(
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
@@ -31,12 +30,12 @@ data object  FurnaceProvider : ServerDataProvider<BlockHologramContext, Abstract
         progressBar.current(cookingTimer).max(cookingTotalTime)
 
         builder.single("working") {
-            if (!item0.isEmpty) itemStack(item0)
-            if (!item1.isEmpty) itemStack(item1)
+            itemInteractive(item0, 0)
+            itemInteractive(item1, 1)
             if (litTimeRemaining != 0) {
                 workingArrowProgress(progressBar).setPositionOffset(0, 2)
             }
-            if (!item2.isEmpty) itemStack(item2)
+            if (!item2.isEmpty) itemInteractive(item2, 2)
         }
     }
 

@@ -13,6 +13,8 @@ import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
+import com.google.common.collect.BiMap
+import com.google.common.collect.HashBiMap
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerPlayer
@@ -20,15 +22,15 @@ import java.util.*
 
 object DataQueryManager {
     object Client {
-        private val syncs: MutableMap<UUID, DynamicBuildWidget<*>> = mutableMapOf()
-        private val maps: MutableMap<DynamicBuildWidget<*>, HologramContext> = mutableMapOf()
+        private val syncs: BiMap<UUID, DynamicBuildWidget<*>> = HashBiMap.create()
+        private val maps: BiMap<DynamicBuildWidget<*>, HologramContext> = HashBiMap.create()
 
         fun syncCount() = syncs.size
 
         fun <T : HologramContext> query(
             widget: DynamicBuildWidget<T>,
             additionDataTag: CompoundTag,
-            providers: List<ServerDataProvider<T,*>>,
+            providers: List<ServerDataProvider<T, *>>,
             context: T
         ) {
             val uuid = context.getRememberData().uuid
@@ -36,6 +38,11 @@ object DataQueryManager {
             maps[widget] = context
             val payload = ComponentRequestDataPayload(uuid, additionDataTag, providers, context)
             Minecraft.getInstance().player!!.connection.send(payload)
+        }
+
+        fun queryContextUUID(context: HologramContext): UUID? {
+            val widget = maps.inverse()[context] ?: return null
+            return syncs.inverse()[widget]
         }
 
         fun receiveData(uuid: UUID, tag: CompoundTag) {
@@ -62,7 +69,7 @@ object DataQueryManager {
             syncs.remove(widget.target.getRememberData().uuid)
         }
 
-        fun closeForWidget(uuid : UUID) {
+        fun closeForWidget(uuid: UUID) {
             val widget = syncs.remove(uuid) ?: return
             maps.remove(widget)
         }
@@ -85,12 +92,22 @@ object DataQueryManager {
             syncs.computeIfAbsent(player) { mutableMapOf() }[payload.uuid] = (payload)
         }
 
+        fun manualSync(syncUUID: UUID, player: ServerPlayer) {
+            val payload = syncs[player]?.get(syncUUID) ?: return
+            val tag = CompoundTag()
+            val changed = append(payload, tag)
+            if (changed) {
+                val payload = ComponentResponseDataPayload(payload.uuid, tag)
+                player.connection.send(payload)
+            }
+        }
+
         fun tick() {
             tick.tryConsume {
                 syncs.forEach { (player, payloads) ->
                     for (payload in payloads.values) {
                         if (!Config.Server.updateAtUnloaded.get()) {
-                            val pos = when(val context = payload.context) {
+                            val pos = when (val context = payload.context) {
                                 is BlockHologramContext -> context.pos
                                 is EntityHologramContext -> context.getEntity().blockPosition()
                             }

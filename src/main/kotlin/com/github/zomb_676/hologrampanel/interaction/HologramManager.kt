@@ -3,12 +3,12 @@ package com.github.zomb_676.hologrampanel.interaction
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
-import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
 import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.profiler
 import com.github.zomb_676.hologrampanel.util.profilerStack
@@ -25,7 +25,7 @@ object HologramManager {
     private val widgets = mutableMapOf<Any, HologramWidget>()
     internal val states = mutableMapOf<HologramWidget, HologramRenderState>()
     private var lookingWidget: HologramRenderState? = null
-    private var interactiveTarget: HologramInteractive? = null
+    private var interactiveTarget: InteractiveEntry? = null
 
     fun clearAllHologram() {
         while (states.isNotEmpty()) {
@@ -116,10 +116,12 @@ object HologramManager {
                 style.fill(0, 0, widgetSize.width, widgetSize.height, 0x7fffffff)
 
                 val interactiveSet = this.getInteractiveTarget() != null
-                widget.render(state, style, displayType, partialTicks)
+                style.stack {
+                    widget.render(state, style, displayType, partialTicks)
+                }
                 val currentInteractive = this.getInteractiveTarget()
                 if (!interactiveSet && currentInteractive != null) {
-                    currentInteractive.renderInteractive(style)
+                    currentInteractive.renderInteractive(style, state.size)
                 }
             }
         }
@@ -317,9 +319,9 @@ object HologramManager {
 
     fun widgetCount(): Int = states.size
 
-    fun submitInteractive(interactive: HologramInteractive) {
-        this.interactiveTarget = interactive
+    fun submitInteractive(interactiveEntry: InteractiveEntry) {
+        this.interactiveTarget = interactiveEntry
     }
 
-    fun getInteractiveTarget(): HologramInteractive? = this.interactiveTarget
+    fun getInteractiveTarget(): InteractiveEntry? = this.interactiveTarget
 }

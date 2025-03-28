@@ -9,7 +9,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 
 class ServerHandShakePayload(val id : Int = 0) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
+    override fun type(): CustomPacketPayload.Type<ServerHandShakePayload> = TYPE
 
     companion object {
         val TYPE = CustomPacketPayload.Type<ServerHandShakePayload>(HologramPanel.rl("server_hand_shake"))

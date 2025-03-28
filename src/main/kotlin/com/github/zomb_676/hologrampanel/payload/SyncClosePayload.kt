@@ -14,7 +14,7 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
 class SyncClosePayload(val uuid: UUID) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<out SyncClosePayload> = TYPE
+    override fun type(): CustomPacketPayload.Type<SyncClosePayload> = TYPE
 
     companion object {
         val TYPE = CustomPacketPayload.Type<SyncClosePayload>(HologramPanel.rl("sync_close"))

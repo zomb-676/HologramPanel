@@ -32,6 +32,7 @@ import net.neoforged.neoforge.event.level.LevelEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.registries.RegisterEvent
+import net.neoforged.neoforge.server.ServerLifecycleHooks
 import org.lwjgl.glfw.GLFW
 
 object EventHandler {
@@ -130,8 +131,7 @@ object EventHandler {
 
             val interactiveTarget = HologramManager.getInteractiveTarget()
             if (interactiveTarget != null) {
-                val player = Minecraft.getInstance().player ?: return
-                val res = interactiveTarget.onKey(player, HologramInteractive.Key.create(event))
+                val res = interactiveTarget.onKey(event)
                 if (res) return
             }
 
@@ -146,7 +146,8 @@ object EventHandler {
             val interactiveTarget = HologramManager.getInteractiveTarget()
             if (interactiveTarget != null) {
                 val player = Minecraft.getInstance().player ?: return
-                val res = interactiveTarget.onMouseScroll(player, HologramInteractive.MouseScroll.create(event))
+                val mouseScroll = HologramInteractive.MouseScroll.create(event)
+                val res = interactiveTarget.onMouseScroll(event)
                 if (res) {
                     event.isCanceled = true
                     return
@@ -170,13 +171,14 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            val interactiveTarget = HologramManager.getInteractiveTarget()
-            if (interactiveTarget != null) {
-                val player = Minecraft.getInstance().player ?: return
-                val res = interactiveTarget.onMouseClick(player, HologramInteractive.MouseButton.create(event))
-                if (res) {
-                    event.isCanceled = true
-                    return
+            if (event.action == GLFW.GLFW_PRESS) {
+                val interactiveTarget = HologramManager.getInteractiveTarget()
+                if (interactiveTarget != null) {
+                    val res = interactiveTarget.onMouseClick(event)
+                    if (res) {
+                        event.isCanceled = true
+                        return
+                    }
                 }
             }
 
@@ -249,14 +251,36 @@ object EventHandler {
             DebugStatisticsPayload.TYPE,
             DebugStatisticsPayload.STREAM_CODEC,
             DebugStatisticsPayload.HANDLE
+        ).playToServer<ItemInteractivePayload>(
+            ItemInteractivePayload.TYPE,
+            ItemInteractivePayload.STREAM_CODEC,
+            ItemInteractivePayload.HANDLE
         )
     }
 
     private fun registerCommand(event: RegisterCommandsEvent) {
-
+        CommandDSL(event.dispatcher).apply {
+            HologramPanel.MOD_ID {
+                if (HologramPanel.underDebug) {
+                    "froze_time_and_weather" {
+                        execute {
+                            val server = ServerLifecycleHooks.getCurrentServer() ?: return@execute
+                            server.commands.performPrefixedCommand(source, "gamerule doDaylightCycle false")
+                            server.commands.performPrefixedCommand(source, "gamerule doWeatherCycle false")
+                        }
+                    }
+                    "clear_all_items" {
+                        execute {
+                            val server = ServerLifecycleHooks.getCurrentServer() ?: return@execute
+                            server.commands.performPrefixedCommand(source, "kill @e[type=minecraft:item]")
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    private fun registerClientCommand(event : RegisterClientCommandsEvent) {
+    private fun registerClientCommand(event: RegisterClientCommandsEvent) {
         CommandDSL(event.dispatcher).apply {
             HologramPanel.MOD_ID {
                 "debug_layer" {
@@ -264,6 +288,14 @@ object EventHandler {
                         execute {
                             val value = BoolArgumentType.getBool(this, "debug_layer")
                             Config.Client.renderDebugLayer.set(value)
+                        }
+                    }
+                }
+                "debug_box" {
+                    "debug_box"(BoolArgumentType.bool()) {
+                        execute {
+                            val value = BoolArgumentType.getBool(this, "debug_box")
+                            Config.Client.renderDebugBox.set(value)
                         }
                     }
                 }

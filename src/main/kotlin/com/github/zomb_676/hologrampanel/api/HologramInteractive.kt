@@ -1,6 +1,8 @@
 package com.github.zomb_676.hologrampanel.api
 
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.util.Size
 import net.minecraft.client.player.LocalPlayer
 import net.neoforged.neoforge.client.event.InputEvent
 import org.jetbrains.annotations.ApiStatus
@@ -9,19 +11,42 @@ interface HologramInteractive {
     /**
      * @return true will consume the input
      */
-    fun onMouseClick(player: LocalPlayer, data: MouseButton): Boolean = false
+    fun onMouseClick(
+        player: LocalPlayer,
+        data: MouseButton,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ): Boolean = false
 
     /**
      * @return true will consume the input
      */
-    fun onMouseScroll(player: LocalPlayer, data: MouseScroll): Boolean = false
+    fun onMouseScroll(
+        player: LocalPlayer,
+        data: MouseScroll,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ): Boolean = false
 
     /**
      * @return true will consume the input
      */
-    fun onKey(player: LocalPlayer, data: Key): Boolean = false
+    fun onKey(
+        player: LocalPlayer, data: Key, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int
+    ): Boolean = false
 
-    fun renderInteractive(style: HologramStyle) {}
+    fun renderInteractive(
+        style: HologramStyle,
+        context: HologramContext,
+        widgetSize: Size,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ) {}
 
     data class Key(
         val key: Int, val scanCode: Int, val action: Int, val modifiers: Int

@@ -7,7 +7,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -32,7 +31,7 @@ class BlockHologramContext(
 ) : HologramContext {
 
     private val originalBlock: BlockState = player.level().getBlockState(pos)
-    private var tag : CompoundTag? = null
+    private var tag: CompoundTag? = null
 
     private val centerPosition = Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f)
     private val remember = Remember.create(this)
@@ -90,15 +89,19 @@ class BlockHologramContext(
      **/
     override fun stillValid(): Boolean = getBlockState().block == originalBlock.block
 
+    override fun toString(): String {
+        return "BlockContext(pos=${pos.toShortString()}, block=${originalBlock.block})"
+    }
+
     companion object {
         fun of(hit: BlockHitResult, player: Player): BlockHologramContext {
             val pos: BlockPos = hit.blockPos
             return BlockHologramContext(pos, player, hit)
         }
 
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, BlockHologramContext> =
-            object : StreamCodec<RegistryFriendlyByteBuf, BlockHologramContext> {
-                override fun decode(buffer: RegistryFriendlyByteBuf): BlockHologramContext {
+        val STREAM_CODEC: StreamCodec<FriendlyByteBuf, BlockHologramContext> =
+            object : StreamCodec<FriendlyByteBuf, BlockHologramContext> {
+                override fun decode(buffer: FriendlyByteBuf): BlockHologramContext {
                     val pos = BlockPos.STREAM_CODEC.decode(buffer)
                     val playerUUID = UUIDUtil.STREAM_CODEC.decode(buffer)
                     val player = ServerLifecycleHooks.getCurrentServer()!!.playerList.getPlayer(playerUUID)
@@ -107,7 +110,7 @@ class BlockHologramContext(
                 }
 
                 override fun encode(
-                    buffer: RegistryFriendlyByteBuf,
+                    buffer: FriendlyByteBuf,
                     value: BlockHologramContext
                 ) {
                     BlockPos.STREAM_CODEC.encode(buffer, value.pos)

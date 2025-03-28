@@ -8,6 +8,7 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponen
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.BufferUploader
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
@@ -19,6 +20,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.util.ARGB
 import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
+import org.joml.Matrix4f
 import org.joml.Vector4f
 import kotlin.math.*
 
@@ -135,6 +137,9 @@ interface HologramStyle {
 
     fun push() = this.guiGraphics.pose().pushPose()
     fun pop() = this.guiGraphics.pose().popPose()
+
+    fun pose(): PoseStack = this.guiGraphics.pose()
+    fun poseMatrix(): Matrix4f = this.guiGraphics.pose().last().pose()
 
     val font: Font get() = Minecraft.getInstance().font
 

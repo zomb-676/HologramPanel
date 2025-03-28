@@ -36,17 +36,7 @@ class ComponentRequestDataPayload<T : HologramContext>(
                     val providers = List(providerSize) { _ ->
                         AllRegisters.ComponentHologramProviderRegistry.STREAM_CODEC.decode(buffer)
                     }
-                    val context = when (buffer.readShort()) {
-                        0.toShort() -> {
-                            BlockHologramContext.STREAM_CODEC.decode(buffer)
-                        }
-
-                        1.toShort() -> {
-                            EntityHologramContext.STREAM_CODE.decode(buffer)
-                        }
-
-                        else -> throw RuntimeException()
-                    }
+                    val context = HologramContext.STREAM_CODE.decode(buffer)
                     return ComponentRequestDataPayload(uuid, additionDataTag, providers.unsafeCast(), context)
                 }
 
@@ -61,17 +51,7 @@ class ComponentRequestDataPayload<T : HologramContext>(
                             buffer, provider as ComponentProvider<*,*>
                         )
                     }
-                    when (val context = value.context) {
-                        is BlockHologramContext -> {
-                            buffer.writeShort(0)
-                            BlockHologramContext.STREAM_CODEC.encode(buffer, context)
-                        }
-
-                        is EntityHologramContext -> {
-                            buffer.writeShort(1)
-                            EntityHologramContext.STREAM_CODE.encode(buffer, context)
-                        }
-                    }
+                    HologramContext.STREAM_CODE.encode(buffer, value.context)
                 }
             }
         val HANDLE = object : IPayloadHandler<ComponentRequestDataPayload<*>> {

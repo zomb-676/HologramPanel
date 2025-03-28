@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.Entity
@@ -80,15 +80,19 @@ class EntityHologramContext(
      **/
     override fun stillValid(): Boolean = !this.entity.isRemoved
 
+    override fun toString(): String {
+        return "EntityContext(entity=${entity::class.java.simpleName}/${entity.name.string})"
+    }
+
     companion object {
         fun of(hit: EntityHitResult, player: Player): EntityHologramContext {
             val entity: Entity = hit.entity
             return EntityHologramContext(entity, player, hit)
         }
 
-        val STREAM_CODE: StreamCodec<RegistryFriendlyByteBuf, EntityHologramContext> =
-            object : StreamCodec<RegistryFriendlyByteBuf, EntityHologramContext> {
-                override fun decode(buffer: RegistryFriendlyByteBuf): EntityHologramContext {
+        val STREAM_CODE: StreamCodec<FriendlyByteBuf, EntityHologramContext> =
+            object : StreamCodec<FriendlyByteBuf, EntityHologramContext> {
+                override fun decode(buffer: FriendlyByteBuf): EntityHologramContext {
                     val levelKey = AllRegisters.Codecs.LEVEL_STREAM_CODE.decode(buffer)
                     val server = ServerLifecycleHooks.getCurrentServer()!!
                     val level = server.getLevel(levelKey)!!
@@ -101,9 +105,7 @@ class EntityHologramContext(
                     return EntityHologramContext(entity, player, hit)
                 }
 
-                override fun encode(
-                    buffer: RegistryFriendlyByteBuf, value: EntityHologramContext
-                ) {
+                override fun encode(buffer: FriendlyByteBuf, value: EntityHologramContext) {
                     AllRegisters.Codecs.LEVEL_STREAM_CODE.encode(buffer, value.entity.level().dimension())
                     buffer.writeVarInt(value.entity.id)
                     UUIDUtil.STREAM_CODEC.encode(buffer, value.player.uuid)

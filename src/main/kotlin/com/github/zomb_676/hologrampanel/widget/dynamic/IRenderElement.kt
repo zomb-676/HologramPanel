@@ -1,6 +1,8 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.payload.ItemInteractivePayload
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.render.HologramStyle.Companion.ITEM_STACK_LENGTH
 import com.github.zomb_676.hologrampanel.util.ProgressData
@@ -30,6 +32,7 @@ import net.neoforged.neoforge.client.textures.FluidSpriteCache
 import net.neoforged.neoforge.fluids.FluidType
 import org.joml.Quaternionf
 import org.joml.Vector3f
+import org.lwjgl.glfw.GLFW
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -248,43 +251,24 @@ interface IRenderElement {
 
         override fun render(style: HologramStyle, partialTicks: Float) {
             val texture = ClientHooks.onRenderTooltipTexture(
-                item,
-                style.guiGraphics,
-                0,
-                0,
-                style.font,
-                tooltips,
-                sprite
+                item, style.guiGraphics, 0, 0, style.font, tooltips, sprite
             )
             var height = 0
             style.stack {
                 style.guiGraphics.pose().translate(2.0, 2.0, 400.0)
                 TooltipRenderUtil.renderTooltipBackground(
-                    style.guiGraphics,
-                    0,
-                    0,
-                    contentSize.width - 4,
-                    contentSize.height - 5,
-                    0,
-                    texture.texture
+                    style.guiGraphics, 0, 0, contentSize.width - 4, contentSize.height - 5, 0, texture.texture
                 )
                 tooltips.forEachIndexed { index, tooltip ->
                     tooltip.renderText(
-                        style.font,
-                        0,
-                        height,
-                        style.guiGraphics.pose().last().pose(),
-                        style.guiGraphics.bufferSource
+                        style.font, 0, height, style.guiGraphics.pose().last().pose(), style.guiGraphics.bufferSource
                     )
                     height += tooltip.getHeight(style.font)
                 }
                 height = 0
                 tooltips.forEachIndexed { index, tooltip ->
                     tooltip.renderImage(
-                        style.font,
-                        0,
-                        height,
-                        contentSize.width, contentSize.height, style.guiGraphics
+                        style.font, 0, height, contentSize.width, contentSize.height, style.guiGraphics
                     )
                     height += tooltip.getHeight(style.font)
                 }
@@ -296,16 +280,20 @@ interface IRenderElement {
         }
     }
 
-    open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement() , HologramInteractive {
+    open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement() {
 
         override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize().scale()
 
         override fun render(
             style: HologramStyle, partialTicks: Float
         ) {
-            style.guiGraphics.renderItem(itemStack, 0, 0)
-            if (renderDecoration) {
-                style.guiGraphics.renderItemDecorations(style.font, itemStack, 0, 0)
+            if (itemStack.isEmpty) {
+                style.outline(this.contentSize)
+            } else {
+                style.guiGraphics.renderItem(itemStack, 0, 0)
+                if (renderDecoration) {
+                    style.guiGraphics.renderItemDecorations(style.font, itemStack, 0, 0)
+                }
             }
         }
 
@@ -314,16 +302,58 @@ interface IRenderElement {
             return this
         }
 
+        override fun toString(): String {
+            return "ItemStack(renderDecoration=$renderDecoration, itemStack=$itemStack)"
+        }
+    }
+
+    open class InteractiveItemElement(item: ItemStack, val interactiveSlot: Int) : ItemStackElement(true, item),
+        HologramInteractive {
         override fun onMouseClick(
             player: LocalPlayer,
-            data: HologramInteractive.MouseButton
+            data: HologramInteractive.MouseButton,
+            context: HologramContext,
+            interactiveSize: Size,
+            mouseX: Int,
+            mouseY: Int
         ): Boolean {
-            player.displayClientMessage(itemStack.displayName, true)
+            val isShiftDown = data.modifiers and GLFW.GLFW_MOD_SHIFT != 0
+            when (data.button) {
+                GLFW.GLFW_MOUSE_BUTTON_LEFT -> {
+                    val count = if (isShiftDown) itemStack.count else 1
+                    if (!this.itemStack.isEmpty) {
+                        ItemInteractivePayload.query(itemStack, count, context, interactiveSlot)
+                    }
+                }
+
+                GLFW.GLFW_MOUSE_BUTTON_RIGHT -> {
+                    if (this.itemStack.isEmpty) {
+                        val mainHand = player.mainHandItem
+                        if (!mainHand.isEmpty) {
+                            ItemInteractivePayload.store(mainHand, mainHand.count, context, interactiveSlot)
+                        }
+                    } else {
+                        val count = if (isShiftDown) this.itemStack.maxStackSize - this.itemStack.count else 1
+                        ItemInteractivePayload.store(this.itemStack, count, context, interactiveSlot)
+                    }
+                }
+            }
             return true
         }
 
-        override fun toString(): String {
-            return "ItemStack(renderDecoration=$renderDecoration, itemStack=$itemStack)"
+        override fun renderInteractive(
+            style: HologramStyle,
+            context: HologramContext,
+            widgetSize: Size,
+            interactiveSize: Size,
+            mouseX: Int,
+            mouseY: Int
+        ) {
+            style.stack {
+                style.move(widgetSize.width + 3, 0)
+                style.drawString("1", 10)
+                style.drawString("2", 20)
+            }
         }
     }
 

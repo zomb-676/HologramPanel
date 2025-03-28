@@ -195,7 +195,12 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
          * this will call [net.minecraft.client.gui.GuiGraphics.renderItemDecorations]
          */
         fun itemStack(itemStack: ItemStack): IRenderElement.ItemStackElement {
-            return IRenderElement.ItemStackElement(true, itemStack).attach()
+            return IRenderElement.ItemStackElement(itemStack = itemStack).attach()
+        }
+
+        fun itemInteractive(item : ItemStack, interactiveSlot : Int) : IRenderElement.InteractiveItemElement {
+            require(interactiveSlot >= 0)
+            return IRenderElement.InteractiveItemElement(item, interactiveSlot).attach()
         }
 
         fun workingArrowProgress(progress: ProgressData): IRenderElement.WorkingArrowProgressBarElement {

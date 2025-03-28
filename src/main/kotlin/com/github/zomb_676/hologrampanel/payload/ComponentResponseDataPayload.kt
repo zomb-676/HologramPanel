@@ -13,7 +13,7 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
 class ComponentResponseDataPayload(val uuid: UUID, val data: CompoundTag) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<out ComponentResponseDataPayload> = TYPE
+    override fun type(): CustomPacketPayload.Type<ComponentResponseDataPayload> = TYPE
 
     companion object {
         val TYPE = CustomPacketPayload.Type<ComponentResponseDataPayload>(HologramPanel.rl("component_response_data"))

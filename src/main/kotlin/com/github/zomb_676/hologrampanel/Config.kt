@@ -88,6 +88,9 @@ object Config {
         val renderDebugLayer : ModConfigSpec.BooleanValue = builder
             .define("render_debug_value", false)
 
+        val renderDebugBox: ModConfigSpec.BooleanValue = builder
+            .define("render_debug_box", true)
+
         fun tryValidate() {
             if (renderMaxDistance.get() <= renderMinDistance.get()) {
                 renderMinDistance.set(1.0)
