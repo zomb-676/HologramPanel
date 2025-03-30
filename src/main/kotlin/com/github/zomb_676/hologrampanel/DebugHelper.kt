@@ -5,6 +5,9 @@ import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.payload.DebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.payload.QueryDebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
+import com.github.zomb_676.hologrampanel.util.FontBufferSource
+import com.github.zomb_676.hologrampanel.util.glDebugStack
+import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
@@ -13,10 +16,10 @@ import com.mojang.blaze3d.vertex.*
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.CoreShaders
-import net.minecraft.client.renderer.ShapeRenderer
+import net.minecraft.client.renderer.*
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.util.ARGB
 import net.neoforged.neoforge.client.event.ClientTickEvent
@@ -36,11 +39,15 @@ object DebugHelper {
         private var lastDebugState: Boolean = false
 
         private var remainTimeInTicks: Int = 0
-        private val queryUpdateData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
+        private val queryUpdateData: Object2IntOpenHashMap<UpdateEntry> = Object2IntOpenHashMap()
+
+        data class UpdateEntry(val state: HologramRenderState, val size: Int)
+
         private val popUpData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
         private val removeData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
 
         private var lookingRenderElement: IRenderElement? = null
+
 
         private fun tick(target: Object2IntOpenHashMap<*>) {
             val iterator = target.object2IntEntrySet().fastIterator()
@@ -88,6 +95,26 @@ object DebugHelper {
             )
         }
 
+        fun totalTickDataSize(): String {
+            val iterator = this.queryUpdateData.object2IntEntrySet().iterator()
+            var size = 0
+            while (iterator.hasNext()) {
+                val next = iterator.next()
+//                if (next.intValue >= UPDATE_TINE - 1) {
+                size += next.key.size
+//                }
+            }
+            return byteSize(size)
+        }
+
+        private fun byteSize(size: Int) = when {
+            size < (2 shl 11) - 1 -> "$size Bytes"
+            size < (2 shl 21) - 1 -> "%.2f MB".format(size.toFloat() / ((2 shl 11) - 1))
+            else -> "%.2f GB".format(size.toFloat() / ((2 shl 21) - 1))
+        }
+
+        val fontBufferSource = FontBufferSource()
+
         fun renderLevelLast(event: RenderLevelStageEvent) {
             if (!Config.Client.renderDebugLayer.get()) return
             if (!Config.Client.renderDebugBox.get()) return
@@ -100,6 +127,9 @@ object DebugHelper {
             RenderSystem.setShader(CoreShaders.POSITION_COLOR)
             RenderSystem.disableDepthTest()
 
+            val font = Minecraft.getInstance().font
+
+
             val camPos = event.camera.position
             pose.translate(-camPos.x, -camPos.y, -camPos.z)
             val partialTick = event.partialTick.getGameTimeDeltaPartialTick(true)
@@ -108,7 +138,20 @@ object DebugHelper {
                 while (iterator.hasNext()) {
                     val next = iterator.next()
                     val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, 0x00ffffff.toInt(), -1)
-                    fill(next.key.sourcePosition(partialTick), color, pose, builder)
+                    val position = next.key.state.sourcePosition(partialTick)
+                    fill(position, color, pose, builder)
+
+                    val size = next.key.size
+                    pose.stack {
+                        pose.translate(position.x(), position.y() + 0.8f, position.z())
+                        pose.mulPose(Minecraft.getInstance().entityRenderDispatcher.cameraOrientation())
+                        pose.scale(0.025f, -0.025f, 0.025f)
+                        val text = byteSize(size)
+                        font.drawInBatch(
+                            text, -(font.width(text) / 2).toFloat(), 0f, -2130706433, false, pose.last().pose(),
+                            fontBufferSource, Font.DisplayMode.SEE_THROUGH, 1056964608, LightTexture.FULL_BRIGHT
+                        )
+                    }
                 }
             }
             if (popUpData.isNotEmpty()) {
@@ -129,7 +172,11 @@ object DebugHelper {
                     fill(next.key.sourcePosition(partialTick), color, pose, builder)
                 }
             }
-            BufferUploader.drawWithShader(builder.buildOrThrow())
+            builder.buildOrThrow().close()
+//            BufferUploader.drawWithShader(builder.buildOrThrow())
+            glDebugStack("font") {
+                fontBufferSource.endBatch()
+            }
             RenderSystem.enableDepthTest()
         }
 
@@ -140,7 +187,8 @@ object DebugHelper {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
                 val font = Minecraft.getInstance().font
-                guiGraphics.drawString(font, "syncRate:${Config.Server.updateInternal.get()}Tick", 10, 20, -1)
+                guiGraphics.drawString(font, "syncRate:${Config.Server.updateInternal.get()}Tick", 10, 10, -1)
+                guiGraphics.drawString(font, "synced data size:${totalTickDataSize()}", 10, 20, -1)
                 guiGraphics.drawString(font, "current widget count : ${HologramManager.widgetCount()}", 10, 30, -1)
                 guiGraphics.drawString(font, querySyncString(), 10, 40, -1)
                 guiGraphics.drawString(
@@ -170,10 +218,10 @@ object DebugHelper {
             return builder.toString()
         }
 
-        fun onDataReceived(widget: DynamicBuildWidget<*>) {
+        fun onDataReceived(widget: DynamicBuildWidget<*>, sizeInBytes: Int) {
             if (!Config.Client.renderDebugLayer.get()) return
             val state = HologramManager.queryHologramState(widget) ?: return
-            queryUpdateData.put(state, UPDATE_TINE)
+            queryUpdateData.put(UpdateEntry(state, sizeInBytes), UPDATE_TINE)
         }
 
         fun recordPopup(state: HologramRenderState) {

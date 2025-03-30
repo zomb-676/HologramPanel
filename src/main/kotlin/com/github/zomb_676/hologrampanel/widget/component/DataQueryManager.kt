@@ -48,7 +48,7 @@ object DataQueryManager {
             return syncs.inverse()[widget]
         }
 
-        fun receiveData(uuid: UUID, tag: CompoundTag) {
+        fun receiveData(uuid: UUID, tag: CompoundTag, sizeInBytes: Int) {
             val widget = syncs[uuid]
             if (widget == null) {
                 SyncClosePayload(uuid).sendToServer()
@@ -64,7 +64,7 @@ object DataQueryManager {
                     widget.updateComponent(state.displayType)
                 }
             }
-            DebugHelper.Client.onDataReceived(widget)
+            DebugHelper.Client.onDataReceived(widget, sizeInBytes)
         }
 
         fun closeForWidget(widget: DynamicBuildWidget<*>) {
@@ -100,7 +100,7 @@ object DataQueryManager {
             val tag = CompoundTag()
             val changed = append(payload, tag)
             if (changed) {
-                val payload = ComponentResponseDataPayload(payload.uuid, tag)
+                val payload = ComponentResponseDataPayload.of(payload.uuid, tag)
                 player.connection.send(payload)
             }
         }
@@ -120,7 +120,7 @@ object DataQueryManager {
                         val tag = CompoundTag()
                         val changed = append(payload, tag)
                         if (changed) {
-                            val payload = ComponentResponseDataPayload(payload.uuid, tag)
+                            val payload = ComponentResponseDataPayload.of(payload.uuid, tag)
                             player.connection.send(payload)
                         }
                     }

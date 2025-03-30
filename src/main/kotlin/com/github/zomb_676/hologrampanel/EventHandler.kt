@@ -9,6 +9,7 @@ import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.brigadier.arguments.BoolArgumentType
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
@@ -240,6 +241,14 @@ object EventHandler {
                         execute {
                             val server = ServerLifecycleHooks.getCurrentServer() ?: return@execute
                             server.commands.performPrefixedCommand(source, "kill @e[type=minecraft:item]")
+                        }
+                    }
+                    "data_sync_interval" {
+                        "interval"(IntegerArgumentType.integer(1, 20)) {
+                            execute {
+                                val interval = IntegerArgumentType.getInteger(this, "interval")
+                                Config.Server.updateInternal.set(interval)
+                            }
                         }
                     }
                 }

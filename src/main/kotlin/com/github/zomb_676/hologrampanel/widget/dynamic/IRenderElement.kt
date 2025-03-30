@@ -352,10 +352,12 @@ interface IRenderElement {
             mouseY: Int,
             renderInteractiveHint: Boolean
         ) {
-            style.stack {
-                style.move(widgetSize.width + 3, 0)
-                style.drawString("left click to take")
-                style.drawString("right click to store")
+            if (renderInteractiveHint) {
+                style.stack {
+                    style.move(widgetSize.width + 3, 0)
+                    style.drawString("left click to take")
+                    style.drawString("right click to store", y = 10)
+                }
             }
         }
     }
@@ -471,14 +473,16 @@ interface IRenderElement {
             mouseY: Int,
             renderInteractiveHint: Boolean
         ) {
-            style.stack {
-                style.move(widgetSize.width, 0)
-                val index = decodeIndex(mouseX, mouseY)
-                if (index >= 0) {
-                    if (index == items.size) {
-                        style.drawString("click to try input")
-                    } else {
-                        style.itemWithDecoration(items[index], 0, 0)
+            if (renderInteractiveHint) {
+                style.stack {
+                    style.move(widgetSize.width, 0)
+                    val index = decodeIndex(mouseX, mouseY)
+                    if (index >= 0) {
+                        if (index == items.size) {
+                            style.drawString("click to try input")
+                        } else {
+                            style.itemWithDecoration(items[index], 0, 0)
+                        }
                     }
                 }
             }
