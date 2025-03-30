@@ -75,7 +75,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         codeBlock.invoke()
         val desWidget =
             createSingleFromElements(helper.isolateScope { description.invoke(helper) }, "description_$identityName")!!
-        val group = createGroupForElements(stack.pop(), desWidget, collapse, identityName)
+        val group = createGroupForElements(stack.pop(), desWidget, collapse, identityName, false)
         if (group != null) {
             stack.peek().add(group)
         }
@@ -102,10 +102,11 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         child: MutableList<DynamicBuildComponentWidget<T>>,
         desWidget: DynamicBuildComponentWidget.Single<T>,
         collapse: Boolean,
-        identityName: String
+        identityName: String,
+        isGlobal : Boolean
     ): DynamicBuildComponentWidget.Group<T>? {
         if (child.isEmpty()) return null
-        return DynamicBuildComponentWidget.Group(this.currentProvider!!, desWidget, child, identityName, collapse)
+        return DynamicBuildComponentWidget.Group(isGlobal,this.currentProvider!!, desWidget, child, identityName, collapse)
     }
 
     /**
@@ -137,7 +138,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         if (context.getRememberData().serverDataEntries().isNotEmpty()) {
             currentStack.add(DynamicBuildComponentWidget.requireServerData(context))
         }
-        val global = createGroupForElements(currentStack, desc, false, "global")!!
+        val global = createGroupForElements(currentStack, desc, false, "global", true)!!
         require(stack.isEmpty())
         this.currentProvider = null
         return DynamicBuildWidget(context, global, providers)

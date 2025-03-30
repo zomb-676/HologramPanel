@@ -2,7 +2,6 @@
   "hologram_panel.configuration.title": "Hologram Panel Configuration",
 
 
-
   "hologram_panel.configuration.section.hologram.panel.server.toml.title": "Configure Server",
   "hologram_panel.configuration.section.hologram.panel.server.toml": "Server Configuration",
 
@@ -11,6 +10,7 @@
 
   "hologram_panel.configuration.update_at_unloaded":"data syncer work at chunk which is not loaded",
   "hologram_panel.configuration.update_at_unloaded.tooltip":"should be false in most case",
+
 
   "hologram_panel.configuration.section.hologram.panel.client.toml.title": "Client Universal Configuration",
   "hologram_panel.configuration.section.hologram.panel.client.toml": "Client Universal Configuration",
@@ -45,11 +45,17 @@
   "hologram_panel.configuration.skip_hologram_if_empty": "skip render empty hologram",
   "hologram_panel.configuration.skip_hologram_if_empty.tooltip": "widget currently have no meaningful information",
 
+  "hologram_panel.configuration.display_interactive_hint": "display hologram interactive hint if exist",
+  "hologram_panel.configuration.display_interactive_hint.tooltip": "some widget is not interactive or not support hint",
+
   "hologram_panel.configuration.render_debug_layer": "render debug layer",
   "hologram_panel.configuration.render_debug_layer.tooltip": "render debug layer",
 
-  "hologram_panel.configuration.render_debug_box" : "render popup/update/remove box for widget",
+  "hologram_panel.configuration.render_debug_box" : "render popup/update/remove box for hologram",
   "hologram_panel.configuration.render_debug_box.tooltip" : "require debug_layer enabled",
+
+  "hologram_panel.configuration.render_widget_debug_info" : "render debug information for hologram",
+  "hologram_panel.configuration.render_widget_debug_info.tooltip" : "require debug_layer enabled",
 
   "hologram_panel.configuration.section.hologram.panel.plugin.settings": "Plugin Settings"
 

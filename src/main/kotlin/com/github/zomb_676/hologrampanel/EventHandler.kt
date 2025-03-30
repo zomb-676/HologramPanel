@@ -2,8 +2,6 @@ package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
-import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
-import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
 import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
@@ -74,16 +72,6 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onRenderLevelStage)
         }
 
-        val switchModeKey by lazy {
-            KeyMapping(
-                "key.a.switch_mode_key",
-                KeyConflictContext.IN_GAME,
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_G,
-                "key.categories.misc"
-            )
-        }
-
         val panelKey by lazy {
             KeyMapping(
                 "key.a.selector_panel",
@@ -95,14 +83,10 @@ object EventHandler {
         }
 
         private fun registerKey(event: RegisterKeyMappingsEvent) {
-            event.register(switchModeKey)
             event.register(panelKey)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
-            while (switchModeKey.consumeClick()) {
-                InteractionModeManager.switchModeKeyToggled()
-            }
             if (panelKey.isDown) {
                 CycleSelector.tryBegin()
             } else {
@@ -134,9 +118,6 @@ object EventHandler {
                 val res = interactiveTarget.onKey(event)
                 if (res) return
             }
-
-            if (InteractionModeManager.mode.isDisable()) return
-            InteractionCommand.Raw.Key.create(event).post()
         }
 
         private fun onMouseScroll(event: InputEvent.MouseScrollingEvent) {
@@ -153,10 +134,6 @@ object EventHandler {
                     return
                 }
             }
-
-            if (InteractionModeManager.mode.isDisable()) return
-            event.isCanceled = true
-            InteractionCommand.Raw.MouseScroll.create(event).post()
         }
 
         private fun onMouseButton(event: InputEvent.MouseButton.Pre) {
@@ -181,19 +158,10 @@ object EventHandler {
                     }
                 }
             }
-
-            if (InteractionModeManager.mode.isDisable()) return
-            if (InteractionModeManager.shouldRestPlayerClientInput() && event.action != GLFW.GLFW_RELEASE) {
-                event.isCanceled = true
-            }
-            InteractionCommand.Raw.MouseButton.create(event).post()
         }
 
         private fun onInteraction(event: InputEvent.InteractionKeyMappingTriggered) {
-            if (Minecraft.getInstance().level == null) return
-            if (Minecraft.getInstance().screen != null) return
-            if (InteractionModeManager.mode.isDisable()) return
-            event.isCanceled = true
+//            event.isCanceled = true
         }
 
         private fun registerLayer(event: RegisterGuiLayersEvent) {
@@ -213,7 +181,6 @@ object EventHandler {
         private fun onPlayerLogIn(event: ClientPlayerNetworkEvent.LoggingIn) {
 
         }
-
 
         private fun onPlayerLogout(event: ClientPlayerNetworkEvent.LoggingOut) {
             HologramPanel.serverInstalled = false

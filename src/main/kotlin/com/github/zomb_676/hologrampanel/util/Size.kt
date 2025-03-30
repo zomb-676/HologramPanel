@@ -14,6 +14,7 @@ value class Size private constructor(@PublishedApi internal val size: Long) {
     fun expandHeight(value: Int) = of(width, height + value)
     fun shrinkWidth(value: Int) = of(width - value, height)
     fun shrinkHeight(value: Int) = of(width, height - value)
+    fun expand(padding: Padding) = of(width + padding.horizontal, height + padding.vertical)
 
     override fun toString(): String = "width:$width,height:$height"
 

@@ -20,6 +20,9 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerPlayer
 import java.util.*
 
+/**
+ * manager object for all [com.github.zomb_676.hologrampanel.widget.dynamic.Remember]
+ */
 object DataQueryManager {
     object Client {
         private val syncs: BiMap<UUID, DynamicBuildWidget<*>> = HashBiMap.create()

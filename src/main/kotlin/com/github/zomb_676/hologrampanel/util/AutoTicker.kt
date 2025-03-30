@@ -6,7 +6,7 @@ import java.util.function.IntSupplier
 class AutoTicker private constructor(val interval: IntSupplier) {
     companion object {
         fun by(interval: IntSupplier) = AutoTicker(interval)
-        fun by(interval: Int) = AutoTicker({ interval })
+        fun by(interval: Int) = AutoTicker { interval }
     }
 
     @PublishedApi

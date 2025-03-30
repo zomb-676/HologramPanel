@@ -2,8 +2,6 @@ package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
-import com.github.zomb_676.hologrampanel.interaction.InteractionCommand
-import com.github.zomb_676.hologrampanel.interaction.InteractionModeManager
 import com.github.zomb_676.hologrampanel.payload.DebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.payload.QueryDebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
@@ -29,7 +27,6 @@ import kotlin.math.max
 
 object DebugHelper {
     object Client {
-        const val COMMAND_LASTING_TIME = 3
         private val UPDATE_TINE: Int get() = max(Config.Server.updateInternal.get(), 20)
         private const val POPUP_TIME = 30
         private const val REMOVE_TIME = 30
@@ -38,7 +35,6 @@ object DebugHelper {
 
         private var lastDebugState: Boolean = false
 
-        private var command: InteractionCommand.Exact? = null
         private var remainTimeInTicks: Int = 0
         private val queryUpdateData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
         private val popUpData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
@@ -77,21 +73,6 @@ object DebugHelper {
             tick(queryUpdateData)
             tick(popUpData)
             tick(removeData)
-        }
-
-        fun updateExactCommand(command: InteractionCommand.Exact?) {
-            if (command != null) {
-                this.command = command
-                this.remainTimeInTicks = COMMAND_LASTING_TIME
-            }
-        }
-
-        fun renderCommand(x: Int, y: Int, guiGraphics: GuiGraphics, partialTick: Float) {
-            if (remainTimeInTicks > 0 && command != null) {
-                val color =
-                    ARGB.lerp((this.remainTimeInTicks + partialTick) / COMMAND_LASTING_TIME, 0x00ffffff.toInt(), -1)
-                guiGraphics.drawString(Minecraft.getInstance().font, command.toString(), x, y, color)
-            }
         }
 
         fun fill(pos: Vector3fc, color: Int, poseStack: PoseStack, builder: BufferBuilder) {
@@ -159,8 +140,6 @@ object DebugHelper {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
                 val font = Minecraft.getInstance().font
-                renderCommand(10, 5, guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false))
-                guiGraphics.drawString(font, InteractionModeManager.mode.toString(), 10, 10, -1)
                 guiGraphics.drawString(font, "syncRate:${Config.Server.updateInternal.get()}Tick", 10, 20, -1)
                 guiGraphics.drawString(font, "current widget count : ${HologramManager.widgetCount()}", 10, 30, -1)
                 guiGraphics.drawString(font, querySyncString(), 10, 40, -1)

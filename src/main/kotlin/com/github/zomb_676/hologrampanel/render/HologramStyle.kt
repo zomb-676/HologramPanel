@@ -1,8 +1,8 @@
 package com.github.zomb_676.hologrampanel.render
 
-import com.github.zomb_676.hologrampanel.util.ScreenPosition
-import com.github.zomb_676.hologrampanel.util.Size
-import com.github.zomb_676.hologrampanel.util.normalizedInto2PI
+import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.api.EfficientConst
+import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
@@ -12,12 +12,16 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
-import net.minecraft.util.ARGB
 import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
+import net.minecraft.world.item.ItemStack
 import org.joml.Matrix4f
+import org.joml.Quaternionf
 import org.joml.Vector4f
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sin
 
 /**
  * a wrapped [GuiGraphics] which is intended for convenience use and customize widget style
@@ -28,6 +32,7 @@ interface HologramStyle {
 
     /**
      * @param contentSize [HologramWidgetComponent.Single.contentSize]
+     * @return [HologramWidgetComponent.Single.visualSize]
      */
     fun mergeOutlineSizeForSingle(contentSize: Size): Size
 
@@ -46,16 +51,17 @@ interface HologramStyle {
      * @param size [HologramWidgetComponent.Group.visualSize]
      */
     fun drawGroupOutline(
-        size: Size, descriptionSize: Size, collapse: Boolean, color: Int = contextColor
+        isGroupGlobal: Boolean, size: Size, descriptionSize: Size, collapse: Boolean, color: Int = contextColor
     )
 
     fun moveToGroupDescription(descriptionSize: Size)
     fun moveAfterDrawGroupOutline(descriptionSize: Size)
     fun moveAfterDrawSingleOutline()
-    fun mergeOutlineSizeForSlot(contentSize: Size): Size
-    fun drawSlotOutline(sizeIncludingOutline: Size)
-    fun moveAfterDrawSlotOutline()
 
+    fun outlineSelected(size: Size)
+
+    @EfficientConst
+    fun elementPadding(): Int
 
     fun drawString(string: String, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
         guiGraphics.drawString(font, string, x, y, color, false)
@@ -85,12 +91,12 @@ interface HologramStyle {
         this.move(screenPosition.x, screenPosition.y)
     }
 
-    fun translate(x: Float, y: Float) {
-        this.translate(x.toDouble(), y.toDouble())
+    fun translate(x: Float, y: Float, z : Float = 0.0f) {
+        this.translate(x.toDouble(), y.toDouble(), z.toDouble())
     }
 
-    fun translate(x: Double, y: Double) {
-        guiGraphics.pose().translate(x, y, 1.0)
+    fun translate(x: Double, y: Double, z: Double = 0.0) {
+       pose().translate(x, y,z)
     }
 
     fun fill(size: Size, color: Int = contextColor) {
@@ -114,20 +120,40 @@ interface HologramStyle {
         consumer.addVertex(pose, maxX, minY, 0.0f).setColor(color)
     }
 
-    fun scale(x: Double, y: Double) {
-        this.scale(x.toFloat(), y.toFloat())
+    /**
+     * @param z by default, is 1.0
+     */
+    fun scale(x: Double, y: Double,z : Double = 1.0) {
+        this.scale(x.toFloat(), y.toFloat(), z.toFloat())
     }
 
-    fun scale(x: Float, y: Float) {
-        guiGraphics.pose().scale(x, y, 1.0f)
+    /**
+     * @param z by default, is 1.0
+     */
+    fun scale(x: Float, y: Float, z : Float = 1.0f) {
+        guiGraphics.pose().scale(x, y, z)
     }
 
+    /**
+     * not scale z
+     */
     fun scale(scale: Double) {
-        this.scale(scale, scale)
+        this.scale(scale, scale, 1.0)
     }
 
+    /**
+     * not scale z
+     */
     fun scale(scale: Float) {
-        this.scale(scale, scale)
+        this.scale(scale, scale, 1.0f)
+    }
+
+    fun mulPose(matrix : Matrix4f) {
+        this.pose().mulPose(matrix)
+    }
+
+    fun mulPose(quaternion: Quaternionf) {
+        this.pose().mulPose(quaternion)
     }
 
     fun push() = this.guiGraphics.pose().pushPose()
@@ -146,12 +172,30 @@ interface HologramStyle {
         return Size.of(font.width(string), font.lineHeight)
     }
 
-    fun itemStackSize(): Size = ITEM_STACK_SIZE
-
     fun outline(size: Size, color: Int = contextColor) {
         guiGraphics.renderOutline(0, 0, size.width, size.height, color)
     }
 
+    fun itemStackSize(): Size = ITEM_STACK_SIZE
+
+    fun item(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
+        guiGraphics.renderItem(itemStack, x, y)
+    }
+
+    fun itemDecoration(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
+        guiGraphics.renderItemDecorations(font, itemStack, x, y)
+    }
+
+    fun itemWithDecoration(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
+        item(itemStack, x, y)
+        itemDecoration(itemStack, x, y)
+    }
+
+    /**
+     * check if the mouse is in current size
+     *
+     * coordinate is based on the current [poseMatrix]
+     */
     fun checkMouseInSize(size: Size): Boolean {
         if (size == Size.ZERO) return false
 
@@ -175,6 +219,15 @@ interface HologramStyle {
         return x > mouseX && y > mouseY
     }
 
+    /**
+     * @param outRadius the radius of the circle
+     * @param colorOut the outer side color of the circle
+     * @param colorIn the center side color of the circle
+     * @param beginRadian from down, anti-cock wise grows
+     * @param endRadian from down, anti-cock wise grows
+     * @param tessellationCount the amount of division
+     * @param isClockWise which side between [beginRadian] and [outRadius] will be filled
+     */
     fun drawCycle(
         outRadius: Float,
         colorOut: Int = contextColor,
@@ -225,6 +278,16 @@ interface HologramStyle {
         BufferUploader.drawWithShader(builder.buildOrThrow())
     }
 
+    /**
+     * @param inRadius the inner radius of the torus
+     * @param outRadius the outer radius of the torus
+     * @param colorOut the outer side color of the circle
+     * @param colorIn the center side color of the circle
+     * @param beginRadian from down, anti-cock wise grows
+     * @param endRadian from down, anti-cock wise grows
+     * @param tessellationCount the amount of division
+     * @param isClockWise which side between [beginRadian] and [outRadius] will be filled
+     */
     fun drawTorus(
         inRadius: Float,
         outRadius: Float,
@@ -287,117 +350,101 @@ interface HologramStyle {
     }
 
     companion object {
+        /**
+         * a const indicates the length of [net.minecraft.world.item.ItemStack]
+         */
         const val ITEM_STACK_LENGTH = 16
         val ITEM_STACK_SIZE = Size.of(ITEM_STACK_LENGTH, ITEM_STACK_LENGTH)
     }
 
     class DefaultStyle(override val guiGraphics: GuiGraphics) : HologramStyle {
+        companion object {
+            val SINGLE_INNER_PADDING = Padding(2)
+            val COLLAPSE_SIZE = Size.of(4)
+            const val SELECTED_COLOR = -1
+            const val OUTLINE_COLOR = 0xff7f7f7f.toInt()
+        }
+
         override var contextColor: Int = (0xff000000).toInt()
 
+        override fun outlineSelected(size: Size) {
+            outline(size, SELECTED_COLOR)
+        }
+
         override fun mergeOutlineSizeForSingle(contentSize: Size): Size {
-            return contentSize.expandWidth(4).expandHeight(5)
+            return contentSize.expand(SINGLE_INNER_PADDING)
         }
 
         override fun mergeOutlineSizeForGroup(contentSize: Size, descriptionSize: Size, collapse: Boolean): Size {
-            if (collapse) {
-                val width = max(contentSize.width + 6, descriptionSize.width + 8)
-                val height = contentSize.height + descriptionSize.height
-                return Size.of(width + 4, height + 4)
-            } else {
-                val width = max(contentSize.width + 6, descriptionSize.width + 8)
-                val height = contentSize.height + descriptionSize.height
-                return Size.of(width + 4, height + 6)
-            }
+//            if (collapse) {
+//                val width = max(contentSize.width + 6, descriptionSize.width + 8)
+//                val height = contentSize.height + descriptionSize.height
+//                return Size.of(width + 4, height + 4)
+//            } else {
+            val width = max(contentSize.width, descriptionSize.width) + SINGLE_INNER_PADDING.horizontal
+            val height = contentSize.height + descriptionSize.height + SINGLE_INNER_PADDING.up
+            return Size.of(width, height)
+//            }
         }
 
         override fun drawSingleOutline(size: Size, color: Int) {
-//            if (selected.isAtTerminal) {
-            outline(size.shrinkHeight(2), 0xff7f7f7f.toInt())
-//            }
-        }
-
-//        fun brightColorBySelectedType(color: Int, selected: SelectPathType) = when {
-//            selected.isUnSelect -> 0xff000000.toInt()
-//            selected.isAtTerminal -> 0xffffffff.toInt()
-//            else -> 0xff7f7f7f.toInt()
-//        }
-
-        fun brighter(color: Int): Int {
-            val factor = 0.7
-            var r: Int = ARGB.red(color)
-            var g: Int = ARGB.green(color)
-            var b: Int = ARGB.blue(color)
-            val alpha: Int = ARGB.alpha(color)
-
-            val i = (1.0 / (1.0 - factor)).toInt()
-            if (r == 0 && g == 0 && b == 0) {
-                return ARGB.color(alpha, i, i, i)
+            if (this.checkMouseInSize(size)) {
+                stack {
+                    outlineSelected(size)
+                }
             }
-            if (r > 0 && r < i) r = i
-            if (g > 0 && g < i) g = i
-            if (b > 0 && b < i) b = i
-
-            return ARGB.color(
-                alpha,
-                min((r / factor).toInt().toDouble(), 255.0).toInt(),
-                min((g / factor).toInt().toDouble(), 255.0).toInt(),
-                min((b / factor).toInt().toDouble(), 255.0).toInt(),
-            )
         }
 
         override fun drawGroupOutline(
-            size: Size, descriptionSize: Size, collapse: Boolean, color: Int
+            isGroupGlobal: Boolean,
+            size: Size,
+            descriptionSize: Size,
+            collapse: Boolean,
+            color: Int
         ) {
-            val height =
-//                if (selected.isAtHead) {
-//                size.height
-//            } else {
-                size.height - 2
-//            }
-            guiGraphics.renderOutline(0, 0, size.width, height, 0xff7f7f7f.toInt())
+
+            outline(size, OUTLINE_COLOR)
 
             val matrix = guiGraphics.pose().last().pose()
             val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
-            val centerY = ((descriptionSize.height) / 2.0f) + 0.5f
-            val left = 4.0f
-            val right = 8.0f
+            val centerY = (descriptionSize.height / 2.0f) + SINGLE_INNER_PADDING.up
+            val left = SINGLE_INNER_PADDING.left.toFloat()
+            val right = left + COLLAPSE_SIZE.width.toFloat()
+            val centerX = (left + right) / 2.0f
             val up = centerY - 2
             val down = centerY + 2
+            val lineHalfWidth = 0.5f
 
-            consumer.addVertex(matrix, left, (centerY - 0.5f), 0.0f).setColor(color)
-            consumer.addVertex(matrix, left, (centerY + 0.5f), 0.0f).setColor(color)
-            consumer.addVertex(matrix, right, (centerY + 0.5f), 0.0f).setColor(color)
-            consumer.addVertex(matrix, right, (centerY - 0.5f), 0.0f).setColor(color)
+            consumer.addVertex(matrix, left, (centerY - lineHalfWidth), 0.0f).setColor(color)
+            consumer.addVertex(matrix, left, (centerY + lineHalfWidth), 0.0f).setColor(color)
+            consumer.addVertex(matrix, right, (centerY + lineHalfWidth), 0.0f).setColor(color)
+            consumer.addVertex(matrix, right, (centerY - lineHalfWidth), 0.0f).setColor(color)
             if (!collapse) {
-                consumer.addVertex(matrix, 5.5f, up, 0.0f).setColor(color)
-                consumer.addVertex(matrix, 5.5f, down, 0.0f).setColor(color)
-                consumer.addVertex(matrix, 6.5f, down, 0.0f).setColor(color)
-                consumer.addVertex(matrix, 6.5f, up, 0.0f).setColor(color)
+                consumer.addVertex(matrix, centerX - lineHalfWidth, up, 0.0f).setColor(color)
+                consumer.addVertex(matrix, centerX - lineHalfWidth, down, 0.0f).setColor(color)
+                consumer.addVertex(matrix, centerX + lineHalfWidth, down, 0.0f).setColor(color)
+                consumer.addVertex(matrix, centerX + lineHalfWidth, up, 0.0f).setColor(color)
             }
         }
 
         override fun moveToGroupDescription(descriptionSize: Size) {
-            move(10, 2)
+            move(SINGLE_INNER_PADDING.horizontal + COLLAPSE_SIZE.width, SINGLE_INNER_PADDING.up)
+            if (Config.Client.renderDebugLayer.get() && Config.Client.renderWidgetDebugInfo.get()) {
+                stack {
+                    pose().translate(0f, 0f, 100f)
+                    outline(descriptionSize, 0xff00000ff.toInt())
+                }
+            }
         }
 
         override fun moveAfterDrawGroupOutline(descriptionSize: Size) {
-            move(6, 4 + descriptionSize.height)
+            move(SINGLE_INNER_PADDING.left, descriptionSize.height + SINGLE_INNER_PADDING.vertical)
         }
 
         override fun moveAfterDrawSingleOutline() {
-            move(2, 2)
+            move(SINGLE_INNER_PADDING.left, SINGLE_INNER_PADDING.up)
         }
 
-        override fun mergeOutlineSizeForSlot(contentSize: Size): Size {
-            return contentSize.expandWidth(4).expandHeight(4)
-        }
-
-        override fun drawSlotOutline(sizeIncludingOutline: Size) {
-            guiGraphics.renderOutline(0, 0, sizeIncludingOutline.width, sizeIncludingOutline.height, contextColor)
-        }
-
-        override fun moveAfterDrawSlotOutline() {
-            move(2, 2)
-        }
+        override fun elementPadding(): Int = 2
     }
 }

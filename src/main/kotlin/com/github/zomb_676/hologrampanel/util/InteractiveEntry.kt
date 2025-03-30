@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.util
 
+import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
-import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import net.minecraft.client.Minecraft
@@ -55,7 +55,8 @@ class InteractiveEntry(
     }
 
     fun renderInteractive(style: HologramStyle, widgetSize: Size) {
-        interactive.renderInteractive(style, context, widgetSize, interactiveSize, mouseX, mouseY)
+        val hint = Config.Client.displayInteractiveHint.get()
+        interactive.renderInteractive(style, context, widgetSize, interactiveSize, mouseX, mouseY, hint)
     }
 
     override fun toString(): String {

@@ -45,7 +45,8 @@ interface HologramInteractive {
         widgetSize: Size,
         interactiveSize: Size,
         mouseX: Int,
-        mouseY: Int
+        mouseY: Int,
+        renderInteractiveHint : Boolean
     ) {}
 
     data class Key(

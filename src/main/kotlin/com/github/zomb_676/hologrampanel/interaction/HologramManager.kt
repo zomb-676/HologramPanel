@@ -4,7 +4,6 @@ import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramTicket
-import com.github.zomb_676.hologrampanel.interaction.InteractionCommand.Exact
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -127,9 +126,9 @@ object HologramManager {
         }
         this.updateLookingAt()
 
-        this.renderHologramStateTip(style, InteractionModeManager.getSelectedHologram(), style.contextColor, 5)
+//        this.renderHologramStateTip(style, InteractionModeManager.getSelectedHologram(), style.contextColor, 5)
         this.renderHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), 8)
-        this.renderHologramStateTip(style, InteractionModeManager.getFindCandidateHologram(), 0xff_efe4b0.toInt(), 11)
+//        this.renderHologramStateTip(style, InteractionModeManager.getFindCandidateHologram(), 0xff_efe4b0.toInt(), 11)
         profiler.pop()
     }
 
@@ -212,62 +211,6 @@ object HologramManager {
         return this.lookingWidget
     }
 
-    fun getSubsequentDisplayedCandidate(
-        state: HologramRenderState?,
-        exact: Exact.SelectHologram
-    ): HologramRenderState? {
-        return when (exact) {
-            Exact.SelectHologram.SELECT_HOLOGRAM -> getLookingHologram()
-            Exact.SelectHologram.SWITCH_HOLOGRAM_UP -> null
-            Exact.SelectHologram.SWITCH_HOLOGRAM_RIGHT -> null
-            Exact.SelectHologram.SWITCH_HOLOGRAM_DOWN -> null
-            Exact.SelectHologram.SWITCH_HOLOGRAM_LEFT -> null
-            Exact.SelectHologram.SWITCH_HOLOGRAM_BEFORE -> if (state == null) {
-                this.states.values.first { it.displayed }
-            } else {
-                val values = this.states.values.toList()
-                val index = values.indexOf(state)
-                run {
-                    if (index < 0) return@run null
-                    if (index > 0) {
-                        for (i in (index - 1) downTo 0) {
-                            val next = values[i]
-                            if (next.displayed) return@run next
-                        }
-                    }
-                    for (i in (values.size - 1) downTo (index + 1)) {
-                        val next = values[i]
-                        if (next.displayed) return@run next
-                    }
-                    return@run null
-                }
-            }
-
-
-            Exact.SelectHologram.SWITCH_HOLOGRAM_NEXT -> if (state == null) {
-                this.states.values.first { it.displayed }
-            } else {
-                val values = this.states.values.toList()
-                val index = values.indexOf(state)
-                run {
-                    if (index >= 0) {
-                        for (i in (index + 1)..<values.size) {
-                            val next = values[i]
-                            if (next.displayed) return@run next
-                        }
-                        for (i in 0..<index) {
-                            val next = values[i]
-                            if (next.displayed) return@run next
-                        }
-                        null
-                    } else null
-                }
-            }
-
-            Exact.SelectHologram.UNSELECT -> null
-        } ?: state
-    }
-
     /**
      * this will do all the staffs if a widget should be removed from client
      */
@@ -280,7 +223,6 @@ object HologramManager {
             if (this.lookingWidget?.widget == widget) {
                 this.lookingWidget = null
             }
-            InteractionModeManager.onWidgetRemoved(widget)
             if (context is EntityHologramContext) {
                 (context.getEntity() as HologramHolder).setWidget(null)
             }

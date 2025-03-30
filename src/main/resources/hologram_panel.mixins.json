@@ -12,7 +12,6 @@
   "client": [
     "GameRenderMixin",
     "LevelRenderMixin",
-    "LocalPlayerMixin",
     "MinecraftMixin",
     "MouseHandleMixin"
   ],

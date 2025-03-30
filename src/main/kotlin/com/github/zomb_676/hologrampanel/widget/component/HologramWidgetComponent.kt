@@ -42,6 +42,7 @@ interface HologramWidgetComponent<T : Any> {
     }
 
     abstract class Group<T : Any>(
+        val isGlobal: Boolean,
         open val children: List<HologramWidgetComponent<T>>,
         open var collapse: Boolean = false
     ) :
@@ -75,6 +76,7 @@ interface HologramWidgetComponent<T : Any> {
                     height += childSize.height
                 }
             }
+            height += (this.children.size + 1) * style.elementPadding()
             this.contentSize = Size.of(width, height)
             this.visualSize = style.mergeOutlineSizeForGroup(
                 this.contentSize, this.descriptionSize(target, style, displayType), this.collapse
@@ -89,7 +91,13 @@ interface HologramWidgetComponent<T : Any> {
             partialTicks: Float
         ) {
             val descriptionSize = this.descriptionSize(target, style, displayType)
-            style.drawGroupOutline(this.visualSize, descriptionSize, this.collapse)
+            if (style.checkMouseInSize(this.visualSize)) {
+                style.stack {
+                    style.pose().translate(0f, 0f, 100f)
+                    style.outlineSelected(this.visualSize)
+                }
+            }
+            style.drawGroupOutline(this.isGlobal, this.visualSize, descriptionSize, this.collapse)
             style.stack {
                 style.moveToGroupDescription(descriptionSize)
                 this.renderGroupDescription(target, style, displayType, partialTicks)
@@ -114,7 +122,7 @@ interface HologramWidgetComponent<T : Any> {
                                 component.render(target, style, displayType, partialTicks)
                             }
                         }
-                        style.move(0, component.visualSize.height)
+                        style.move(0, component.visualSize.height + style.elementPadding())
                     }
                 }
             }

@@ -107,7 +107,6 @@ class HologramRenderState(
     fun displayAreaInScreen() = this.centerScreenPos.inScreen(this.displaySize)
 
     fun isLookingAt() = HologramManager.getLookingHologram() == this
-    fun isSelected() = InteractionModeManager.getSelectedHologram() == this
 
     fun distanceToCamera(partialTick: Float): Double {
         val source = this.sourcePosition(partialTick)

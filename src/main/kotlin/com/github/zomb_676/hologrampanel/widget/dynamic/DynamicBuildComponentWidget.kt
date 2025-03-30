@@ -71,7 +71,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                     if (inMouse && style.checkMouseInSize(size)) {
                         DebugHelper.Client.recordHoverElement(element)
                         if (element is HologramInteractive) {
-                            HologramManager.submitInteractive(InteractiveEntry.of(element, target,size, style))
+                            HologramManager.submitInteractive(InteractiveEntry.of(element, target, size, style))
                         }
                     }
                     element.render(style, partialTicks)
@@ -156,12 +156,13 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
     ) : Single<T>(provider, listOf(element), identityName)
 
     open class Group<T : HologramContext>(
+        isGlobal: Boolean,
         private val provider: ComponentProvider<T, *>,
         val descriptionWidget: Single<T>,
         override var children: List<DynamicBuildComponentWidget<T>>,
         private val identityName: String,
         collapse: Boolean
-    ) : HologramWidgetComponent.Group<T>(children, collapse), DynamicBuildComponentWidget<T> {
+    ) : HologramWidgetComponent.Group<T>(isGlobal, children, collapse), DynamicBuildComponentWidget<T> {
         override fun descriptionSize(
             target: T, style: HologramStyle, displayType: DisplayType
         ): Size = descriptionWidget.measureSize(target, style, displayType)
@@ -184,7 +185,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         descriptionWidget: Single<T>,
         identityName: String,
         val initializer: () -> List<DynamicBuildComponentWidget<T>>
-    ) : Group<T>(provider, descriptionWidget, listOf(), identityName, true) {
+    ) : Group<T>(false, provider, descriptionWidget, listOf(), identityName, true) {
         override var collapse: Boolean = true
             set(value) {
                 field = value

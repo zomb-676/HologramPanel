@@ -18,6 +18,7 @@ import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.RenderType
+import net.minecraft.client.renderer.entity.MinecartRenderer
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
@@ -119,7 +120,7 @@ interface IRenderElement {
 
     open class EntityRenderElement(val entity: Entity, val entityScale: Double) : RenderElement() {
         companion object {
-            val QUATERNION: Quaternionf = Quaternionf().rotateZ(Math.PI.toFloat())
+            val QUATERNION: Quaternionf = Quaternionf().rotateXYZ(Math.toRadians(15.0).toFloat(), 0f, Math.PI.toFloat())
         }
 
         override fun measureContentSize(style: HologramStyle): Size {
@@ -131,13 +132,10 @@ interface IRenderElement {
         override fun render(style: HologramStyle, partialTicks: Float) {
             val guiGraphics = style.guiGraphics
             style.stack {
-                guiGraphics.pose().translate(
-                    contentSize.width.toFloat() / 2, contentSize.height.toFloat(), 50.0f
-                )
+                style.translate(contentSize.width.toFloat() / 2, contentSize.height.toFloat(), 50.0f)
                 val entityScale = entityScale.toFloat()
-                guiGraphics.pose().scale(entityScale, entityScale, -entityScale)
-                guiGraphics.pose()
-                    .mulPose(Quaternionf().rotateXYZ(Math.toRadians(15.0).toFloat(), 0f, Math.PI.toFloat()))
+                style.scale(entityScale, entityScale, -entityScale)
+                style.mulPose(QUATERNION)
                 guiGraphics.flush()
                 Lighting.setupForEntityInInventory()
                 val dispatcher = Minecraft.getInstance().entityRenderDispatcher
@@ -158,10 +156,10 @@ interface IRenderElement {
             val centerX = contentSize.width / 2
             val halfWidth = entity.bbWidth * entityScale * getScale()
             val height = entity.bbHeight * entityScale * getScale()
-            graphics.hLine(-1000, 1000, contentSize.height, colorWhite)
-            graphics.hLine(-1000, 1000, (contentSize.height - height).toInt(), colorWhite)
-            graphics.vLine((centerX - halfWidth).toInt(), -1000, +1000, colorWhite)
-            graphics.vLine((centerX + halfWidth).toInt(), -1000, +1000, colorWhite)
+            style.drawHorizontalLine(-1000, 1000, contentSize.height, colorWhite)
+            style.drawHorizontalLine(-1000, 1000, (contentSize.height - height).toInt(), colorWhite)
+            style.drawVerticalLine(-1000, +1000, (centerX - halfWidth).toInt(), colorWhite)
+            style.drawVerticalLine(-1000, +1000, (centerX + halfWidth).toInt(), colorWhite)
         }
 
         override fun toString(): String {
@@ -225,6 +223,9 @@ interface IRenderElement {
         }
     }
 
+    /**
+     * similar to [net.minecraft.client.gui.GuiGraphics.renderTooltipInternal]
+     */
     open class ScreenTooltipElement(val item: ItemStack) : RenderElement() {
         var sprite = item.get(DataComponents.TOOLTIP_STYLE)
         var tooltips: List<ClientTooltipComponent> = listOf()
@@ -250,8 +251,9 @@ interface IRenderElement {
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {
+            val font = style.font
             val texture = ClientHooks.onRenderTooltipTexture(
-                item, style.guiGraphics, 0, 0, style.font, tooltips, sprite
+                item, style.guiGraphics, 0, 0, font, tooltips, sprite
             )
             var height = 0
             style.stack {
@@ -261,16 +263,16 @@ interface IRenderElement {
                 )
                 tooltips.forEachIndexed { index, tooltip ->
                     tooltip.renderText(
-                        style.font, 0, height, style.guiGraphics.pose().last().pose(), style.guiGraphics.bufferSource
+                        font, 0, height, style.guiGraphics.pose().last().pose(), style.guiGraphics.bufferSource
                     )
-                    height += tooltip.getHeight(style.font)
+                    height += tooltip.getHeight(font)
                 }
                 height = 0
                 tooltips.forEachIndexed { index, tooltip ->
                     tooltip.renderImage(
-                        style.font, 0, height, contentSize.width, contentSize.height, style.guiGraphics
+                        font, 0, height, contentSize.width, contentSize.height, style.guiGraphics
                     )
-                    height += tooltip.getHeight(style.font)
+                    height += tooltip.getHeight(font)
                 }
             }
         }
@@ -290,9 +292,9 @@ interface IRenderElement {
             if (itemStack.isEmpty) {
                 style.outline(this.contentSize)
             } else {
-                style.guiGraphics.renderItem(itemStack, 0, 0)
+                style.item(itemStack)
                 if (renderDecoration) {
-                    style.guiGraphics.renderItemDecorations(style.font, itemStack, 0, 0)
+                    style.itemDecoration(itemStack)
                 }
             }
         }
@@ -347,12 +349,13 @@ interface IRenderElement {
             widgetSize: Size,
             interactiveSize: Size,
             mouseX: Int,
-            mouseY: Int
+            mouseY: Int,
+            renderInteractiveHint: Boolean
         ) {
             style.stack {
                 style.move(widgetSize.width + 3, 0)
-                style.drawString("1", 10)
-                style.drawString("2", 20)
+                style.drawString("left click to take")
+                style.drawString("right click to store")
             }
         }
     }
@@ -368,21 +371,18 @@ interface IRenderElement {
 
         override fun measureContentSize(style: HologramStyle): Size {
             val l = ITEM_STACK_LENGTH
-            val height = l * lineCount + PADDING * (lineCount + 1)
+            val height = l * lineCount + PADDING * (lineCount - 1)
             val width = if (lineCount > 1) {
-                l * ITEM_EACH_LINE + PADDING * (ITEM_EACH_LINE + 1)
+                l * ITEM_EACH_LINE + PADDING * (ITEM_EACH_LINE - 1)
             } else {
-                l * count + PADDING * (count + 1)
+                l * count + PADDING * (count - 1)
             }
             return Size.of(width, height).scale()
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {
             val font = style.font
-            style.outline(this.contentSize)
             style.stack {
-                style.move(PADDING, PADDING)
-                style.push()
                 var i = 0
                 items.forEachIndexed { index, item ->
                     if (i == ITEM_EACH_LINE) {
@@ -391,12 +391,10 @@ interface IRenderElement {
                         style.move(0, ITEM_STACK_LENGTH + PADDING)
                         style.push()
                     }
-                    style.guiGraphics.renderItem(item, 0, 0)
-                    style.guiGraphics.renderItemDecorations(font, item, 0, 0)
+                    style.itemWithDecoration(item, 0, 0)
                     style.move(ITEM_STACK_LENGTH + PADDING, 0)
                     i++
                 }
-                style.pop()
             }
         }
 
@@ -470,7 +468,8 @@ interface IRenderElement {
             widgetSize: Size,
             interactiveSize: Size,
             mouseX: Int,
-            mouseY: Int
+            mouseY: Int,
+            renderInteractiveHint: Boolean
         ) {
             style.stack {
                 style.move(widgetSize.width, 0)
@@ -479,8 +478,7 @@ interface IRenderElement {
                     if (index == items.size) {
                         style.drawString("click to try input")
                     } else {
-                        style.guiGraphics.renderItem(items[index], 0, 0)
-                        style.guiGraphics.renderItemDecorations(style.font, items[index], 0, 0)
+                        style.itemWithDecoration(items[index], 0, 0)
                     }
                 }
             }
@@ -515,7 +513,7 @@ interface IRenderElement {
         }
 
         override fun toString(): String {
-            return "TextureAtlasSprite(sprite=$sprite, width=$width, height=$height)"
+            return "Sprite(sprite=$sprite, width=$width, height=$height)"
         }
     }
 
@@ -526,8 +524,6 @@ interface IRenderElement {
         ): Size {
             return Size.of(floor(barWidth).toInt() + 2, style.font.lineHeight + 2).scale()
         }
-
-        val decorateLineColor = 0xff555555.toInt()
 
         override fun render(style: HologramStyle, partialTicks: Float) {
             if (this.requireOutlineDecorate()) {
@@ -559,7 +555,7 @@ interface IRenderElement {
             val description = getDescription(percent)
             val width = style.measureString(description).width
             style.stack {
-                style.guiGraphics.pose().translate(0.0, 0.0, 1.0)
+                style.translate(0.0, 0.0, 1.0)
                 style.drawString(description, (this.contentSize.width - width) / 2, 2)
             }
         }
@@ -622,7 +618,7 @@ interface IRenderElement {
             val tintColor = handle.tintColor
             val sprite: TextureAtlasSprite = FluidSpriteCache.getSprite(handle.stillTexture)
 
-            val matrix = style.guiGraphics.pose().last().pose()
+            val matrix = style.poseMatrix()
             val consumer = style.guiGraphics.bufferSource.getBuffer(RenderType.guiTextured(sprite.atlasLocation()))
 
             val maxU = (((sprite.u1 - sprite.u0) * percent) + sprite.u0).toFloat()
