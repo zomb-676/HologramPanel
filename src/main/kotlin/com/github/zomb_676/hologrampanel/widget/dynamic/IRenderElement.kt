@@ -18,7 +18,6 @@ import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.RenderType
-import net.minecraft.client.renderer.entity.MinecartRenderer
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
@@ -152,7 +151,7 @@ interface IRenderElement {
 
         protected fun renderEntityOutline(style: HologramStyle) {
             val colorWhite = -1
-            val graphics = style.guiGraphics
+            style.guiGraphics
             val centerX = contentSize.width / 2
             val halfWidth = entity.bbWidth * entityScale * getScale()
             val height = entity.bbHeight * entityScale * getScale()
@@ -383,7 +382,7 @@ interface IRenderElement {
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {
-            val font = style.font
+            style.font
             style.stack {
                 var i = 0
                 items.forEachIndexed { index, item ->

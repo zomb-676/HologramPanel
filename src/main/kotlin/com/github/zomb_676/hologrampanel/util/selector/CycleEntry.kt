@@ -4,7 +4,7 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 
 sealed interface CycleEntry {
-    fun onClick(callback : SelectorCallback)
+    fun onClick(callback: SelectorCallback)
     fun onClose() {}
     fun renderContent(style: HologramStyle, partialTick: Float, isHover: Boolean)
     fun size(style: HologramStyle): Size

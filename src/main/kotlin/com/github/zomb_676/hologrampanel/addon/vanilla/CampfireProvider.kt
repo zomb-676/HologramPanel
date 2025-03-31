@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.CampfireBlock
 import net.minecraft.world.level.block.entity.CampfireBlockEntity
 
-data object  CampfireProvider : ServerDataProvider<BlockHologramContext, CampfireBlock> {
+data object CampfireProvider : ServerDataProvider<BlockHologramContext, CampfireBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,

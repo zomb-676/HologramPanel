@@ -11,11 +11,16 @@ import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
+import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
+import net.minecraft.network.chat.ClickEvent
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.HoverEvent
+import net.minecraft.network.chat.Style
 import net.minecraft.server.level.ServerPlayer
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
@@ -116,6 +121,10 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
+            if (event.action == GLFW.GLFW_PRESS && event.key == GLFW.GLFW_KEY_TAB) {
+                HologramManager.trySwitchWidgetCollapse()
+            }
+
             val interactiveTarget = HologramManager.getInteractiveTarget()
             if (interactiveTarget != null) {
                 val res = interactiveTarget.onKey(event)
@@ -129,8 +138,8 @@ object EventHandler {
 
             val interactiveTarget = HologramManager.getInteractiveTarget()
             if (interactiveTarget != null) {
-                val player = Minecraft.getInstance().player ?: return
-                val mouseScroll = HologramInteractive.MouseScroll.create(event)
+                Minecraft.getInstance().player ?: return
+                HologramInteractive.MouseScroll.create(event)
                 val res = interactiveTarget.onMouseScroll(event)
                 if (res) {
                     event.isCanceled = true
@@ -169,9 +178,7 @@ object EventHandler {
 
         private fun registerLayer(event: RegisterGuiLayersEvent) {
             event.registerBelow(
-                VanillaGuiLayers.CROSSHAIR,
-                HologramPanel.rl("interaction_mode_layer"),
-                InteractionLayer.getLayer()
+                VanillaGuiLayers.CROSSHAIR, HologramPanel.rl("interaction_mode_layer"), InteractionLayer.getLayer()
             )
             event.registerAboveAll(HologramPanel.rl("cycle_selector"), object : LayeredDraw.Layer {
                 override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
@@ -206,25 +213,17 @@ object EventHandler {
             ComponentResponseDataPayload.STREAM_CODEC,
             ComponentResponseDataPayload.HANDLE
         ).playBidirectional<SyncClosePayload>(
-            SyncClosePayload.TYPE,
-            SyncClosePayload.STREAM_CODEC,
-            SyncClosePayload.HANDLE
+            SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE
         ).playToClient<EntityConversationPayload>(
-            EntityConversationPayload.TYPE,
-            EntityConversationPayload.STREAM_CODEC,
-            EntityConversationPayload.HANDLE
+            EntityConversationPayload.TYPE, EntityConversationPayload.STREAM_CODEC, EntityConversationPayload.HANDLE
         ).playToServer<QueryDebugStatisticsPayload>(
             QueryDebugStatisticsPayload.TYPE,
             QueryDebugStatisticsPayload.STREAM_CODEC,
             QueryDebugStatisticsPayload.HANDLE
         ).playToClient<DebugStatisticsPayload>(
-            DebugStatisticsPayload.TYPE,
-            DebugStatisticsPayload.STREAM_CODEC,
-            DebugStatisticsPayload.HANDLE
+            DebugStatisticsPayload.TYPE, DebugStatisticsPayload.STREAM_CODEC, DebugStatisticsPayload.HANDLE
         ).playToServer<ItemInteractivePayload>(
-            ItemInteractivePayload.TYPE,
-            ItemInteractivePayload.STREAM_CODEC,
-            ItemInteractivePayload.HANDLE
+            ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
         )
     }
 
@@ -290,11 +289,47 @@ object EventHandler {
                         HologramManager.clearAllHologram()
                     }
                 }
-                "search_backend" {
-                    "type"(EnumArgument.enumArgument(SearchBackend.Type::class.java)) {
+                "search" {
+                    "str"(StringArgumentType.string()) {
                         execute {
-                            val type = getArgument("type", SearchBackend.Type::class.java)
-                            Config.Client.searchBackend.set(type)
+                            val str = StringArgumentType.getString(this, "str")
+                            SearchBackend.getCurrentBackend().setSearchString(str)
+                            val style = Style.EMPTY.withClickEvent(
+                                ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hologram_panel search")
+                            ).withHoverEvent(
+                                HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("click to clear"))
+                            )
+                            source.sendSystemMessage(Component.literal("set search string:${str}").withStyle(style))
+                        }
+                    }
+
+                    execute {
+                        SearchBackend.getCurrentBackend().setSearchString("")
+                        source.sendSystemMessage(Component.literal("clear search string"))
+                    }
+
+                    "backend" {
+                        "type"(EnumArgument.enumArgument(SearchBackend.Type::class.java)) {
+                            execute {
+                                val type = getArgument("type", SearchBackend.Type::class.java)
+                                Config.Client.searchBackend.set(type)
+                            }
+                        }
+
+                        execute {
+                            val backend = Config.Client.searchBackend.get()
+                            this.source.sendSystemMessage(Component.literal("current backend:${backend}"))
+                        }
+                    }
+
+                    "display" {
+                        execute {
+                            val str = SearchBackend.getCurrentBackend().getSearchString()
+                            if (str != null && str.isNotEmpty()) {
+                                this.source.sendSystemMessage(Component.literal("search string:${str}"))
+                            } else {
+                                this.source.sendSystemMessage(Component.literal("No search text set"))
+                            }
                         }
                     }
                 }

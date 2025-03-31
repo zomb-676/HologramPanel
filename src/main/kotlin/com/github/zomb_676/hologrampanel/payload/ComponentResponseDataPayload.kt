@@ -12,8 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
-class ComponentResponseDataPayload private constructor(val uuid: UUID, val data: CompoundTag, val sizeInBytes: Int) :
-    CustomPacketPayload {
+class ComponentResponseDataPayload private constructor(val uuid: UUID, val data: CompoundTag, val sizeInBytes: Int) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<ComponentResponseDataPayload> = TYPE
 
     companion object {
@@ -29,24 +28,20 @@ class ComponentResponseDataPayload private constructor(val uuid: UUID, val data:
                 }
 
                 override fun encode(
-                    buffer: RegistryFriendlyByteBuf,
-                    value: ComponentResponseDataPayload
+                    buffer: RegistryFriendlyByteBuf, value: ComponentResponseDataPayload
                 ) {
                     UUIDUtil.STREAM_CODEC.encode(buffer, value.uuid)
                     ByteBufCodecs.COMPOUND_TAG.encode(buffer, value.data)
                 }
 
             }
+
         val HANDLE = object : IPayloadHandler<ComponentResponseDataPayload> {
-            override fun handle(
-                payload: ComponentResponseDataPayload,
-                context: IPayloadContext
-            ) {
+            override fun handle(payload: ComponentResponseDataPayload, context: IPayloadContext) {
                 DataQueryManager.Client.receiveData(payload.uuid, payload.data, payload.sizeInBytes)
             }
         }
 
-        fun of(uuid: UUID, data: CompoundTag) =
-            ComponentResponseDataPayload(uuid, data, 0)
+        fun of(uuid: UUID, data: CompoundTag) = ComponentResponseDataPayload(uuid, data, 0)
     }
 }

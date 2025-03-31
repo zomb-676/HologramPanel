@@ -13,7 +13,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.EnderChestBlock
 import net.neoforged.neoforge.items.wrapper.InvWrapper
 
-data object  EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderChestBlock> {
+data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderChestBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,

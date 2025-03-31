@@ -134,7 +134,7 @@ object DebugHelper {
 
             val camPos = event.camera.position
             pose.translate(-camPos.x, -camPos.y, -camPos.z)
-            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(true)
+            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
             if (queryUpdateData.isNotEmpty()) {
                 val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
                 while (iterator.hasNext()) {
@@ -174,7 +174,6 @@ object DebugHelper {
                     fill(next.key.sourcePosition(partialTick), color, pose, builder)
                 }
             }
-//            builder.buildOrThrow().close()
             BufferUploader.drawWithShader(builder.buildOrThrow())
             glDebugStack("font") {
                 fontBufferSource.endFontBatch()
@@ -183,9 +182,7 @@ object DebugHelper {
         }
 
         fun getLayer() = object : LayeredDraw.Layer {
-            override fun render(
-                guiGraphics: GuiGraphics, deltaTracker: DeltaTracker
-            ) {
+            override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
                 val font = Minecraft.getInstance().font
@@ -193,19 +190,18 @@ object DebugHelper {
                 guiGraphics.drawString(font, "synced data size:${totalTickDataSize()}", 10, 20, -1)
                 guiGraphics.drawString(font, "current widget count : ${HologramManager.widgetCount()}", 10, 30, -1)
                 guiGraphics.drawString(font, querySyncString(), 10, 40, -1)
-                guiGraphics.drawString(
-                    font, "displayed:${HologramManager.states.values.count { it.displayed }}", 10, 50, -1
-                )
-                guiGraphics.drawString(font, "lookingRenderElement:${lookingRenderElement}", 10, 60, -1)
+                guiGraphics.drawString(font, "displayed:${HologramManager.states.values.count { it.displayed }}", 10, 50, -1)
+                guiGraphics.drawString(font, "collapseTarget:${HologramManager.getCollapseTarget()}", 10, 60, -1)
+                guiGraphics.drawString(font, "lookingRenderElement:${lookingRenderElement}", 10, 70, -1)
                 if (Config.Server.allowHologramInteractive.get()) {
-                    guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}", 10, 70, -1)
+                    guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}", 10, 80, -1)
                 } else {
-                    guiGraphics.drawString(font, "interactive is disabled on this server", 10, 70, -1)
+                    guiGraphics.drawString(font, "interactive is disabled on this server", 10, 80, -1)
                 }
                 val lookingHologram = HologramManager.getLookingHologram() ?: return
-                guiGraphics.drawString(font, "lookingHologramContext:${lookingHologram.context}", 10, 80, -1)
+                guiGraphics.drawString(font, "lookingHologramContext:${lookingHologram.context}", 10, 90, -1)
                 val tickets = lookingHologram.hologramTicks.joinToString()
-                guiGraphics.drawString(font, "lookTicket:$tickets", 10, 90, -1)
+                guiGraphics.drawString(font, "lookTicket:$tickets", 10, 100, -1)
             }
         }
 

@@ -66,6 +66,7 @@ object RayTraceHelper {
                 }
                 context
             }
+
             else -> throw RuntimeException("unknown hit result:$result")
         }
     }

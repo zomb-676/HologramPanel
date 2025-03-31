@@ -104,7 +104,7 @@ class EntityHologramContext(
                             EntityHitResult(entity, location)
                         } else null
                         return EntityHologramContext(entity, player, hit)
-                    } catch (e : Exception) {
+                    } catch (e: Exception) {
                         throw e
                     }
                 }

@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.BrewingStandBlock
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity
 
-data object  BrewStandProvider : ServerDataProvider<BlockHologramContext, BrewingStandBlock> {
+data object BrewStandProvider : ServerDataProvider<BlockHologramContext, BrewingStandBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,

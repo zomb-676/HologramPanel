@@ -15,9 +15,7 @@ import java.util.function.Predicate
 
 @JvmInline
 @Suppress("unused")
-value class CommandDSL<S>(
-    val dispatcher: CommandDispatcher<S>,
-) {
+value class CommandDSL<S>(val dispatcher: CommandDispatcher<S>) {
     inline operator fun String.invoke(block: WithNode<S, LiteralArgumentBuilder<S>>.() -> Unit) {
         val n = LiteralArgumentBuilder.literal<S>(this)
         block(WithNode(n))
@@ -25,19 +23,14 @@ value class CommandDSL<S>(
     }
 
     @JvmInline
-    value class WithNode<S, T : ArgumentBuilder<S, T>>(
-        val node: ArgumentBuilder<S, T>
-    ) {
+    value class WithNode<S, T : ArgumentBuilder<S, T>>(val node: ArgumentBuilder<S, T>) {
         inline operator fun String.invoke(block: WithNode<S, LiteralArgumentBuilder<S>>.() -> Unit) {
             val n = LiteralArgumentBuilder.literal<S>(this)
             block(WithNode(n))
             node.then(n)
         }
 
-        inline operator fun <Arg> String.invoke(
-            pType: ArgumentType<Arg>,
-            block: WithNode<S, RequiredArgumentBuilder<S, Arg>>.() -> Unit
-        ) {
+        inline operator fun <Arg> String.invoke(pType: ArgumentType<Arg>, block: WithNode<S, RequiredArgumentBuilder<S, Arg>>.() -> Unit) {
             val n = RequiredArgumentBuilder.argument<S, Arg>(this, pType)
             block(WithNode(n))
             node.then(n)
@@ -67,11 +60,7 @@ value class CommandDSL<S>(
             block(WithNode(n))
         }
 
-        inline fun redirect(
-            target: CommandNode<S>,
-            modifier: SingleRedirectModifier<S>,
-            block: WithNode<S, T>.() -> Unit
-        ) {
+        inline fun redirect(target: CommandNode<S>, modifier: SingleRedirectModifier<S>, block: WithNode<S, T>.() -> Unit) {
             val n = node.redirect(target, modifier)
             block(WithNode(n))
         }
@@ -81,12 +70,7 @@ value class CommandDSL<S>(
             block(WithNode((n)))
         }
 
-        inline fun forward(
-            target: CommandNode<S>,
-            modifier: RedirectModifier<S>,
-            fork: Boolean,
-            block: WithNode<S, T>.() -> Unit
-        ) {
+        inline fun forward(target: CommandNode<S>, modifier: RedirectModifier<S>, fork: Boolean, block: WithNode<S, T>.() -> Unit) {
             val n = node.forward(target, modifier, fork)
             block(WithNode(n))
         }

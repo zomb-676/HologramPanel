@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.JukeboxBlock
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity
 import kotlin.jvm.optionals.getOrNull
 
-data object  JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBlock> {
+data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBlock> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,

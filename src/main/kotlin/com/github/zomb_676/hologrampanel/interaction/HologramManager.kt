@@ -15,6 +15,7 @@ import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
+import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
@@ -25,6 +26,7 @@ object HologramManager {
     internal val states = mutableMapOf<HologramWidget, HologramRenderState>()
     private var lookingWidget: HologramRenderState? = null
     private var interactiveTarget: InteractiveEntry? = null
+    private var collapseTarget: HologramWidgetComponent.Group<*>? = null
 
     fun clearAllHologram() {
         while (states.isNotEmpty()) {
@@ -73,6 +75,7 @@ object HologramManager {
 
         profiler.push("render_hologram")
         this.interactiveTarget = null
+        this.collapseTarget = null
         DebugHelper.Client.clearRenderRelatedInfo()
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
@@ -268,4 +271,14 @@ object HologramManager {
     }
 
     fun getInteractiveTarget(): InteractiveEntry? = this.interactiveTarget
+
+    fun getCollapseTarget() = this.collapseTarget
+
+    fun setCollapseTarget(group: HologramWidgetComponent.Group<*>) {
+        this.collapseTarget = group
+    }
+
+    fun trySwitchWidgetCollapse() {
+        this.collapseTarget?.switchCollapse()
+    }
 }

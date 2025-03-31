@@ -21,7 +21,7 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
 class ComponentRequestDataPayload<T : HologramContext>(
-    val uuid: UUID, val additionDataTag: CompoundTag, val providers: List<ServerDataProvider<T,*>>, val context: T
+    val uuid: UUID, val additionDataTag: CompoundTag, val providers: List<ServerDataProvider<T, *>>, val context: T
 ) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<out ComponentRequestDataPayload<*>> = TYPE
 
@@ -48,19 +48,15 @@ class ComponentRequestDataPayload<T : HologramContext>(
                     ByteBufCodecs.VAR_INT.encode(buffer, value.providers.size)
                     for (provider in value.providers) {
                         AllRegisters.ComponentHologramProviderRegistry.STREAM_CODEC.encode(
-                            buffer, provider as ComponentProvider<*,*>
+                            buffer, provider as ComponentProvider<*, *>
                         )
                     }
                     HologramContext.STREAM_CODE.encode(buffer, value.context)
                 }
             }
         val HANDLE = object : IPayloadHandler<ComponentRequestDataPayload<*>> {
-            override fun handle(
-                payload: ComponentRequestDataPayload<*>, context: IPayloadContext
-            ) {
-                DataQueryManager.Server.create(
-                    context.player() as ServerPlayer, payload
-                )
+            override fun handle(payload: ComponentRequestDataPayload<*>, context: IPayloadContext) {
+                DataQueryManager.Server.create(context.player() as ServerPlayer, payload)
             }
         }
     }

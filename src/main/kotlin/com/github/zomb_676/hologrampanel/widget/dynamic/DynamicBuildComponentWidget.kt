@@ -21,16 +21,12 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
     fun getIdentityName(): String
 
     open class Single<T : HologramContext>(
-        private val provider: ComponentProvider<T, *>,
-        val elements: List<IRenderElement>,
-        private val identityName: String
+        private val provider: ComponentProvider<T, *>, val elements: List<IRenderElement>, private val identityName: String
     ) : HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
         private var baseY: Int = 0
         private val padding = 1
 
-        override fun measureSize(
-            target: T, style: HologramStyle, displayType: DisplayType
-        ): Size {
+        override fun measureSize(target: T, style: HologramStyle, displayType: DisplayType): Size {
             var width = 0
             var height = 0
             this.elements.forEach {
@@ -51,13 +47,8 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             return Size.of(width, height)
         }
 
-        override fun render(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType,
-            partialTicks: Float
-        ) {
-            val inMouse = style.checkMouseInSize(this.contentSize)
+        override fun render(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
+            val inMouse = style.checkMouseInSize(this.visualSize)
             if (baseY != 0) {
                 style.move(0, baseY)
             }
@@ -87,52 +78,33 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
     companion object {
         private val noActiveProvider = IRenderElement.StringRenderElement(Component.literal("No Active"))
         private val noApplicableProvider = IRenderElement.StringRenderElement(Component.literal("No Applicable"))
-        private val requireServerDataElement =
-            IRenderElement.StringRenderElement(Component.literal("Waiting Server Packet"))
+        private val requireServerDataElement = IRenderElement.StringRenderElement(Component.literal("Waiting Server Packet"))
 
         object NoActiveProvider {
-            val block: Single<BlockHologramContext> =
-                OrdinarySingle<BlockHologramContext>(
-                    DefaultBlockDescriptionProvider,
-                    noActiveProvider,
-                    "no_active_provider"
-                )
-            val entity: Single<EntityHologramContext> =
-                OrdinarySingle<EntityHologramContext>(
-                    DefaultEntityDescriptionProvider,
-                    noActiveProvider,
-                    "no_active)provider"
-                )
+            val block: Single<BlockHologramContext> = OrdinarySingle<BlockHologramContext>(
+                DefaultBlockDescriptionProvider, noActiveProvider, "no_active_provider"
+            )
+            val entity: Single<EntityHologramContext> = OrdinarySingle<EntityHologramContext>(
+                DefaultEntityDescriptionProvider, noActiveProvider, "no_active)provider"
+            )
         }
 
         object NoApplicableProvider {
-            val block: Single<BlockHologramContext> =
-                OrdinarySingle<BlockHologramContext>(
-                    DefaultBlockDescriptionProvider,
-                    noApplicableProvider,
-                    "no_applicable_provider"
-                )
-            val entity: Single<EntityHologramContext> =
-                OrdinarySingle<EntityHologramContext>(
-                    DefaultEntityDescriptionProvider,
-                    noApplicableProvider,
-                    "no_applicable_provider"
-                )
+            val block: Single<BlockHologramContext> = OrdinarySingle<BlockHologramContext>(
+                DefaultBlockDescriptionProvider, noApplicableProvider, "no_applicable_provider"
+            )
+            val entity: Single<EntityHologramContext> = OrdinarySingle<EntityHologramContext>(
+                DefaultEntityDescriptionProvider, noApplicableProvider, "no_applicable_provider"
+            )
         }
 
         object RequireServerData {
-            val block: Single<BlockHologramContext> =
-                OrdinarySingle<BlockHologramContext>(
-                    DefaultBlockDescriptionProvider,
-                    requireServerDataElement,
-                    "require_server_data"
-                )
-            val entity: Single<EntityHologramContext> =
-                OrdinarySingle<EntityHologramContext>(
-                    DefaultEntityDescriptionProvider,
-                    requireServerDataElement,
-                    "require_server_data"
-                )
+            val block: Single<BlockHologramContext> = OrdinarySingle<BlockHologramContext>(
+                DefaultBlockDescriptionProvider, requireServerDataElement, "require_server_data"
+            )
+            val entity: Single<EntityHologramContext> = OrdinarySingle<EntityHologramContext>(
+                DefaultEntityDescriptionProvider, requireServerDataElement, "require_server_data"
+            )
         }
 
         fun <T : HologramContext> onNoActiveProvider(context: T): Single<T> = when (context) {
@@ -168,10 +140,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         ): Size = descriptionWidget.measureSize(target, style, displayType)
 
         override fun renderGroupDescription(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType,
-            partialTicks: Float
+            target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float
         ) {
             descriptionWidget.render(target, style, displayType, partialTicks)
         }
@@ -207,27 +176,15 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 field
             }
 
-        override fun descriptionSize(
-            target: T, style: HologramStyle, displayType: DisplayType
-        ): Size {
+        override fun descriptionSize(target: T, style: HologramStyle, displayType: DisplayType): Size {
             return super.descriptionSize(target, style, displayType)
         }
 
-        override fun renderGroupDescription(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType,
-            partialTicks: Float
-        ) {
+        override fun renderGroupDescription(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
             super.renderGroupDescription(target, style, displayType, partialTicks)
         }
 
-        override fun render(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType,
-            partialTicks: Float
-        ) {
+        override fun render(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
             super.render(target, style, displayType, partialTicks)
         }
     }

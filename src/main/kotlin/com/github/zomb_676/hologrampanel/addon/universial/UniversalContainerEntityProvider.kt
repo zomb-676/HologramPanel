@@ -12,7 +12,7 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.capabilities.Capabilities
 
-data object  UniversalContainerEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
+data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,

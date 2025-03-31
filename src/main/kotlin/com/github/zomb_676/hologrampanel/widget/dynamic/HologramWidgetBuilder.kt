@@ -64,18 +64,18 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         return DynamicBuildComponentWidget.Single(currentProvider!!, elements, identityName)
     }
 
-    fun group(identityName: String, des: String, collapse: Boolean = false, codeBlock: () -> Unit) {
-        group(identityName, { text(des) }, codeBlock, collapse)
+    fun group(identityName: String, des: String, codeBlock: () -> Unit) {
+        group(identityName, { text(des) }, codeBlock)
     }
 
-    fun group(identityName: String, description: Helper.() -> Unit, codeBlock: () -> Unit, collapse: Boolean = false) {
+    fun group(identityName: String, description: Helper.() -> Unit, codeBlock: () -> Unit) {
         requireNotNull(currentProvider)
         require(!currentInSingle) { "not call group in single" }
         stack.push(mutableListOf())
         codeBlock.invoke()
         val desWidget =
             createSingleFromElements(helper.isolateScope { description.invoke(helper) }, "description_$identityName")!!
-        val group = createGroupForElements(stack.pop(), desWidget, collapse, identityName, false)
+        val group = createGroupForElements(stack.pop(), desWidget, false, identityName, false)
         if (group != null) {
             stack.peek().add(group)
         }
@@ -103,10 +103,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         desWidget: DynamicBuildComponentWidget.Single<T>,
         collapse: Boolean,
         identityName: String,
-        isGlobal : Boolean
+        isGlobal: Boolean
     ): DynamicBuildComponentWidget.Group<T>? {
         if (child.isEmpty()) return null
-        return DynamicBuildComponentWidget.Group(isGlobal,this.currentProvider!!, desWidget, child, identityName, collapse)
+        return DynamicBuildComponentWidget.Group(isGlobal, this.currentProvider!!, desWidget, child, identityName, collapse)
     }
 
     /**
@@ -192,7 +192,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.ItemsElement(items).attach()
         }
 
-        fun itemsInteractive(items: List<ItemStack>, input : Boolean): IRenderElement.InteractiveItemsElement {
+        fun itemsInteractive(items: List<ItemStack>, input: Boolean): IRenderElement.InteractiveItemsElement {
             return IRenderElement.InteractiveItemsElement(items, input).attach()
         }
 
@@ -203,7 +203,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.ItemStackElement(itemStack = itemStack).attach()
         }
 
-        fun itemInteractive(item : ItemStack, interactiveSlot : Int) : IRenderElement.InteractiveItemElement {
+        fun itemInteractive(item: ItemStack, interactiveSlot: Int): IRenderElement.InteractiveItemElement {
             require(interactiveSlot >= 0)
             return IRenderElement.InteractiveItemElement(item, interactiveSlot).attach()
         }

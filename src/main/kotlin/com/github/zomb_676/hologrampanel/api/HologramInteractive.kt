@@ -11,33 +11,19 @@ interface HologramInteractive {
     /**
      * @return true will consume the input
      */
-    fun onMouseClick(
-        player: LocalPlayer,
-        data: MouseButton,
-        context: HologramContext,
-        interactiveSize: Size,
-        mouseX: Int,
-        mouseY: Int
-    ): Boolean = false
+    fun onMouseClick(player: LocalPlayer, data: MouseButton, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean =
+        false
 
     /**
      * @return true will consume the input
      */
-    fun onMouseScroll(
-        player: LocalPlayer,
-        data: MouseScroll,
-        context: HologramContext,
-        interactiveSize: Size,
-        mouseX: Int,
-        mouseY: Int
-    ): Boolean = false
+    fun onMouseScroll(player: LocalPlayer, data: MouseScroll, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean =
+        false
 
     /**
      * @return true will consume the input
      */
-    fun onKey(
-        player: LocalPlayer, data: Key, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int
-    ): Boolean = false
+    fun onKey(player: LocalPlayer, data: Key, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean = false
 
     fun renderInteractive(
         style: HologramStyle,
@@ -46,17 +32,14 @@ interface HologramInteractive {
         interactiveSize: Size,
         mouseX: Int,
         mouseY: Int,
-        renderInteractiveHint : Boolean
-    ) {}
-
-    data class Key(
-        val key: Int, val scanCode: Int, val action: Int, val modifiers: Int
+        renderInteractiveHint: Boolean
     ) {
+    }
+
+    data class Key(val key: Int, val scanCode: Int, val action: Int, val modifiers: Int) {
         companion object {
             @ApiStatus.Internal
-            internal fun create(event: InputEvent.Key): Key {
-                return Key(event.key, event.scanCode, event.action, event.modifiers)
-            }
+            internal fun create(event: InputEvent.Key): Key = Key(event.key, event.scanCode, event.action, event.modifiers)
         }
     }
 
@@ -73,28 +56,16 @@ interface HologramInteractive {
             @ApiStatus.Internal
             internal fun create(event: InputEvent.MouseScrollingEvent): MouseScroll {
                 return MouseScroll(
-                    event.scrollDeltaX,
-                    event.scrollDeltaY,
-                    event.mouseX,
-                    event.mouseY,
-                    event.isLeftDown,
-                    event.isMiddleDown,
-                    event.isRightDown
+                    event.scrollDeltaX, event.scrollDeltaY, event.mouseX, event.mouseY, event.isLeftDown, event.isMiddleDown, event.isRightDown
                 )
             }
         }
     }
 
-    data class MouseButton(
-        val button: Int,
-        val action: Int,
-        val modifiers: Int,
-    ) {
+    data class MouseButton(val button: Int, val action: Int, val modifiers: Int) {
         companion object {
             @ApiStatus.Internal
-            internal fun create(event: InputEvent.MouseButton): MouseButton {
-                return MouseButton(event.button, event.action, event.modifiers)
-            }
+            internal fun create(event: InputEvent.MouseButton): MouseButton = MouseButton(event.button, event.action, event.modifiers)
         }
     }
 }

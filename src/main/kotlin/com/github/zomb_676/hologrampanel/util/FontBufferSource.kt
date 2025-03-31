@@ -13,6 +13,8 @@ import java.util.SequencedMap
  * used for accelerating batch font render in level
  *
  * assume satisfying [RenderType.canConsolidateConsecutiveGeometry]
+ *
+ * works under vanilla and ModernUI
  */
 class FontBufferSource : MultiBufferSource {
     val buffers: MutableMap<RenderType, ByteBufferBuilder> = mutableMapOf()

@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
@@ -17,18 +18,9 @@ interface HologramWidgetComponent<T : Any> {
     /**
      * @return [contentSize]
      */
-    fun measureSize(
-        target: T,
-        style: HologramStyle,
-        displayType: DisplayType
-    ): Size
+    fun measureSize(target: T, style: HologramStyle, displayType: DisplayType): Size
 
-    fun render(
-        target: T,
-        style: HologramStyle,
-        displayType: DisplayType,
-        partialTicks: Float
-    )
+    fun render(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float)
 
     fun isGroup(): Boolean
 
@@ -75,8 +67,8 @@ interface HologramWidgetComponent<T : Any> {
                     width = max(width, childSize.width)
                     height += childSize.height
                 }
+                height += (this.children.size + 1) * style.elementPadding()
             }
-            height += (this.children.size + 1) * style.elementPadding()
             this.contentSize = Size.of(width, height)
             this.visualSize = style.mergeOutlineSizeForGroup(
                 this.contentSize, this.descriptionSize(target, style, displayType), this.collapse
@@ -90,6 +82,9 @@ interface HologramWidgetComponent<T : Any> {
             displayType: DisplayType,
             partialTicks: Float
         ) {
+            if (style.checkMouseInSize(this.visualSize)) {
+                HologramManager.setCollapseTarget(this)
+            }
             val descriptionSize = this.descriptionSize(target, style, displayType)
             if (style.checkMouseInSize(this.visualSize)) {
                 style.stack {
@@ -109,9 +104,7 @@ interface HologramWidgetComponent<T : Any> {
                     this.children.forEach { component ->
                         when (component) {
                             is Single<T> -> {
-                                style.drawSingleOutline(
-                                    component.visualSize
-                                )
+                                style.drawSingleOutline(component.visualSize)
                                 style.stack {
                                     style.moveAfterDrawSingleOutline()
                                     component.render(target, style, displayType, partialTicks)
@@ -132,18 +125,9 @@ interface HologramWidgetComponent<T : Any> {
             this.collapse = !this.collapse
         }
 
-        abstract fun descriptionSize(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType
-        ): Size
+        abstract fun descriptionSize(target: T, style: HologramStyle, displayType: DisplayType): Size
 
-        abstract fun renderGroupDescription(
-            target: T,
-            style: HologramStyle,
-            displayType: DisplayType,
-            partialTicks: Float
-        )
+        abstract fun renderGroupDescription(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float)
 
         fun traverseRecursively(code: (HologramWidgetComponent<T>) -> Unit) {
             code.invoke(this)

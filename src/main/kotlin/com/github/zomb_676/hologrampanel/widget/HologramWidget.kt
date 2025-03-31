@@ -31,5 +31,5 @@ interface HologramWidget {
     fun onRemove() {}
     fun onAdd() {}
 
-    fun hasNoneOrdinaryContent() : Boolean = true
+    fun hasNoneOrdinaryContent(): Boolean = true
 }

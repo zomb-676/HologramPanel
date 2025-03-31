@@ -17,8 +17,6 @@ data object CauldronBlockProvider : ComponentProvider<BlockHologramContext, Abst
         displayType: DisplayType
     ) {
         val context = builder.context
-        val block by context.getRememberData()
-            .client(0, Blocks.CAULDRON.defaultBlockState()) { context.getBlockState() }
         val level = context.getLevel()
         val cap = level.getCapability(Capabilities.FluidHandler.BLOCK, context.pos, null)
         if (cap != null) {

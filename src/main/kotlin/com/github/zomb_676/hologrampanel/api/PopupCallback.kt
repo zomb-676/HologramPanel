@@ -8,10 +8,10 @@ import net.minecraft.world.level.Level
 
 sealed interface PopupCallback {
     fun interface BlockPopupCallback {
-        fun popup(pos : BlockPos, level : Level) : List<HologramTicket<BlockHologramContext>>
+        fun popup(pos: BlockPos, level: Level): List<HologramTicket<BlockHologramContext>>
     }
 
     fun interface EntityPopupCallback {
-        fun popup(entity : Entity) : List<HologramTicket<EntityHologramContext>>
+        fun popup(entity: Entity): List<HologramTicket<EntityHologramContext>>
     }
 }

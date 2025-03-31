@@ -24,14 +24,12 @@ class DebugStatisticsPayload(val total: Int, val forPlayer: Int) : CustomPacketP
             ::DebugStatisticsPayload
         )
         val HANDLE = object : IPayloadHandler<DebugStatisticsPayload> {
-            override fun handle(
-                payload: DebugStatisticsPayload,
-                context: IPayloadContext
-            ) {
+            override fun handle(payload: DebugStatisticsPayload, context: IPayloadContext) {
                 TOTAL_SYNC_COUNT = payload.total
                 SYNC_COUNT_FOR_PLAYER = payload.forPlayer
             }
         }
+
         fun clear() {
             TOTAL_SYNC_COUNT = -1
             SYNC_COUNT_FOR_PLAYER = -1

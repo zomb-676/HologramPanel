@@ -30,7 +30,7 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         val item1 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
         val item2 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
         val litTimeRemaining = buffer.readVarInt()
-        val litTotalTime = buffer.readVarInt()
+        buffer.readVarInt()
         val cookingTimer = buffer.readVarInt()
         val cookingTotalTime = buffer.readVarInt()
 

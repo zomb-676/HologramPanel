@@ -55,5 +55,5 @@ interface ComponentProvider<T : HologramContext, V> {
     @EfficientConst
     fun appliesTo(context: T, check: V): Boolean = true
 
-    fun attachTicket(context: T, tick : TicketAdder<T>) {}
+    fun attachTicket(context: T, tick: TicketAdder<T>) {}
 }

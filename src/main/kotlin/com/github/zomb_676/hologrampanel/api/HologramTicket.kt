@@ -54,7 +54,7 @@ interface HologramTicket<in T : HologramContext> {
         override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean = state.isLookingAt()
     }
 
-    class ByTickAfterNotSee(val aliveTick : Int) : HologramTicket<HologramContext> {
+    class ByTickAfterNotSee(val aliveTick: Int) : HologramTicket<HologramContext> {
         init {
             require(aliveTick > 0)
         }

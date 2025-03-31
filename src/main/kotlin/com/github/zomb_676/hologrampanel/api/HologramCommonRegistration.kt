@@ -13,13 +13,13 @@ import net.neoforged.neoforge.fluids.FluidType
  */
 class HologramCommonRegistration(val plugin: IHologramPlugin) {
 
-    internal val blockProviders: MutableList<ComponentProvider<BlockHologramContext,*>> = mutableListOf()
-    internal val entityProviders: MutableList<ComponentProvider<EntityHologramContext,*>> = mutableListOf()
+    internal val blockProviders: MutableList<ComponentProvider<BlockHologramContext, *>> = mutableListOf()
+    internal val entityProviders: MutableList<ComponentProvider<EntityHologramContext, *>> = mutableListOf()
 
     /**
      * register [BlockHologramContext] provider
      */
-    fun registerBlockComponent(provider: ComponentProvider<BlockHologramContext,*>) {
+    fun registerBlockComponent(provider: ComponentProvider<BlockHologramContext, *>) {
         blockProviders.add(provider)
         require(!checkType(provider.targetClass(), Entity::class.java)) {
             "block provider located in ${provider.location()} provided by ${plugin.location()} should not target Entity class"
@@ -29,7 +29,7 @@ class HologramCommonRegistration(val plugin: IHologramPlugin) {
     /**
      * register [EntityHologramContext] provider
      */
-    fun registerEntityComponent(provider: ComponentProvider<EntityHologramContext,*>) {
+    fun registerEntityComponent(provider: ComponentProvider<EntityHologramContext, *>) {
         entityProviders.add(provider)
         require(!checkType(provider.targetClass(), Block::class.java)) {
             "entity provider located in ${provider.location()} provided by ${plugin.location()} should not target Block class"

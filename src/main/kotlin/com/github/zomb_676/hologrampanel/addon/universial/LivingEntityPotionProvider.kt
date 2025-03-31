@@ -15,7 +15,7 @@ import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffectUtil
 import net.minecraft.world.entity.LivingEntity
 
-data object  LivingEntityPotionProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
+data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,
@@ -54,7 +54,7 @@ data object  LivingEntityPotionProvider : ServerDataProvider<EntityHologramConte
         displayType: DisplayType
     ) {
         val context = builder.context
-        val entity = context.getEntity<LivingEntity>()
+        context.getEntity<LivingEntity>()
         val remember = context.getRememberData()
         val data by remember.server(0, listOf()) { tag ->
             val data = context.warpRegistryFriendlyByteBuf(tag.getByteArray("potions"))

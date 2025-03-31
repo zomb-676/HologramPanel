@@ -12,7 +12,7 @@ interface IHologramPlugin {
      * @return the identity path for your plugin
      */
     @EfficientConst
-    fun location() : ResourceLocation
+    fun location(): ResourceLocation
 
     /**
      * register and setup settings on both physical sides
@@ -25,5 +25,6 @@ interface IHologramPlugin {
     fun registerClient(register: HologramClientRegistration) {}
 
     @ApiStatus.Experimental
-    fun registerClientConfig(register : ModConfigSpec.Builder) {}
+    fun registerClientConfig(register: ModConfigSpec.Builder) {
+    }
 }

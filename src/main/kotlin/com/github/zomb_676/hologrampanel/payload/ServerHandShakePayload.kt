@@ -8,7 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 
-class ServerHandShakePayload(val id : Int = 0) : CustomPacketPayload {
+class ServerHandShakePayload(val id: Int = 0) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<ServerHandShakePayload> = TYPE
 
     companion object {
@@ -18,10 +18,7 @@ class ServerHandShakePayload(val id : Int = 0) : CustomPacketPayload {
             ::ServerHandShakePayload
         )
         val HANDLE = object : IPayloadHandler<ServerHandShakePayload> {
-            override fun handle(
-                payload: ServerHandShakePayload,
-                context: IPayloadContext
-            ) {
+            override fun handle(payload: ServerHandShakePayload, context: IPayloadContext) {
                 HologramPanel.serverInstalled = true
             }
         }

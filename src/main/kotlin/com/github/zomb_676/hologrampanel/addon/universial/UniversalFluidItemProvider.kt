@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
 import net.neoforged.neoforge.capabilities.Capabilities
 
-data object  UniversalFluidItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
+data object UniversalFluidItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendServerData(
         additionData: CompoundTag,
         targetData: CompoundTag,

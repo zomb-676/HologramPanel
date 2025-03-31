@@ -20,10 +20,7 @@ class QueryDebugStatisticsPayload(val enable: Boolean) : CustomPacketPayload {
             ::QueryDebugStatisticsPayload
         )
         val HANDLE = object : IPayloadHandler<QueryDebugStatisticsPayload> {
-            override fun handle(
-                payload: QueryDebugStatisticsPayload,
-                context: IPayloadContext
-            ) {
+            override fun handle(payload: QueryDebugStatisticsPayload, context: IPayloadContext) {
                 DebugHelper.Server.onPacket(payload, context)
             }
         }
