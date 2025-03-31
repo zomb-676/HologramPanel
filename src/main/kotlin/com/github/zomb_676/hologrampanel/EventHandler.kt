@@ -224,6 +224,8 @@ object EventHandler {
             DebugStatisticsPayload.TYPE, DebugStatisticsPayload.STREAM_CODEC, DebugStatisticsPayload.HANDLE
         ).playToServer<ItemInteractivePayload>(
             ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
+        ).playBidirectional(
+            MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE
         )
     }
 

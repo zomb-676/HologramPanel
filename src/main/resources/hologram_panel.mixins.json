@@ -7,7 +7,8 @@
   "mixins": [
     "ConversionTypeMixin",
     "EntityMixin",
-    "GameDataMixin"
+    "GameDataMixin",
+    "CustomPacketPayloadMixin"
   ],
   "client": [
     "GameRenderMixin",
