@@ -292,7 +292,7 @@ interface IRenderElement {
             if (itemStack.isEmpty) {
                 style.outline(this.contentSize)
             } else {
-                style.item(itemStack)
+                style.itemFiltered(itemStack)
                 if (renderDecoration) {
                     style.itemDecoration(itemStack)
                 }
@@ -393,7 +393,7 @@ interface IRenderElement {
                         style.move(0, ITEM_STACK_LENGTH + PADDING)
                         style.push()
                     }
-                    style.itemWithDecoration(item, 0, 0)
+                    style.itemWithFilteredDecoration(item, 0, 0)
                     style.move(ITEM_STACK_LENGTH + PADDING, 0)
                     i++
                 }

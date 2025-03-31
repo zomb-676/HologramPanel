@@ -11,6 +11,9 @@
   "hologram_panel.configuration.update_at_unloaded":"data syncer work at chunk which is not loaded",
   "hologram_panel.configuration.update_at_unloaded.tooltip":"should be false in most case",
 
+  "hologram_panel.configuration.allow_hologram_interactive":"allow interactive via hologram",
+  "hologram_panel.configuration.allow_hologram_interactive.tooltip":"if install mod like FTB chunks to set territory, set false if not adapted",
+
 
   "hologram_panel.configuration.section.hologram.panel.client.toml.title": "Client Universal Configuration",
   "hologram_panel.configuration.section.hologram.panel.client.toml": "Client Universal Configuration",
@@ -56,6 +59,9 @@
 
   "hologram_panel.configuration.render_widget_debug_info" : "render debug information for hologram",
   "hologram_panel.configuration.render_widget_debug_info.tooltip" : "require debug_layer enabled",
+
+  "hologram_panel.configuration.search_backend" : "search backend",
+  "hologram_panel.configuration.search_backend.tooltip" : "use AUTO in most case",
 
   "hologram_panel.configuration.section.hologram.panel.plugin.settings": "Plugin Settings"
 

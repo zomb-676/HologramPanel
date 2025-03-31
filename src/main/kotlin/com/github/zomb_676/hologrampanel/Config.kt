@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.util.SearchBackend
 import net.minecraft.client.gui.screens.Screen
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
@@ -49,6 +50,9 @@ object Config {
         val updateAtUnloaded: ModConfigSpec.BooleanValue = builder
             .define("update_at_unloaded", false)
 
+        val allowHologramInteractive: ModConfigSpec.BooleanValue = builder
+            .define("allow_hologram_interactive", true)
+
         val space: ModConfigSpec = builder.build()
     }
 
@@ -96,6 +100,9 @@ object Config {
 
         val renderWidgetDebugInfo: ModConfigSpec.BooleanValue = builder
             .define("render_widget_debug_info", true)
+
+        val searchBackend: ModConfigSpec.EnumValue<SearchBackend.Type> = builder
+            .defineEnum("search_backend", SearchBackend.Type.AUTO)
 
         fun tryValidate() {
             if (renderMaxDistance.get() <= renderMinDistance.get()) {

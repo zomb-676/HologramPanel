@@ -262,7 +262,9 @@ object HologramManager {
     fun widgetCount(): Int = states.size
 
     fun submitInteractive(interactiveEntry: InteractiveEntry) {
-        this.interactiveTarget = interactiveEntry
+        if (Config.Server.allowHologramInteractive.get()) {
+            this.interactiveTarget = interactiveEntry
+        }
     }
 
     fun getInteractiveTarget(): InteractiveEntry? = this.interactiveTarget

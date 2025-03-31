@@ -19,7 +19,9 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.*
+import net.minecraft.client.renderer.CoreShaders
+import net.minecraft.client.renderer.LightTexture
+import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.util.ARGB
 import net.neoforged.neoforge.client.event.ClientTickEvent
@@ -195,7 +197,11 @@ object DebugHelper {
                     font, "displayed:${HologramManager.states.values.count { it.displayed }}", 10, 50, -1
                 )
                 guiGraphics.drawString(font, "lookingRenderElement:${lookingRenderElement}", 10, 60, -1)
-                guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}", 10, 70, -1)
+                if (Config.Server.allowHologramInteractive.get()) {
+                    guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}", 10, 70, -1)
+                } else {
+                    guiGraphics.drawString(font, "interactive is disabled on this server", 10, 70, -1)
+                }
                 val lookingHologram = HologramManager.getLookingHologram() ?: return
                 guiGraphics.drawString(font, "lookingHologramContext:${lookingHologram.context}", 10, 80, -1)
                 val tickets = lookingHologram.hologramTicks.joinToString()

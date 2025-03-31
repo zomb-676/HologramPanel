@@ -91,12 +91,12 @@ interface HologramStyle {
         this.move(screenPosition.x, screenPosition.y)
     }
 
-    fun translate(x: Float, y: Float, z : Float = 0.0f) {
+    fun translate(x: Float, y: Float, z: Float = 0.0f) {
         this.translate(x.toDouble(), y.toDouble(), z.toDouble())
     }
 
     fun translate(x: Double, y: Double, z: Double = 0.0) {
-       pose().translate(x, y,z)
+        pose().translate(x, y, z)
     }
 
     fun fill(size: Size, color: Int = contextColor) {
@@ -123,14 +123,14 @@ interface HologramStyle {
     /**
      * @param z by default, is 1.0
      */
-    fun scale(x: Double, y: Double,z : Double = 1.0) {
+    fun scale(x: Double, y: Double, z: Double = 1.0) {
         this.scale(x.toFloat(), y.toFloat(), z.toFloat())
     }
 
     /**
      * @param z by default, is 1.0
      */
-    fun scale(x: Float, y: Float, z : Float = 1.0f) {
+    fun scale(x: Float, y: Float, z: Float = 1.0f) {
         guiGraphics.pose().scale(x, y, z)
     }
 
@@ -148,7 +148,7 @@ interface HologramStyle {
         this.scale(scale, scale, 1.0f)
     }
 
-    fun mulPose(matrix : Matrix4f) {
+    fun mulPose(matrix: Matrix4f) {
         this.pose().mulPose(matrix)
     }
 
@@ -178,8 +178,28 @@ interface HologramStyle {
 
     fun itemStackSize(): Size = ITEM_STACK_SIZE
 
+    fun drawItemFilteredBg(itemStack: ItemStack, x: Int, y: Int) {
+        val backend = SearchBackend.getCurrentBackend()
+        val searchText = backend.getSearchString()
+        if (searchText == null || searchText.isEmpty()) return
+        if (!backend.matches(itemStack)) {
+            guiGraphics.fill(x, y, x + 16, y + 16, 0xaf141414.toInt())
+        } else {
+            val color = 0xff00ff00.toInt()
+            guiGraphics.fill(x, y, x + 1, y + 16, color)
+            guiGraphics.fill(x, y, x + 16, y + 1, color)
+            guiGraphics.fill(x + 15, y, x + 16, y + 16, color)
+            guiGraphics.fill(x, y + 15, x + 16, y + 16, color)
+        }
+    }
+
     fun item(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
         guiGraphics.renderItem(itemStack, x, y)
+    }
+
+    fun itemFiltered(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
+        drawItemFilteredBg(itemStack, x, y)
+        item(itemStack, x, y)
     }
 
     fun itemDecoration(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
@@ -189,6 +209,11 @@ interface HologramStyle {
     fun itemWithDecoration(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
         item(itemStack, x, y)
         itemDecoration(itemStack, x, y)
+    }
+
+    fun itemWithFilteredDecoration(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
+        drawItemFilteredBg(itemStack, x, y)
+        itemWithDecoration(itemStack, x, y)
     }
 
     /**

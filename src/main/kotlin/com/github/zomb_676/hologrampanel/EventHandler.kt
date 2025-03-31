@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.util.CommandDSL
+import com.github.zomb_676.hologrampanel.util.SearchBackend
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
@@ -32,6 +33,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.registries.RegisterEvent
 import net.neoforged.neoforge.server.ServerLifecycleHooks
+import net.neoforged.neoforge.server.command.EnumArgument
 import org.lwjgl.glfw.GLFW
 
 object EventHandler {
@@ -251,6 +253,14 @@ object EventHandler {
                             }
                         }
                     }
+                    "allow_hologram_interactive" {
+                        "allow"(BoolArgumentType.bool()) {
+                            execute {
+                                val allow = BoolArgumentType.getBool(this, "allow")
+                                Config.Server.allowHologramInteractive.set(allow)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -278,6 +288,14 @@ object EventHandler {
                 "clear_all_widget" {
                     execute {
                         HologramManager.clearAllHologram()
+                    }
+                }
+                "search_backend" {
+                    "type"(EnumArgument.enumArgument(SearchBackend.Type::class.java)) {
+                        execute {
+                            val type = getArgument("type", SearchBackend.Type::class.java)
+                            Config.Client.searchBackend.set(type)
+                        }
                     }
                 }
             }
