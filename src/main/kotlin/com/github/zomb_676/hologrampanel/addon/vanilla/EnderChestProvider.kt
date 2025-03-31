@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
@@ -31,7 +32,7 @@ data object  EnderChestProvider : ServerDataProvider<BlockHologramContext, Ender
             }
         }
         targetData.putInt("item_count", writeItemCount)
-        targetData.putByteArray("item_data", buffer.array())
+        targetData.putByteArray("item_data", buffer.extractArray())
         return true
     }
 

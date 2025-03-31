@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.util.FluidDataSyncEntry
 import com.github.zomb_676.hologrampanel.util.ProgressData
+import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
@@ -30,7 +31,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
                 fluidCount++
             }
         }
-        targetData.putByteArray("fluid_data", buffer.array())
+        targetData.putByteArray("fluid_data", buffer.extractArray())
         targetData.putInt("fluid_count", fluidCount)
         return true
     }

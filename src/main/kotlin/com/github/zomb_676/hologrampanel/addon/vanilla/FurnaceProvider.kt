@@ -5,27 +5,34 @@ import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBloc
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.util.ProgressData
+import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.AbstractFurnaceBlock
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
 
 data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
+
     override fun appendComponent(
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
-        val item0 by remember.serverItemStack(0, "furnace_slot_0")
-        val item1 by remember.serverItemStack(1, "furnace_slot_1")
-        val item2 by remember.serverItemStack(2, "furnace_slot_2")
-        val litTimeRemaining by remember.server(3, 0) { tag -> tag.getIntArray("furnace_progress_data")[0] }
-        val litTotalTime by remember.server(4, 0) { tag -> tag.getIntArray("furnace_progress_data")[1] }
-        val cookingTimer by remember.server(5, 0) { tag -> tag.getIntArray("furnace_progress_data")[2] }
-        val cookingTotalTime by remember.server(6, 0) { tag -> tag.getIntArray("furnace_progress_data")[3] }
-        val progressBar = remember.keep(7, ::ProgressData)
+        val data by remember.server(0, ByteArray(0), ByteArray::equals) { tag -> tag.getByteArray("f") }
+        val progressBar = remember.keep(1, ::ProgressData)
+
+        if (data.isEmpty()) return
+        val buffer = builder.context.warpRegistryFriendlyByteBuf(data)
+        val item0 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
+        val item1 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
+        val item2 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
+        val litTimeRemaining = buffer.readVarInt()
+        val litTotalTime = buffer.readVarInt()
+        val cookingTimer = buffer.readVarInt()
+        val cookingTotalTime = buffer.readVarInt()
 
         progressBar.current(cookingTimer).max(cookingTotalTime)
 
@@ -47,17 +54,15 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val furnace = context.getBlockEntity<AbstractFurnaceBlockEntity>() ?: return true
-        targetData.putIntArray(
-            "furnace_progress_data", intArrayOf(
-                furnace.litTimeRemaining, furnace.litTotalTime, furnace.cookingTimer, furnace.cookingTotalTime
-            )
-        )
-        val items = furnace.items
-        val registryAccess = context.getLevel().registryAccess()
-        targetData.put("furnace_slot_0", items[0].saveOptional(registryAccess))
-        targetData.put("furnace_slot_1", items[1].saveOptional(registryAccess))
-        targetData.put("furnace_slot_2", items[2].saveOptional(registryAccess))
-
+        val buffer = context.createRegistryFriendlyByteBuf()
+        furnace.items.forEach {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, it)
+        }
+        buffer.writeVarInt(furnace.litTimeRemaining)
+        buffer.writeVarInt(furnace.litTotalTime)
+        buffer.writeVarInt(furnace.cookingTimer)
+        buffer.writeVarInt(furnace.cookingTotalTime)
+        targetData.putByteArray("f", buffer.extractArray())
         return true
     }
 

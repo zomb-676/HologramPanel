@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
+import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
@@ -132,7 +133,7 @@ object DataQueryManager {
             var changed = false
             payload.providers.forEach { provider ->
                 val addTag = CompoundTag()
-                tag.put(provider.location().toString(), addTag)
+                tag.put(AllRegisters.ComponentHologramProviderRegistry.getId(provider).toString(), addTag)
                 changed = changed or provider.appendServerData(payload.additionDataTag, addTag, payload.context)
             }
             return changed

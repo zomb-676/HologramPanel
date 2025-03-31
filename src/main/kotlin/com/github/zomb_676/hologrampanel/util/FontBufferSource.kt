@@ -4,8 +4,10 @@ import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.BufferBuilder
 import com.mojang.blaze3d.vertex.ByteBufferBuilder
 import com.mojang.blaze3d.vertex.VertexConsumer
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.RenderType
+import java.util.SequencedMap
 
 /**
  * used for accelerating batch font render in level
@@ -14,7 +16,7 @@ import net.minecraft.client.renderer.RenderType
  */
 class FontBufferSource : MultiBufferSource {
     val buffers: MutableMap<RenderType, ByteBufferBuilder> = mutableMapOf()
-    val building: MutableMap<RenderType, BufferBuilder> = mutableMapOf()
+    val building: SequencedMap<RenderType, BufferBuilder> = Object2ObjectLinkedOpenHashMap()
     override fun getBuffer(renderType: RenderType): VertexConsumer {
         return building.computeIfAbsent(renderType) {
             val buffer = buffers.computeIfAbsent(renderType) {
@@ -24,7 +26,7 @@ class FontBufferSource : MultiBufferSource {
         }
     }
 
-    fun endBatch() {
+    fun endFontBatch() {
         building.forEach { (type, builder) ->
             val meshData = builder.build()
             if (meshData != null) {

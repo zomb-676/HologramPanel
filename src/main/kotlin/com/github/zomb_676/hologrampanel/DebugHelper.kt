@@ -108,9 +108,9 @@ object DebugHelper {
         }
 
         private fun byteSize(size: Int) = when {
-            size < (2 shl 11) - 1 -> "$size Bytes"
-            size < (2 shl 21) - 1 -> "%.2f MB".format(size.toFloat() / ((2 shl 11) - 1))
-            else -> "%.2f GB".format(size.toFloat() / ((2 shl 21) - 1))
+            size < (1 shl 10) -> "$size Bytes"
+            size < (1 shl 20) -> "%.2f MB".format(size.toFloat() / (1 shl 10))
+            else -> "%.2f GB".format(size.toFloat() / (1 shl 20))
         }
 
         val fontBufferSource = FontBufferSource()
@@ -143,9 +143,9 @@ object DebugHelper {
 
                     val size = next.key.size
                     pose.stack {
-                        pose.translate(position.x(), position.y() + 0.8f, position.z())
+                        pose.translate(position.x(), position.y() + 0.6f, position.z())
                         pose.mulPose(Minecraft.getInstance().entityRenderDispatcher.cameraOrientation())
-                        pose.scale(0.025f, -0.025f, 0.025f)
+                        pose.scale(0.0125f, -0.0125f, 0.0125f)
                         val text = byteSize(size)
                         font.drawInBatch(
                             text, -(font.width(text) / 2).toFloat(), 0f, -2130706433, false, pose.last().pose(),
@@ -172,10 +172,10 @@ object DebugHelper {
                     fill(next.key.sourcePosition(partialTick), color, pose, builder)
                 }
             }
-            builder.buildOrThrow().close()
-//            BufferUploader.drawWithShader(builder.buildOrThrow())
+//            builder.buildOrThrow().close()
+            BufferUploader.drawWithShader(builder.buildOrThrow())
             glDebugStack("font") {
-                fontBufferSource.endBatch()
+                fontBufferSource.endFontBatch()
             }
             RenderSystem.enableDepthTest()
         }

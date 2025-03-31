@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.util
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
+import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
@@ -105,4 +106,12 @@ inline fun ModConfigSpec.Builder.stack(name: String, crossinline f: () -> Unit) 
     this.push(name)
     f.invoke()
     this.pop()
+}
+
+fun ByteBuf.extractArray(): ByteArray {
+    val percent = this.writerIndex().toFloat() / this.capacity()
+    if (percent < 0.8 || (1 - percent) > 512) {
+        return this.array().sliceArray(0..<this.writerIndex())
+    }
+    return this.array()
 }

@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
@@ -29,7 +30,7 @@ data object  UniversalContainerItemProvider : ServerDataProvider<EntityHologramC
             }
         }
         targetData.putInt("item_count", writeItemCount)
-        targetData.putByteArray("item_data", buffer.array())
+        targetData.putByteArray("item_data", buffer.extractArray())
         return true
     }
 

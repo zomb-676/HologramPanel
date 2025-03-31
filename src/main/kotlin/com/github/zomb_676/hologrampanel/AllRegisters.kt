@@ -34,6 +34,9 @@ object AllRegisters {
                 .create()
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*, *>> =
             ByteBufCodecs.registry(RESOURCE_KEY)
+
+        fun getId(provider: ComponentProvider<*,*>) = REGISTRY.getId(provider)
+        fun byId(id : Int) = REGISTRY.byId(id)
     }
 
     object Codecs {

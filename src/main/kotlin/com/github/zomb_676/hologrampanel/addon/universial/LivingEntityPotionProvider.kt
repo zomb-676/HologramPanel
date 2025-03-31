@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
@@ -31,7 +32,7 @@ data object  LivingEntityPotionProvider : ServerDataProvider<EntityHologramConte
                 MobEffectInstance.STREAM_CODEC.encode(data, effect)
             }
         }
-        targetData.putByteArray("potions", data.asByteBuf().array())
+        targetData.putByteArray("potions", data.asByteBuf().extractArray())
         return true
     }
 
