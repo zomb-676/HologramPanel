@@ -401,15 +401,16 @@ interface HologramStyle {
         }
 
         override fun mergeOutlineSizeForGroup(contentSize: Size, descriptionSize: Size, collapse: Boolean): Size {
-//            if (collapse) {
-//                val width = max(contentSize.width + 6, descriptionSize.width + 8)
-//                val height = contentSize.height + descriptionSize.height
-//                return Size.of(width + 4, height + 4)
-//            } else {
-            val width = max(contentSize.width, descriptionSize.width) + SINGLE_INNER_PADDING.horizontal
-            val height = contentSize.height + descriptionSize.height + SINGLE_INNER_PADDING.up
-            return Size.of(width, height)
-//            }
+            if (collapse) {
+                require(contentSize == Size.ZERO)
+                val width = descriptionSize.width + SINGLE_INNER_PADDING.horizontal * 2 + COLLAPSE_SIZE.width
+                val height = descriptionSize.height + SINGLE_INNER_PADDING.vertical
+                return Size.of(width, height)
+            } else {
+                val width = max(contentSize.width, descriptionSize.width) + SINGLE_INNER_PADDING.horizontal * 2 + COLLAPSE_SIZE.width
+                val height = contentSize.height + descriptionSize.height + SINGLE_INNER_PADDING.up
+                return Size.of(width, height)
+            }
         }
 
         override fun drawSingleOutline(size: Size, color: Int) {

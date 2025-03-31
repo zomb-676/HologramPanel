@@ -55,7 +55,7 @@ data object BeeHiveProvider : ServerDataProvider<BlockHologramContext, BeehiveBl
                 text("Bee Count:$beeCount")
             }
             data.forEachIndexed { index, data ->
-                builder.group("Bee$index", "Bee ${index + 1}") {
+                builder.lazyGroup("Bee$index", "Bee ${index + 1}") {
                     val tick = data.ticksInHive
                     val data = data.occupant
                     builder.single("in_hive") { text("inHive:$tick/${data.minTicksInHive()}") }
