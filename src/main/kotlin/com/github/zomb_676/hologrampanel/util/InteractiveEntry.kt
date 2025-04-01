@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import net.minecraft.client.Minecraft
+import net.minecraft.network.chat.Component
 import net.neoforged.neoforge.client.event.InputEvent
 import org.joml.Matrix4f
 import org.joml.Vector4f
@@ -17,10 +18,7 @@ import org.joml.Vector4f
  * @property mouseY same coordinate as [interactiveSize]
  */
 class InteractiveEntry(
-    val interactive: HologramInteractive,
-    val context: HologramContext,
-    val interactiveSize: Size,
-    poseMatrix: Matrix4f
+    val interactive: HologramInteractive, val context: HologramContext, val interactiveSize: Size, poseMatrix: Matrix4f
 ) {
     val mouseX: Int
     val mouseY: Int
@@ -37,26 +35,41 @@ class InteractiveEntry(
     }
 
     fun onKey(event: InputEvent.Key): Boolean {
-        val player = Minecraft.getInstance().player ?: return false
-        val key = HologramInteractive.Key.create(event)
-        return interactive.onKey(player, key, context, interactiveSize, mouseX, mouseY)
+        if (Config.Server.allowHologramInteractive.get()) {
+            val player = Minecraft.getInstance().player ?: return false
+            val key = HologramInteractive.Key.create(event)
+            return interactive.onKey(player, key, context, interactiveSize, mouseX, mouseY)
+        } else {
+            Minecraft.getInstance().gui.setOverlayMessage(FORBIDEN_COMPONENT, false)
+            return true
+        }
     }
 
     fun onMouseScroll(event: InputEvent.MouseScrollingEvent): Boolean {
-        val player = Minecraft.getInstance().player ?: return false
-        val mouseScroll = HologramInteractive.MouseScroll.create(event)
-        return interactive.onMouseScroll(player, mouseScroll, context, interactiveSize, mouseX, mouseY)
+        if (Config.Server.allowHologramInteractive.get()) {
+            val player = Minecraft.getInstance().player ?: return false
+            val mouseScroll = HologramInteractive.MouseScroll.create(event)
+            return interactive.onMouseScroll(player, mouseScroll, context, interactiveSize, mouseX, mouseY)
+        } else {
+            Minecraft.getInstance().gui.setOverlayMessage(FORBIDEN_COMPONENT, false)
+            return true
+        }
     }
 
     fun onMouseClick(event: InputEvent.MouseButton): Boolean {
-        val player = Minecraft.getInstance().player ?: return false
-        val button = HologramInteractive.MouseButton.create(event)
-        return interactive.onMouseClick(player, button, context, interactiveSize, mouseX, mouseY)
+        if (Config.Server.allowHologramInteractive.get()) {
+            val player = Minecraft.getInstance().player ?: return false
+            val button = HologramInteractive.MouseButton.create(event)
+            return interactive.onMouseClick(player, button, context, interactiveSize, mouseX, mouseY)
+        } else {
+            Minecraft.getInstance().gui.setOverlayMessage(FORBIDEN_COMPONENT, false)
+            return true
+        }
     }
 
-    fun renderInteractive(style: HologramStyle, widgetSize: Size) {
+    fun renderInteractive(style: HologramStyle, widgetSize: Size, partialTicks: Float) {
         val hint = Config.Client.displayInteractiveHint.get()
-        interactive.renderInteractive(style, context, widgetSize, interactiveSize, mouseX, mouseY, hint)
+        interactive.renderInteractive(style, context, widgetSize, interactiveSize, mouseX, mouseY, partialTicks, hint)
     }
 
     override fun toString(): String {
@@ -64,15 +77,15 @@ class InteractiveEntry(
     }
 
     companion object {
+
+        val FORBIDEN_COMPONENT = Component.literal("Interactive Is Disabled On This Server")
+
         /**
          * @param size the size the interactive take
          * @param hologramStyle query actual position from its matrix
          */
         fun of(
-            interactive: HologramInteractive,
-            context: HologramContext,
-            size: Size,
-            hologramStyle: HologramStyle
+            interactive: HologramInteractive, context: HologramContext, size: Size, hologramStyle: HologramStyle
         ): InteractiveEntry = InteractiveEntry(interactive, context, size, Matrix4f(hologramStyle.poseMatrix()))
     }
 }

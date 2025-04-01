@@ -34,8 +34,13 @@ value class ScreenPosition private constructor(@PublishedApi internal val positi
         return true
     }
 
+    operator fun unaryMinus() = of(-x, -y)
+
     companion object {
-        fun of(x: Int, y: Int) = ScreenPosition((x.toLong() shl Int.SIZE_BITS) or (y.toLong()))
+        /**
+         * must & 0xFFFFFFFFL to clear high 32 bit, if value is negative, they will be filled with 1, which will influence |
+         */
+        fun of(x: Int, y: Int) = ScreenPosition((x.toLong() shl Int.SIZE_BITS) or (y.toLong() and 0xFFFFFFFFL))
         val ZERO = of(0, 0)
     }
 }

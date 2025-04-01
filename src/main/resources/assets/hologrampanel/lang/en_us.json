@@ -14,6 +14,9 @@
   "hologram_panel.configuration.allow_hologram_interactive":"allow interactive via hologram",
   "hologram_panel.configuration.allow_hologram_interactive.tooltip":"if install mod like FTB chunks to set territory, set false if not adapted",
 
+  "hologram_panel.configuration.sync_radius":"hologram distance larger than this will not be synced",
+  "hologram_panel.configuration.sync_radius.tooltip":"too big will waste network traffic",
+
 
   "hologram_panel.configuration.section.hologram.panel.client.toml.title": "Client Universal Configuration",
   "hologram_panel.configuration.section.hologram.panel.client.toml": "Client Universal Configuration",

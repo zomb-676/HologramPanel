@@ -47,11 +47,11 @@ data object BrewStandProvider : ServerDataProvider<BlockHologramContext, Brewing
         builder.single("brew_fuel") { text("fuel:$fuel") }
         builder.single("brew_time") { text("breeTime:$breeTime") }
         builder.single("brew_items") {
-            if (!item0.isEmpty) itemStack(item0)
-            if (!item1.isEmpty) itemStack(item1)
-            if (!item2.isEmpty) itemStack(item2)
-            if (!item3.isEmpty) itemStack(item3)
-            if (!item4.isEmpty) itemStack(item4)
+            if (!item0.isEmpty) itemInteractive(item0, 0)
+            if (!item1.isEmpty) itemInteractive(item1, 1)
+            if (!item2.isEmpty) itemInteractive(item2, 2)
+            if (!item3.isEmpty) itemInteractive(item3, 3)
+            if (!item4.isEmpty) itemInteractive(item4, 4)
         }
     }
 

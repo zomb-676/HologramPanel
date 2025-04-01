@@ -12,6 +12,7 @@ import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
+import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.google.common.collect.BiMap
@@ -19,7 +20,12 @@ import com.google.common.collect.HashBiMap
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.util.Mth
+import net.minecraft.world.phys.Vec3
+import org.joml.Vector3f
+import org.joml.Vector3fc
 import java.util.*
+import kotlin.math.acos
 
 /**
  * manager object for all [com.github.zomb_676.hologrampanel.widget.dynamic.Remember]
@@ -108,15 +114,23 @@ object DataQueryManager {
 
         fun tick() {
             tick.tryConsume {
+                val syncRadius = Config.Server.syncRadius.get()
                 syncs.forEach { (player, payloads) ->
+                    val playerPos = player.blockPosition()
                     for (payload in payloads.values) {
+                        val pos = when (val context = payload.context) {
+                            is BlockHologramContext -> context.pos
+                            is EntityHologramContext -> context.getEntity().blockPosition()
+                        }
+                        //skip not loaded
                         if (!Config.Server.updateAtUnloaded.get()) {
-                            val pos = when (val context = payload.context) {
-                                is BlockHologramContext -> context.pos
-                                is EntityHologramContext -> context.getEntity().blockPosition()
-                            }
                             if (!payload.context.getLevel().isLoaded(pos)) continue
                         }
+                        //skip far hologram
+                        if (playerPos.distSqr(pos) > syncRadius * syncRadius) continue
+                        //skip not in visual angles
+                        val degree = calculateDegree(player, payload.context.hologramCenterPosition())
+                        if (degree > 80) continue
 
                         val tag = CompoundTag()
                         val changed = append(payload, tag)
@@ -127,6 +141,20 @@ object DataQueryManager {
                     }
                 }
             }
+        }
+
+        private fun calculateDegree(serverPlayer: ServerPlayer, sourcePosition: Vector3fc): Double {
+            val viewVector = serverPlayer.getViewVector(1f).normalize()
+            val cameraPosition = serverPlayer.eyePosition
+            val sourceVector = Vec3(
+                (sourcePosition.x() - cameraPosition.x),
+                (sourcePosition.y() - cameraPosition.y),
+                (sourcePosition.z() - cameraPosition.z)
+            ).normalize()
+
+            val dot = viewVector.dot(sourceVector)
+            val angleInRadius = acos(dot)
+            return Math.toDegrees(angleInRadius.toDouble())
         }
 
         private fun <T : HologramContext> append(payload: ComponentRequestDataPayload<T>, tag: CompoundTag): Boolean {

@@ -6,6 +6,7 @@ import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.util.SearchBackend
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
+import com.github.zomb_676.hologrampanel.util.switch
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.blaze3d.platform.InputConstants
@@ -270,19 +271,23 @@ object EventHandler {
     private fun registerClientCommand(event: RegisterClientCommandsEvent) {
         CommandDSL(event.dispatcher).apply {
             HologramPanel.MOD_ID {
-                "debug_layer" {
-                    "debug_layer"(BoolArgumentType.bool()) {
+                "debug" {
+                    "debug_layer" {
                         execute {
-                            val value = BoolArgumentType.getBool(this, "debug_layer")
-                            Config.Client.renderDebugLayer.set(value)
+                            val newState = Config.Client.renderDebugLayer.switch()
+                            source.sendSystemMessage(Component.literal("switch debug_layer state to $newState"))
                         }
                     }
-                }
-                "debug_box" {
-                    "debug_box"(BoolArgumentType.bool()) {
+                    "debug_box" {
                         execute {
-                            val value = BoolArgumentType.getBool(this, "debug_box")
-                            Config.Client.renderDebugBox.set(value)
+                            val newState = Config.Client.renderDebugBox.switch()
+                            source.sendSystemMessage(Component.literal("switch debug_box state to $newState"))
+                        }
+                    }
+                    "debug_widget" {
+                        execute {
+                            val newState = Config.Client.renderWidgetDebugInfo.switch()
+                            source.sendSystemMessage(Component.literal("switch debug_widget state to $newState"))
                         }
                     }
                 }

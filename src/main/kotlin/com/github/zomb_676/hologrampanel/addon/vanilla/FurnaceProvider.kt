@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.AbstractFurnaceBlock
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
+import java.util.Arrays
 
 data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
 
@@ -21,7 +22,7 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
-        val data by remember.server(0, ByteArray(0), ByteArray::equals) { tag -> tag.getByteArray("f") }
+        val data by remember.server(0, ByteArray(0), Arrays::equals) { tag -> tag.getByteArray("f") }
         val progressBar = remember.keep(1, ::ProgressData)
 
         if (data.isEmpty()) return

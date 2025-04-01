@@ -130,7 +130,11 @@ class ItemInteractivePayload(
                     } else {
                         val stored = cap.getStackInSlot(payload.targetSlot)
                         if (!stored.isEmpty && !ItemStack.isSameItemSameComponents(stored, payload.itemStack)) return
-                        var storeCount = min(stored.maxStackSize - stored.count, payload.count)
+                        var storeCount = if (stored.isEmpty) {
+                            payload.count
+                        } else {
+                            min(stored.maxStackSize - stored.count, payload.count)
+                        }
 
                         val player = payloadContext.player() as ServerPlayer
                         run {

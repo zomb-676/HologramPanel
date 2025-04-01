@@ -53,6 +53,9 @@ object Config {
         val allowHologramInteractive: ModConfigSpec.BooleanValue = builder
             .define("allow_hologram_interactive", true)
 
+        val syncRadius: ModConfigSpec.IntValue = builder
+            .defineInRange("sync_radius", 10, 0, 48)
+
         val space: ModConfigSpec = builder.build()
     }
 

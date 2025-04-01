@@ -123,7 +123,7 @@ object HologramManager {
                 }
                 val currentInteractive = this.getInteractiveTarget()
                 if (!interactiveSet && currentInteractive != null) {
-                    currentInteractive.renderInteractive(style, state.size)
+                    currentInteractive.renderInteractive(style, state.size, partialTicks)
                 }
             }
         }
@@ -265,9 +265,7 @@ object HologramManager {
     fun widgetCount(): Int = states.size
 
     fun submitInteractive(interactiveEntry: InteractiveEntry) {
-        if (Config.Server.allowHologramInteractive.get()) {
-            this.interactiveTarget = interactiveEntry
-        }
+        this.interactiveTarget = interactiveEntry
     }
 
     fun getInteractiveTarget(): InteractiveEntry? = this.interactiveTarget

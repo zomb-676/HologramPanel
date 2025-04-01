@@ -193,7 +193,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         }
 
         fun itemsInteractive(items: List<ItemStack>, input: Boolean): IRenderElement.InteractiveItemsElement {
-            return IRenderElement.InteractiveItemsElement(items, input).attach()
+            return IRenderElement.InteractiveItemsElement(items).attach()
         }
 
         /**

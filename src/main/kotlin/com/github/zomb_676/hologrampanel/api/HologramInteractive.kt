@@ -32,6 +32,7 @@ interface HologramInteractive {
         interactiveSize: Size,
         mouseX: Int,
         mouseY: Int,
+        partialTicks: Float,
         renderInteractiveHint: Boolean
     ) {
     }

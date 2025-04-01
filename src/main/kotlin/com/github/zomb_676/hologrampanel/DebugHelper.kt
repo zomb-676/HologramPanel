@@ -102,17 +102,16 @@ object DebugHelper {
             var size = 0
             while (iterator.hasNext()) {
                 val next = iterator.next()
-//                if (next.intValue >= UPDATE_TINE - 1) {
                 size += next.key.size
-//                }
             }
             return byteSize(size)
         }
 
         private fun byteSize(size: Int) = when {
             size < (1 shl 10) -> "$size Bytes"
-            size < (1 shl 20) -> "%.2f MB".format(size.toFloat() / (1 shl 10))
-            else -> "%.2f GB".format(size.toFloat() / (1 shl 20))
+            size < (1 shl 20) -> "%.2f KiB".format(size.toFloat() / (1 shl 10))
+            size < (1 shl 30) -> "%.2f MiB".format(size.toFloat() / (1 shl 20))
+            else -> "%.2f GiB".format(size.toFloat() / (1 shl 20))
         }
 
         val fontBufferSource = FontBufferSource()
@@ -193,11 +192,8 @@ object DebugHelper {
                 guiGraphics.drawString(font, "displayed:${HologramManager.states.values.count { it.displayed }}", 10, 50, -1)
                 guiGraphics.drawString(font, "collapseTarget:${HologramManager.getCollapseTarget()}", 10, 60, -1)
                 guiGraphics.drawString(font, "lookingRenderElement:${lookingRenderElement}", 10, 70, -1)
-                if (Config.Server.allowHologramInteractive.get()) {
-                    guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}", 10, 80, -1)
-                } else {
-                    guiGraphics.drawString(font, "interactive is disabled on this server", 10, 80, -1)
-                }
+                val enable = Config.Server.allowHologramInteractive.get()
+                guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}, enable:$enable", 10, 80, -1)
                 val lookingHologram = HologramManager.getLookingHologram() ?: return
                 guiGraphics.drawString(font, "lookingHologramContext:${lookingHologram.context}", 10, 90, -1)
                 val tickets = lookingHologram.hologramTicks.joinToString()
@@ -213,7 +209,7 @@ object DebugHelper {
             lastDebugState = configValue
         }
 
-        fun querySyncString(): String {
+        private fun querySyncString(): String {
             val builder = StringBuilder("sync:")
             builder.append("client:${DataQueryManager.Client.syncCount()},")
             builder.append("server:(${DebugStatisticsPayload.SYNC_COUNT_FOR_PLAYER}/${DebugStatisticsPayload.TOTAL_SYNC_COUNT})")

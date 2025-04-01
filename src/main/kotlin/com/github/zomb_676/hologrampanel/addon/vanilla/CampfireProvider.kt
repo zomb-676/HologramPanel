@@ -4,12 +4,20 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.util.ProgressData
+import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
+import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
+import io.netty.buffer.ByteBuf
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.CampfireBlock
 import net.minecraft.world.level.block.entity.CampfireBlockEntity
+import org.apache.http.entity.ByteArrayEntity
+import java.util.Arrays
 
 data object CampfireProvider : ServerDataProvider<BlockHologramContext, CampfireBlock> {
     override fun appendServerData(
@@ -18,14 +26,17 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
         context: BlockHologramContext
     ): Boolean {
         val campfire = context.getBlockEntity<CampfireBlockEntity>() ?: return true
-        targetData.putIntArray("cooking_progress", campfire.cookingProgress)
-        targetData.putIntArray("cooking_time", campfire.cookingTime)
-        val items = campfire.items
-        val registryAccess = context.getLevel().registryAccess()
-        targetData.put("item0", items[0].saveOptional(registryAccess))
-        targetData.put("item1", items[1].saveOptional(registryAccess))
-        targetData.put("item2", items[2].saveOptional(registryAccess))
-        targetData.put("item3", items[3].saveOptional(registryAccess))
+        val buffer = context.createRegistryFriendlyByteBuf()
+        for (progress in campfire.cookingProgress) {
+            buffer.writeVarInt(progress)
+        }
+        for (progress in campfire.cookingTime) {
+            buffer.writeVarInt(progress)
+        }
+        for (item in campfire.items) {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, item)
+        }
+        targetData.putByteArray("campfire", buffer.extractArray())
         return true
     }
 
@@ -35,41 +46,23 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
     ) {
         val context = builder.context
         val remember = context.getRememberData()
-        val cookingProgress by remember.server(
-            0,
-            intArrayOf(0, 0, 0, 0)
-        ) { tag -> tag.getIntArray("cooking_progress") }
-        val cookingTime by remember.server(
-            1,
-            intArrayOf(0, 0, 0, 0)
-        ) { tag -> tag.getIntArray("cooking_time") }
-        val item0 by remember.serverItemStack(2, "item0")
-        val item1 by remember.serverItemStack(3, "item1")
-        val item2 by remember.serverItemStack(4, "item2")
-        val item3 by remember.serverItemStack(5, "item3")
+        val progresses = remember.keep(0) { List(4) { ProgressData() } }
+        val data by remember.server(1, ByteArray(0), Arrays::equals) { tag -> tag.getByteArray("campfire") }
+        if (data.isEmpty()) return
+        val buffer = context.warpRegistryFriendlyByteBuf(data)
+        val cookingProgresses = IntArray(4) { buffer.readVarInt() }
+        val cookingTimes = IntArray(4) { buffer.readVarInt() }
+        val items = List(4) { ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer) }
 
-        if (!item0.isEmpty) {
-            builder.single("cooking0") {
-                itemStack(item0)
-                text("progress:${cookingProgress[0]}/time:${cookingTime[0]}")
-            }
-        }
-        if (!item1.isEmpty) {
-            builder.single("cooking1") {
-                itemStack(item1)
-                text("progress:${cookingProgress[1]}/time:${cookingTime[1]}")
-            }
-        }
-        if (!item2.isEmpty) {
-            builder.single("cooking2") {
-                itemStack(item2)
-                text("progress:${cookingProgress[2]}/time:${cookingTime[2]}")
-            }
-        }
-        if (!item3.isEmpty) {
-            builder.single("cooking3") {
-                itemStack(item3)
-                text("progress:${cookingProgress[3]}/time:${cookingTime[3]}")
+        if (items.all(ItemStack::isEmpty)) return
+        builder.single("cooking") {
+            repeat(4) { index ->
+                val itemStack = items[index]
+                if (itemStack.isEmpty) return@repeat
+                val cookingProgress = cookingProgresses[index]
+                val progress = progresses[index].current(cookingProgress).max(cookingTimes[index])
+                itemStack(itemStack).setPositionOffset(2, 2).noCalculateSize()
+                workingTorusProgress(progress)
             }
         }
     }

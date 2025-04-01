@@ -10,6 +10,8 @@ import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import com.mojang.blaze3d.platform.Lighting
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
@@ -48,6 +50,9 @@ interface IRenderElement {
     fun setPositionOffset(x: Int, y: Int): IRenderElement
     fun getPositionOffset(): ScreenPosition
 
+    fun noCalculateSize()
+    fun hasCalculateSize(): Boolean
+
     var contentSize: Size
 
     companion object {
@@ -75,6 +80,9 @@ interface IRenderElement {
         override fun setPositionOffset(x: Int, y: Int): IRenderElement = this
 
         override fun getPositionOffset(): ScreenPosition = ScreenPosition.ZERO
+        override fun noCalculateSize() {}
+
+        override fun hasCalculateSize(): Boolean = false
 
         override var contentSize: Size
             get() = Size.ZERO
@@ -89,6 +97,7 @@ interface IRenderElement {
                 require(value > 0)
                 field = value
             }
+        private var hasCalculateSize = true
 
         private var positionOffset: ScreenPosition = ScreenPosition.ZERO
 
@@ -114,6 +123,12 @@ interface IRenderElement {
         final override fun setScale(scale: Double): RenderElement {
             this.scale = scale
             return this
+        }
+
+        final override fun hasCalculateSize(): Boolean = hasCalculateSize
+
+        final override fun noCalculateSize() {
+            this.hasCalculateSize = false
         }
     }
 
@@ -281,20 +296,14 @@ interface IRenderElement {
         }
     }
 
-    open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement() {
+    open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement(), HologramInteractive {
 
         override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize().scale()
 
-        override fun render(
-            style: HologramStyle, partialTicks: Float
-        ) {
-            if (itemStack.isEmpty) {
-                style.outline(this.contentSize)
-            } else {
-                style.itemFiltered(itemStack)
-                if (renderDecoration) {
-                    style.itemDecoration(itemStack)
-                }
+        override fun render(style: HologramStyle, partialTicks: Float) {
+            style.itemFiltered(itemStack)
+            if (renderDecoration) {
+                style.itemDecoration(itemStack)
             }
         }
 
@@ -305,6 +314,29 @@ interface IRenderElement {
 
         override fun toString(): String {
             return "ItemStack(renderDecoration=$renderDecoration, itemStack=$itemStack)"
+        }
+
+        protected val tooltipElement by lazy {
+            ScreenTooltipElement(itemStack)
+        }
+
+        override fun renderInteractive(
+            style: HologramStyle,
+            context: HologramContext,
+            widgetSize: Size,
+            interactiveSize: Size,
+            mouseX: Int,
+            mouseY: Int,
+            partialTicks: Float,
+            renderInteractiveHint: Boolean
+        ) {
+            if (renderInteractiveHint && !itemStack.isEmpty) {
+                style.stack {
+                    style.move(widgetSize.width + 10, 0)
+                    tooltipElement.contentSize = tooltipElement.measureContentSize(style)
+                    tooltipElement.render(style, partialTicks)
+                }
+            }
         }
     }
 
@@ -331,7 +363,8 @@ interface IRenderElement {
                     if (this.itemStack.isEmpty) {
                         val mainHand = player.mainHandItem
                         if (!mainHand.isEmpty) {
-                            ItemInteractivePayload.store(mainHand, mainHand.count, context, interactiveSlot)
+                            val count = if (isShiftDown) mainHand.count else 1
+                            ItemInteractivePayload.store(mainHand, count, context, interactiveSlot)
                         }
                     } else {
                         val count = if (isShiftDown) this.itemStack.maxStackSize - this.itemStack.count else 1
@@ -341,27 +374,9 @@ interface IRenderElement {
             }
             return true
         }
-
-        override fun renderInteractive(
-            style: HologramStyle,
-            context: HologramContext,
-            widgetSize: Size,
-            interactiveSize: Size,
-            mouseX: Int,
-            mouseY: Int,
-            renderInteractiveHint: Boolean
-        ) {
-            if (renderInteractiveHint) {
-                style.stack {
-                    style.move(widgetSize.width + 3, 0)
-                    style.drawString("left click to take")
-                    style.drawString("right click to store", y = 10)
-                }
-            }
-        }
     }
 
-    open class ItemsElement(val items: List<ItemStack>) : RenderElement() {
+    open class ItemsElement(val items: List<ItemStack>) : RenderElement(), HologramInteractive {
         companion object {
             const val ITEM_EACH_LINE = 6
             const val PADDING = 1
@@ -402,21 +417,49 @@ interface IRenderElement {
         override fun toString(): String {
             return "Items(count=$count, items=${items.joinToString().take(30)})"
         }
-    }
 
-    open class InteractiveItemsElement(items: List<ItemStack>, val input: Boolean) : ItemsElement(items),
-        HologramInteractive {
         protected fun decodeIndex(mouseX: Int, mouseY: Int): Int {
             val length = ITEM_STACK_LENGTH
             val padding = PADDING
             val index = mouseX / (length + padding) + max(mouseY / (length + padding), 0) * ITEM_EACH_LINE
-            return if ((index in 0..<items.size) || (input && index == items.size)) {
+            return if ((index in 0..<items.size) || (index == items.size)) {
                 index
             } else {
                 -1
             }
         }
 
+        private val map: Int2ObjectMap<ScreenTooltipElement> = Int2ObjectOpenHashMap()
+
+        override fun renderInteractive(
+            style: HologramStyle,
+            context: HologramContext,
+            widgetSize: Size,
+            interactiveSize: Size,
+            mouseX: Int,
+            mouseY: Int,
+            partialTicks: Float,
+            renderInteractiveHint: Boolean
+        ) {
+            if (renderInteractiveHint) {
+                style.stack {
+                    style.move(widgetSize.width + 10, 0)
+                    val index = decodeIndex(mouseX, mouseY)
+                    if (index >= 0) {
+                        if (index == items.size) {
+
+                        } else {
+                            val tooltip = map.computeIfAbsent(index) { ScreenTooltipElement(items[index]) }
+                            tooltip.contentSize = tooltip.measureContentSize(style)
+                            tooltip.render(style, partialTicks)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    open class InteractiveItemsElement(items: List<ItemStack>) : ItemsElement(items) {
         override fun onMouseClick(
             player: LocalPlayer,
             data: HologramInteractive.MouseButton,
@@ -461,30 +504,6 @@ interface IRenderElement {
                 }
             }
             return true
-        }
-
-        override fun renderInteractive(
-            style: HologramStyle,
-            context: HologramContext,
-            widgetSize: Size,
-            interactiveSize: Size,
-            mouseX: Int,
-            mouseY: Int,
-            renderInteractiveHint: Boolean
-        ) {
-            if (renderInteractiveHint) {
-                style.stack {
-                    style.move(widgetSize.width, 0)
-                    val index = decodeIndex(mouseX, mouseY)
-                    if (index >= 0) {
-                        if (index == items.size) {
-                            style.drawString("click to try input")
-                        } else {
-                            style.itemWithDecoration(items[index], 0, 0)
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -759,7 +778,7 @@ interface IRenderElement {
         }
 
         override fun toString(): String {
-            return "(style=Circle,${super.toString()})"
+            return "(style=Circle, progress:$progress)"
         }
     }
 }

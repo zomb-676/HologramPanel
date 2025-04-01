@@ -115,3 +115,9 @@ fun ByteBuf.extractArray(): ByteArray {
     }
     return this.array()
 }
+
+fun ModConfigSpec.BooleanValue.switch(): Boolean {
+    val state = !this.get()
+    this.set(state)
+    return state
+}

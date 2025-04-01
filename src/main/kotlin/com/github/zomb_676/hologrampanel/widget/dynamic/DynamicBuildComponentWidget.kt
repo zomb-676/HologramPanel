@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.addon.BuildInPlugin.Companion.DefaultBlockDescriptionProvider
 import com.github.zomb_676.hologrampanel.addon.BuildInPlugin.Companion.DefaultEntityDescriptionProvider
@@ -29,21 +30,25 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         override fun measureSize(target: T, style: HologramStyle, displayType: DisplayType): Size {
             var width = 0
             var height = 0
+            var calculatedSizeElement = 0
             this.elements.forEach {
                 it.contentSize = it.measureContentSize(style)
                 val offset = it.getPositionOffset()
-                if (offset == ScreenPosition.ZERO) {
-                    width += it.contentSize.width
-                    height = max(height, it.contentSize.height)
-                } else {
-                    width += it.contentSize.width + offset.x
-                    if (offset.y < 0) {
-                        baseY = max(baseY, -offset.y)
+                if (it.hasCalculateSize()) {
+                    calculatedSizeElement++
+                    if (offset == ScreenPosition.ZERO) {
+                        width += it.contentSize.width
+                        height = max(height, it.contentSize.height)
+                    } else {
+                        width += it.contentSize.width + offset.x
+                        if (offset.y < 0) {
+                            baseY = max(baseY, -offset.y)
+                        }
+                        height = max(height, it.contentSize.height + offset.y)
                     }
-                    height = max(height, it.contentSize.height + offset.y)
                 }
             }
-            width += (this.elements.size - 1) * padding
+            width += (calculatedSizeElement - 1) * padding
             return Size.of(width, height)
         }
 
@@ -61,13 +66,23 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
                     if (inMouse && style.checkMouseInSize(size)) {
                         DebugHelper.Client.recordHoverElement(element)
+                        if (Config.Client.renderWidgetDebugInfo.get()) {
+                            style.stack {
+                                style.translate(0f, 0f, 100f)
+                                style.outline(size, 0xff0000ff.toInt())
+                            }
+                        }
                         if (element is HologramInteractive) {
                             HologramManager.submitInteractive(InteractiveEntry.of(element, target, size, style))
                         }
                     }
                     element.render(style, partialTicks)
                 }
-                style.move(size.width + padding, -offset.y)
+                if (element.hasCalculateSize()) {
+                    style.move(size.width + padding, -offset.y)
+                } else if (offset != ScreenPosition.ZERO) {
+                    style.move(-offset)
+                }
             }
         }
 
