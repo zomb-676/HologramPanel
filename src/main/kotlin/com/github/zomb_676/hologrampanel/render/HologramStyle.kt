@@ -455,7 +455,7 @@ interface HologramStyle {
 
         override fun moveToGroupDescription(descriptionSize: Size) {
             move(SINGLE_INNER_PADDING.horizontal + COLLAPSE_SIZE.width, SINGLE_INNER_PADDING.up)
-            if (Config.Client.renderDebugLayer.get() && Config.Client.renderWidgetDebugInfo.get()) {
+            if (Config.Client.renderWidgetDebugInfo.get()) {
                 stack {
                     pose().translate(0f, 0f, 100f)
                     outline(descriptionSize, 0xff00000ff.toInt())

@@ -41,7 +41,7 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
             itemInteractive(item0, 0)
             itemInteractive(item1, 1)
             if (litTimeRemaining != 0) {
-                workingArrowProgress(progressBar).setPositionOffset(0, 2)
+                workingArrowProgress(progressBar).setPositionOffset(1, 2)
             }
             if (!item2.isEmpty) itemInteractive(item2, 2)
         }

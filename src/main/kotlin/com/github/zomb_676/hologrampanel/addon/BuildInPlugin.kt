@@ -21,7 +21,6 @@ class BuildInPlugin : IHologramPlugin {
         register.registerBlockComponent(BrewStandProvider)
         register.registerBlockComponent(CampfireProvider)
         register.registerBlockComponent(JukeBoxProvider)
-        register.registerBlockComponent(BeeHiveProvider)
         register.registerBlockComponent(EnderChestProvider)
         register.registerBlockComponent(LecternProvider)
         register.registerBlockComponent(CauldronBlockProvider)
@@ -71,8 +70,20 @@ class BuildInPlugin : IHologramPlugin {
             ) {
                 val context = builder.context
                 builder.single("default_entity") {
-                    entity(context.getEntity())
-                    component(context.getEntity().name)
+                    val entity = context.getEntity()
+                    entity(entity)
+                    vertical {
+                        val typeName = entity.type.description
+                        component(typeName)
+                        if (entity.hasCustomName()) {
+                            component(entity.customName!!).setScale(0.8)
+                        } else {
+                            val name = entity.name
+                            if (name !== typeName && name.string != typeName.string) {
+                                component(name)
+                            }
+                        }
+                    }
                 }
             }
 

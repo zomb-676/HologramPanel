@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.ProgressData
+import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import net.minecraft.client.Minecraft
@@ -250,6 +251,10 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return IRenderElement.StringRenderElement(str).attach()
         }
 
+        fun takeSize(size: Size): IRenderElement.EmptySized {
+            return IRenderElement.EmptySized(size).attach()
+        }
+
         fun screenTooltip(item: ItemStack): IRenderElement.ScreenTooltipElement {
             return IRenderElement.ScreenTooltipElement(item).attach()
         }
@@ -268,6 +273,15 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
         fun entity(entity: Entity, scale: Double): IRenderElement.EntityRenderElement {
             return IRenderElement.EntityRenderElement(entity, scale).attach()
+        }
+
+        /**
+         * must use the [helper] provided by this lambda
+         */
+        fun vertical(code: Helper.() -> Unit): IRenderElement.VerticalBox {
+            val helper = Helper()
+            code.invoke(helper)
+            return IRenderElement.VerticalBox(helper.elements, context).attach()
         }
     }
 }

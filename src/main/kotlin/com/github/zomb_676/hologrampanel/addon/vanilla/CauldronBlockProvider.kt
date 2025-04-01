@@ -8,9 +8,9 @@ import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.AbstractCauldronBlock
-import net.minecraft.world.level.block.Blocks
 import net.neoforged.neoforge.capabilities.Capabilities
 
+@Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object CauldronBlockProvider : ComponentProvider<BlockHologramContext, AbstractCauldronBlock> {
     override fun appendComponent(
         builder: HologramWidgetBuilder<BlockHologramContext>,

@@ -62,6 +62,7 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
                 val cookingProgress = cookingProgresses[index]
                 val progress = progresses[index].current(cookingProgress).max(cookingTimes[index])
                 itemStack(itemStack).setPositionOffset(2, 2).noCalculateSize()
+                text("${progress.remain / 20}s").setPositionOffset(8, 11).setAdditionLayer(200).setScale(0.9).noCalculateSize()
                 workingTorusProgress(progress)
             }
         }

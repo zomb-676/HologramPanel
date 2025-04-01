@@ -121,3 +121,14 @@ fun ModConfigSpec.BooleanValue.switch(): Boolean {
     this.set(state)
     return state
 }
+
+fun ModConfigSpec.BooleanValue.switchAndSave(): Boolean {
+    val state = !this.get()
+    this.setAndSave(state)
+    return state
+}
+
+fun <T : Any> ModConfigSpec.ConfigValue<T>.setAndSave(value: T) {
+    this.set(value)
+    this.save()
+}

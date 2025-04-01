@@ -40,7 +40,6 @@ object DebugHelper {
 
         private var lastDebugState: Boolean = false
 
-        private var remainTimeInTicks: Int = 0
         private val queryUpdateData: Object2IntOpenHashMap<UpdateEntry> = Object2IntOpenHashMap()
 
         data class UpdateEntry(val state: HologramRenderState, val size: Int)
@@ -69,15 +68,6 @@ object DebugHelper {
             if (current != lastDebugState) {
                 lastDebugState = current
                 QueryDebugStatisticsPayload.query(current)
-                if (!current) {
-                    queryUpdateData.clear()
-                    popUpData.clear()
-                    removeData.clear()
-                }
-            }
-            if (!current) return
-            if (remainTimeInTicks > 0) {
-                --remainTimeInTicks
             }
             tick(queryUpdateData)
             tick(popUpData)
@@ -117,31 +107,52 @@ object DebugHelper {
         val fontBufferSource = FontBufferSource()
 
         fun renderLevelLast(event: RenderLevelStageEvent) {
-            if (!Config.Client.renderDebugLayer.get()) return
-            if (!Config.Client.renderDebugBox.get()) return
             if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
-            if (queryUpdateData.isEmpty() && popUpData.isEmpty() && removeData.isEmpty()) return
-
             val pose = event.poseStack
-            val builder =
-                Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-            RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-            RenderSystem.disableDepthTest()
-
-            val font = Minecraft.getInstance().font
-
-
+            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
             val camPos = event.camera.position
             pose.translate(-camPos.x, -camPos.y, -camPos.z)
-            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
-            if (queryUpdateData.isNotEmpty()) {
+
+            if (Config.Client.renderDebugBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
+                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+                RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+                RenderSystem.disableDepthTest()
+                if (queryUpdateData.isNotEmpty()) {
+                    val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
+                    while (iterator.hasNext()) {
+                        val next = iterator.next()
+                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, 0x00ffffff.toInt(), -1)
+                        val position = next.key.state.sourcePosition(partialTick)
+                        fill(position, color, pose, builder)
+                    }
+                }
+                if (popUpData.isNotEmpty()) {
+                    val iterator = popUpData.object2IntEntrySet().fastIterator()
+                    while (iterator.hasNext()) {
+                        val next = iterator.next()
+                        val color =
+                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, 0x000000ff.toInt(), 0xff0000ff.toInt())
+                        fill(next.key.sourcePosition(partialTick), color, pose, builder)
+                    }
+                }
+                if (removeData.isNotEmpty()) {
+                    val iterator = removeData.object2IntEntrySet().fastIterator()
+                    while (iterator.hasNext()) {
+                        val next = iterator.next()
+                        val color =
+                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, 0x00ff0000.toInt(), 0xffff0000.toInt())
+                        fill(next.key.sourcePosition(partialTick), color, pose, builder)
+                    }
+                }
+                BufferUploader.drawWithShader(builder.buildOrThrow())
+                RenderSystem.enableDepthTest()
+            }
+            if (Config.Client.renderNetworkDebugInfo.get() && queryUpdateData.isNotEmpty()) {
                 val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
+                val font = Minecraft.getInstance().font
                 while (iterator.hasNext()) {
                     val next = iterator.next()
-                    val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, 0x00ffffff.toInt(), -1)
                     val position = next.key.state.sourcePosition(partialTick)
-                    fill(position, color, pose, builder)
-
                     val size = next.key.size
                     pose.stack {
                         pose.translate(position.x(), position.y() + 0.6f, position.z())
@@ -154,30 +165,8 @@ object DebugHelper {
                         )
                     }
                 }
-            }
-            if (popUpData.isNotEmpty()) {
-                val iterator = popUpData.object2IntEntrySet().fastIterator()
-                while (iterator.hasNext()) {
-                    val next = iterator.next()
-                    val color =
-                        ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, 0x000000ff.toInt(), 0xff0000ff.toInt())
-                    fill(next.key.sourcePosition(partialTick), color, pose, builder)
-                }
-            }
-            if (removeData.isNotEmpty()) {
-                val iterator = removeData.object2IntEntrySet().fastIterator()
-                while (iterator.hasNext()) {
-                    val next = iterator.next()
-                    val color =
-                        ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, 0x00ff0000.toInt(), 0xffff0000.toInt())
-                    fill(next.key.sourcePosition(partialTick), color, pose, builder)
-                }
-            }
-            BufferUploader.drawWithShader(builder.buildOrThrow())
-            glDebugStack("font") {
                 fontBufferSource.endFontBatch()
             }
-            RenderSystem.enableDepthTest()
         }
 
         fun getLayer() = object : LayeredDraw.Layer {
@@ -217,18 +206,19 @@ object DebugHelper {
         }
 
         fun onDataReceived(widget: DynamicBuildWidget<*>, sizeInBytes: Int) {
-            if (!Config.Client.renderDebugLayer.get()) return
-            val state = HologramManager.queryHologramState(widget) ?: return
-            queryUpdateData.put(UpdateEntry(state, sizeInBytes), UPDATE_TINE)
+            if (Config.Client.renderDebugBox.get() || Config.Client.renderNetworkDebugInfo.get()) {
+                val state = HologramManager.queryHologramState(widget) ?: return
+                queryUpdateData.put(UpdateEntry(state, sizeInBytes), UPDATE_TINE)
+            }
         }
 
         fun recordPopup(state: HologramRenderState) {
-            if (!Config.Client.renderDebugLayer.get()) return
+            if (!Config.Client.renderDebugBox.get()) return
             popUpData.put(state, POPUP_TIME)
         }
 
         fun recordRemove(state: HologramRenderState) {
-            if (!Config.Client.renderDebugLayer.get()) return
+            if (!Config.Client.renderDebugBox.get()) return
             removeData.put(state, REMOVE_TIME)
         }
 

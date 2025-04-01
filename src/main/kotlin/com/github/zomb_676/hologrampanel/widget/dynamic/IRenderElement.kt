@@ -1,14 +1,20 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
+import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ItemInteractivePayload
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.render.HologramStyle.Companion.ITEM_STACK_LENGTH
+import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.stack
+import com.github.zomb_676.hologrampanel.util.stackIf
+import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.mojang.blaze3d.platform.Lighting
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -50,8 +56,11 @@ interface IRenderElement {
     fun setPositionOffset(x: Int, y: Int): IRenderElement
     fun getPositionOffset(): ScreenPosition
 
-    fun noCalculateSize()
+    fun noCalculateSize(): IRenderElement
     fun hasCalculateSize(): Boolean
+
+    fun additionLayer(): Int
+    fun setAdditionLayer(layer: Int): IRenderElement
 
     var contentSize: Size
 
@@ -80,13 +89,38 @@ interface IRenderElement {
         override fun setPositionOffset(x: Int, y: Int): IRenderElement = this
 
         override fun getPositionOffset(): ScreenPosition = ScreenPosition.ZERO
-        override fun noCalculateSize() {}
+        override fun noCalculateSize() = this
 
         override fun hasCalculateSize(): Boolean = false
+        override fun additionLayer(): Int = 0
+
+        override fun setAdditionLayer(layer: Int) = this
 
         override var contentSize: Size
             get() = Size.ZERO
             set(value) {}
+    }
+
+    data class EmptySized(override var contentSize: Size) : IRenderElement {
+        override fun measureContentSize(style: HologramStyle): Size = contentSize
+
+        override fun render(style: HologramStyle, partialTicks: Float) {}
+
+        override fun setScale(scale: Double): IRenderElement = this
+
+        override fun getScale(): Double = 1.0
+
+        override fun setPositionOffset(x: Int, y: Int): IRenderElement = this
+
+        override fun getPositionOffset(): ScreenPosition = ScreenPosition.ZERO
+
+        override fun noCalculateSize(): IRenderElement = this
+
+        override fun hasCalculateSize(): Boolean = true
+
+        override fun additionLayer(): Int = 0
+
+        override fun setAdditionLayer(layer: Int): IRenderElement = this
     }
 
     abstract class RenderElement : IRenderElement {
@@ -98,6 +132,8 @@ interface IRenderElement {
                 field = value
             }
         private var hasCalculateSize = true
+
+        private var additionLayer = 0
 
         private var positionOffset: ScreenPosition = ScreenPosition.ZERO
 
@@ -127,8 +163,16 @@ interface IRenderElement {
 
         final override fun hasCalculateSize(): Boolean = hasCalculateSize
 
-        final override fun noCalculateSize() {
+        final override fun noCalculateSize(): RenderElement {
             this.hasCalculateSize = false
+            return this
+        }
+
+        final override fun additionLayer(): Int = additionLayer
+
+        final override fun setAdditionLayer(layer: Int): RenderElement {
+            this.additionLayer = layer
+            return this
         }
     }
 
@@ -301,6 +345,7 @@ interface IRenderElement {
         override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize().scale()
 
         override fun render(style: HologramStyle, partialTicks: Float) {
+            if (itemStack.isEmpty) return
             style.itemFiltered(itemStack)
             if (renderDecoration) {
                 style.itemDecoration(itemStack)
@@ -342,6 +387,13 @@ interface IRenderElement {
 
     open class InteractiveItemElement(item: ItemStack, val interactiveSlot: Int) : ItemStackElement(true, item),
         HologramInteractive {
+
+        override fun render(style: HologramStyle, partialTicks: Float) {
+            if (itemStack.isEmpty) {
+                style.outline(style.itemStackSize())
+            } else super.render(style, partialTicks)
+        }
+
         override fun onMouseClick(
             player: LocalPlayer,
             data: HologramInteractive.MouseButton,
@@ -386,12 +438,11 @@ interface IRenderElement {
         val lineCount = ceil(items.size.toDouble() / ITEM_EACH_LINE).toInt()
 
         override fun measureContentSize(style: HologramStyle): Size {
-            val l = ITEM_STACK_LENGTH
-            val height = l * lineCount + PADDING * (lineCount - 1)
+            val height = ITEM_STACK_LENGTH * lineCount + PADDING * (lineCount - 1)
             val width = if (lineCount > 1) {
-                l * ITEM_EACH_LINE + PADDING * (ITEM_EACH_LINE - 1)
+                ITEM_STACK_LENGTH * ITEM_EACH_LINE + PADDING * (ITEM_EACH_LINE - 1)
             } else {
-                l * count + PADDING * (count - 1)
+                ITEM_STACK_LENGTH * count + PADDING * (count - 1)
             }
             return Size.of(width, height).scale()
         }
@@ -544,7 +595,7 @@ interface IRenderElement {
         override fun measureContentSize(
             style: HologramStyle
         ): Size {
-            return Size.of(floor(barWidth).toInt() + 2, style.font.lineHeight + 2).scale()
+            return Size.of(floor(barWidth).toInt(), style.font.lineHeight + 2).scale()
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {
@@ -779,6 +830,69 @@ interface IRenderElement {
 
         override fun toString(): String {
             return "(style=Circle, progress:$progress)"
+        }
+    }
+
+    class VerticalBox(val elements: MutableList<IRenderElement>, val context: HologramContext) : RenderElement() {
+        private var baseX = 0
+        private val padding = 1
+        override fun measureContentSize(style: HologramStyle): Size {
+            var width = 0
+            var height = 0
+            var calculatedSizeElement = 0
+            this.elements.forEach {
+                it.contentSize = it.measureContentSize(style)
+                val offset = it.getPositionOffset()
+                if (it.hasCalculateSize()) {
+                    calculatedSizeElement++
+                    if (offset == ScreenPosition.ZERO) {
+                        width += max(it.contentSize.width, width)
+                        height += it.contentSize.height
+                    } else {
+                        height += it.contentSize.height + offset.y
+                        if (offset.x < 0) {
+                            baseX = max(baseX, -offset.x)
+                        }
+                        width = max(width, it.contentSize.width + offset.x)
+                    }
+                }
+            }
+            height += (calculatedSizeElement - 1) * padding
+            return Size.of(width, height)
+        }
+
+        override fun render(style: HologramStyle, partialTicks: Float) {
+            val inMouse = style.checkMouseInSize(this.contentSize)
+            if (baseX != 0) {
+                style.move(0, baseX)
+            }
+            this.elements.forEach { element ->
+                val offset = element.getPositionOffset()
+                val size = element.contentSize
+                style.stackIf(offset != ScreenPosition.ZERO, { style.move(offset) }) {
+                    style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
+                        if (inMouse && style.checkMouseInSize(size)) {
+                            DebugHelper.Client.recordHoverElement(element)
+                            if (Config.Client.renderWidgetDebugInfo.get()) {
+                                style.stack {
+                                    style.translate(0f, 0f, 100f)
+                                    style.outline(size, 0xff0000ff.toInt())
+                                }
+                            }
+                            if (element is HologramInteractive) {
+                                HologramManager.submitInteractive(InteractiveEntry.of(element, context, size, style))
+                            }
+                        }
+                        val addLayer = element.additionLayer()
+                        style.stackIf(addLayer != 0, { style.translate(0.0, 0.0, addLayer.toDouble()) }) {
+                            element.render(style, partialTicks)
+                        }
+                    }
+                }
+                if (element.hasCalculateSize()) {
+                    style.move(0, size.height + padding + offset.y)
+                }
+            }
         }
     }
 }

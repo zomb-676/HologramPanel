@@ -13,6 +13,8 @@ class ProgressData(var progressCurrent: Int = 0, var progressMax: Int = 100, val
         return this
     }
 
+    val remain get() = progressMax - progressCurrent
+
     override fun toString(): String {
         return "(current=$progressCurrent, max=$progressMax, LTR=$LTR)"
     }

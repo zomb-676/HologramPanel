@@ -6,11 +6,13 @@ import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.util.SearchBackend
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
-import com.github.zomb_676.hologrampanel.util.switch
+import com.github.zomb_676.hologrampanel.util.setAndSave
+import com.github.zomb_676.hologrampanel.util.switchAndSave
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.brigadier.arguments.BoolArgumentType
+import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.client.DeltaTracker
@@ -274,20 +276,35 @@ object EventHandler {
                 "debug" {
                     "debug_layer" {
                         execute {
-                            val newState = Config.Client.renderDebugLayer.switch()
+                            val newState = Config.Client.renderDebugLayer.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_layer state to $newState"))
                         }
                     }
                     "debug_box" {
                         execute {
-                            val newState = Config.Client.renderDebugBox.switch()
+                            val newState = Config.Client.renderDebugBox.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_box state to $newState"))
                         }
                     }
                     "debug_widget" {
                         execute {
-                            val newState = Config.Client.renderWidgetDebugInfo.switch()
+                            val newState = Config.Client.renderWidgetDebugInfo.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_widget state to $newState"))
+                        }
+                    }
+                    "debug_network_usage" {
+                        execute {
+                            val newState = Config.Client.renderNetworkDebugInfo.switchAndSave()
+                            source.sendSystemMessage(Component.literal("switch debug_network_usage state to $newState"))
+                        }
+                    }
+                }
+                "global_hologram_scale" {
+                    "scale"(DoubleArgumentType.doubleArg(0.01, 20.0)) {
+                        execute {
+                            val value = DoubleArgumentType.getDouble(this, "scale")
+                            Config.Client.globalHologramScale.setAndSave(value)
+                            source.sendSystemMessage(Component.literal("set global hologram state to $value"))
                         }
                     }
                 }
@@ -319,7 +336,7 @@ object EventHandler {
                         "type"(EnumArgument.enumArgument(SearchBackend.Type::class.java)) {
                             execute {
                                 val type = getArgument("type", SearchBackend.Type::class.java)
-                                Config.Client.searchBackend.set(type)
+                                Config.Client.searchBackend.setAndSave(type)
                             }
                         }
 

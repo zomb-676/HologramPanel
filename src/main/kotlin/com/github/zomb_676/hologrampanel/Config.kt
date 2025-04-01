@@ -54,7 +54,7 @@ object Config {
             .define("allow_hologram_interactive", true)
 
         val syncRadius: ModConfigSpec.IntValue = builder
-            .defineInRange("sync_radius", 10, 0, 48)
+            .defineInRange("sync_radius", 10, 2, 48)
 
         val space: ModConfigSpec = builder.build()
     }
@@ -72,7 +72,7 @@ object Config {
             .defineInRange("popup_interval", 5, 1, 200)
 
         val popUpDistance: ModConfigSpec.IntValue = builder
-            .defineInRange("popup_distance", 32, 4, 48)
+            .defineInRange("popup_distance", 16, 4, 48)
 
         val popupAllNearbyEntity: ModConfigSpec.BooleanValue = builder
             .define("popup_all_nearby_entity", true)
@@ -89,6 +89,9 @@ object Config {
         val renderMinDistance: ModConfigSpec.DoubleValue = builder
             .defineInRange("render_min_distance", 1.0, 0.1, 16.0)
 
+        val globalHologramScale: ModConfigSpec.DoubleValue = builder
+            .defineInRange("global_hologram_range", 1.0, 0.01, 20.0)
+
         val skipHologramIfEmpty: ModConfigSpec.BooleanValue = builder
             .define("skip_hologram_if_empty", true)
 
@@ -99,10 +102,13 @@ object Config {
             .define("render_debug_layer", false)
 
         val renderDebugBox: ModConfigSpec.BooleanValue = builder
-            .define("render_debug_box", true)
+            .define("render_debug_box", false)
 
         val renderWidgetDebugInfo: ModConfigSpec.BooleanValue = builder
-            .define("render_widget_debug_info", true)
+            .define("render_widget_debug_info", false)
+
+        val renderNetworkDebugInfo: ModConfigSpec.BooleanValue = builder
+            .define("render_network_debug_info", false)
 
         val searchBackend: ModConfigSpec.EnumValue<SearchBackend.Type> = builder
             .defineEnum("search_backend", SearchBackend.Type.AUTO)

@@ -59,29 +59,29 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             }
             this.elements.forEach { element ->
                 val offset = element.getPositionOffset()
-                if (offset != ScreenPosition.ZERO) {
-                    style.move(offset)
-                }
                 val size = element.contentSize
-                style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
-                    if (inMouse && style.checkMouseInSize(size)) {
-                        DebugHelper.Client.recordHoverElement(element)
-                        if (Config.Client.renderWidgetDebugInfo.get()) {
-                            style.stack {
-                                style.translate(0f, 0f, 100f)
-                                style.outline(size, 0xff0000ff.toInt())
+                style.stackIf(offset != ScreenPosition.ZERO, { style.move(offset) }) {
+                    style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
+                        if (inMouse && style.checkMouseInSize(size)) {
+                            DebugHelper.Client.recordHoverElement(element)
+                            if (Config.Client.renderWidgetDebugInfo.get()) {
+                                style.stack {
+                                    style.translate(0f, 0f, 100f)
+                                    style.outline(size, 0xff0000ff.toInt())
+                                }
+                            }
+                            if (element is HologramInteractive) {
+                                HologramManager.submitInteractive(InteractiveEntry.of(element, target, size, style))
                             }
                         }
-                        if (element is HologramInteractive) {
-                            HologramManager.submitInteractive(InteractiveEntry.of(element, target, size, style))
+                        val addLayer = element.additionLayer()
+                        style.stackIf(addLayer != 0, { style.translate(0.0, 0.0, addLayer.toDouble()) }) {
+                            element.render(style, partialTicks)
                         }
                     }
-                    element.render(style, partialTicks)
                 }
                 if (element.hasCalculateSize()) {
-                    style.move(size.width + padding, -offset.y)
-                } else if (offset != ScreenPosition.ZERO) {
-                    style.move(-offset)
+                    style.move(size.width + padding + offset.x, 0)
                 }
             }
         }

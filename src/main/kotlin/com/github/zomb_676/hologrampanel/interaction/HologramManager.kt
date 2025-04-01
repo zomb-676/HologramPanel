@@ -76,6 +76,11 @@ object HologramManager {
         profiler.push("render_hologram")
         this.interactiveTarget = null
         this.collapseTarget = null
+        val scaleValue = Config.Client.globalHologramScale.get() / run {
+            val window = Minecraft.getInstance().window
+            //not use the guiScale current, use auto gui scale to keep hologram size
+            window.guiScale / window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode)
+        }
         DebugHelper.Client.clearRenderRelatedInfo()
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
@@ -102,7 +107,7 @@ object HologramManager {
                 val scale = calculateScale(
                     distance, Config.Client.renderMinDistance.get(),
                     Config.Client.renderMaxDistance.get()
-                )
+                ) * scaleValue
 
                 state.displayed = if (scale * widgetSize.width < 5 || scale * widgetSize.height < 3) {
                     false
