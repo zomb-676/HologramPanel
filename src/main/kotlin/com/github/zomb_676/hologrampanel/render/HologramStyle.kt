@@ -407,7 +407,7 @@ interface HologramStyle {
                 val height = descriptionSize.height + SINGLE_INNER_PADDING.vertical
                 return Size.of(width, height)
             } else {
-                val width = max(contentSize.width, descriptionSize.width) + SINGLE_INNER_PADDING.horizontal * 2 + COLLAPSE_SIZE.width
+                val width = max(contentSize.width, descriptionSize.width + SINGLE_INNER_PADDING.horizontal + COLLAPSE_SIZE.width) + SINGLE_INNER_PADDING.horizontal
                 val height = contentSize.height + descriptionSize.height + SINGLE_INNER_PADDING.up
                 return Size.of(width, height)
             }

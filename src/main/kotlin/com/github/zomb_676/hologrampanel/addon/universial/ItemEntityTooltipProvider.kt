@@ -1,8 +1,10 @@
 package com.github.zomb_676.hologrampanel.addon.universial
 
+import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
@@ -22,15 +24,21 @@ data object ItemEntityTooltipProvider : ComponentProvider<EntityHologramContext,
         val tooltips by context.getRememberData().client(0, listOf()) {
             item.getTooltipLines(Item.TooltipContext.of(context.getLevel()), context.getPlayer(), TooltipFlag.ADVANCED)
         }
-        builder.group("screenTooltip", "screenTooltip") {
-            tooltips.forEachIndexed { index, tooltip ->
-                if (Minecraft.getInstance().font.width(tooltip) > 0) {
-                    builder.single("tooltip_$index") { component(tooltip) }
+
+        when (Config.Style.itemTooltipType.get()) {
+            TooltipType.TEXT -> {
+                builder.group("screenTooltip", "screenTooltip") {
+                    tooltips.forEachIndexed { index, tooltip ->
+                        if (Minecraft.getInstance().font.width(tooltip) > 0) {
+                            builder.single("tooltip_$index") { component(tooltip) }
+                        }
+                    }
                 }
             }
-        }
-        builder.single("tool") {
-            screenTooltip(item)
+
+            else -> builder.single("tool") {
+                screenTooltip(item)
+            }
         }
     }
 

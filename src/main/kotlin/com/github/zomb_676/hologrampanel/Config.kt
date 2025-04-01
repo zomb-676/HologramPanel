@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.util.SearchBackend
+import com.github.zomb_676.hologrampanel.util.TooltipType
 import net.minecraft.client.gui.screens.Screen
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
@@ -15,14 +16,17 @@ import net.neoforged.neoforge.common.ModConfigSpec
 object Config {
     fun registerConfig(container: FMLModContainer, modBus: IEventBus) {
         ModConfigSpec.Builder()
-        container.registerConfig(ModConfig.Type.SERVER, Server.space)
-        container.registerConfig(ModConfig.Type.CLIENT, Client.space)
+        container.registerConfig(ModConfig.Type.SERVER, Server.space, modFolderConfig("server"))
+        container.registerConfig(ModConfig.Type.CLIENT, Client.space, modFolderConfig("client"))
+        container.registerConfig(ModConfig.Type.CLIENT, Style.space, modFolderConfig("style"))
 
         container.registerExtensionPoint(IConfigScreenFactory::class.java, object : IConfigScreenFactory {
             override fun createScreen(container: ModContainer, modListScreen: Screen): Screen =
                 ConfigurationScreen(container, modListScreen)
         })
     }
+
+    fun modFolderConfig(fileName: String): String = "HologramPanel/$fileName.toml"
 
     fun initEvents(dist: Dist, modBus: IEventBus) {
         modBus.addListener(::onLoad)
@@ -123,5 +127,13 @@ object Config {
         val space: ModConfigSpec = builder.build()
     }
 
+    object Style {
+        private val builder = ModConfigSpec.Builder()
+
+        val itemTooltipType: ModConfigSpec.EnumValue<TooltipType> = builder
+            .defineEnum("item_tooltip_type", TooltipType.SCREEN_SMART_BACKGROUND)
+
+        val space: ModConfigSpec = builder.build()
+    }
 
 }

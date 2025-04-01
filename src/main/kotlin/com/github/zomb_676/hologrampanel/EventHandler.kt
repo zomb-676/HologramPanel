@@ -431,9 +431,7 @@ object EventHandler {
     /**
      * we use this event to know that all registries have frozen
      */
-    fun onRegistryEnd(
-//        event: IdMappingEvent
-    ) {
+    fun onRegistryEnd() {
         PluginManager.onLoadComplete()
         PluginManager.getInstance().onClientRegisterEnd()
     }

@@ -12,9 +12,9 @@ import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.util.stackIf
-import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.mojang.blaze3d.platform.Lighting
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -284,7 +284,7 @@ interface IRenderElement {
     /**
      * similar to [net.minecraft.client.gui.GuiGraphics.renderTooltipInternal]
      */
-    open class ScreenTooltipElement(val item: ItemStack) : RenderElement() {
+    open class ScreenTooltipElement(val item: ItemStack, val tooltipType : TooltipType? = null) : RenderElement() {
         var sprite = item.get(DataComponents.TOOLTIP_STYLE)
         var tooltips: List<ClientTooltipComponent> = listOf()
         override fun measureContentSize(style: HologramStyle): Size {
@@ -316,12 +316,20 @@ interface IRenderElement {
             var height = 0
             style.stack {
                 style.guiGraphics.pose().translate(2.0, 2.0, 400.0)
-                TooltipRenderUtil.renderTooltipBackground(
-                    style.guiGraphics, 0, 0, contentSize.width - 4, contentSize.height - 5, 0, texture.texture
-                )
+                run {
+                    val render = when (tooltipType ?:Config.Style.itemTooltipType.get()) {
+                        TooltipType.TEXT, TooltipType.SCREEN_NO_BACKGROUND -> false
+                        TooltipType.SCREEN_SMART_BACKGROUND -> texture.texture != null
+                        TooltipType.SCREEN_ALWAYS_BACKGROUND -> true
+                    }
+                    if (render) {
+                        TooltipRenderUtil.renderTooltipBackground(style.guiGraphics, 0, 0, contentSize.width - 4, contentSize.height - 5, 0, texture.texture)
+                    }
+                }
+
                 tooltips.forEachIndexed { index, tooltip ->
                     tooltip.renderText(
-                        font, 0, height, style.guiGraphics.pose().last().pose(), style.guiGraphics.bufferSource
+                        font, 0, height, style.poseMatrix(), style.guiGraphics.bufferSource
                     )
                     height += tooltip.getHeight(font)
                 }
@@ -362,7 +370,7 @@ interface IRenderElement {
         }
 
         protected val tooltipElement by lazy {
-            ScreenTooltipElement(itemStack)
+            ScreenTooltipElement(itemStack, TooltipType.SCREEN_ALWAYS_BACKGROUND)
         }
 
         override fun renderInteractive(
@@ -430,7 +438,7 @@ interface IRenderElement {
 
     open class ItemsElement(val items: List<ItemStack>) : RenderElement(), HologramInteractive {
         companion object {
-            const val ITEM_EACH_LINE = 6
+            const val ITEM_EACH_LINE = 9
             const val PADDING = 1
         }
 
@@ -500,7 +508,10 @@ interface IRenderElement {
                         if (index == items.size) {
 
                         } else {
-                            val tooltip = map.computeIfAbsent(index) { ScreenTooltipElement(items[index]) }
+                            val tooltip = map.computeIfAbsent(index) {
+                                ScreenTooltipElement(items[index], TooltipType.SCREEN_ALWAYS_BACKGROUND)
+                            }
+                            if (tooltip.item.isEmpty) return@stack
                             tooltip.contentSize = tooltip.measureContentSize(style)
                             tooltip.render(style, partialTicks)
                         }
@@ -544,7 +555,8 @@ interface IRenderElement {
                             if (itemStack.isEmpty) {
                                 val mainHand = player.mainHandItem
                                 if (!mainHand.isEmpty) {
-                                    ItemInteractivePayload.store(mainHand, mainHand.count, context, index)
+                                    val count = if (shiftDown) mainHand.count else 1
+                                    ItemInteractivePayload.store(mainHand, count, context, index)
                                 }
                             } else {
                                 val count = if (isShiftDown) itemStack.maxStackSize - itemStack.count else 1
@@ -760,7 +772,7 @@ interface IRenderElement {
             val consumer = buffer.getBuffer(RenderType.gui())
             val width = this.contentSize.width.toFloat()
 
-            val pose = style.guiGraphics.pose().last().pose()
+            val pose = style.poseMatrix()
 
             val halfHeight = height / 2
             val cuttingPointX = width - (height / 2.0f)
@@ -846,7 +858,7 @@ interface IRenderElement {
                 if (it.hasCalculateSize()) {
                     calculatedSizeElement++
                     if (offset == ScreenPosition.ZERO) {
-                        width += max(it.contentSize.width, width)
+                        width = max(it.contentSize.width, width)
                         height += it.contentSize.height
                     } else {
                         height += it.contentSize.height + offset.y
@@ -863,6 +875,12 @@ interface IRenderElement {
 
         override fun render(style: HologramStyle, partialTicks: Float) {
             val inMouse = style.checkMouseInSize(this.contentSize)
+            if (inMouse && Config.Client.renderWidgetDebugInfo.get()) {
+                style.stack {
+                    style.translate(0f, 0f, 100f)
+                    style.outline(this.contentSize, 0xff0000ff.toInt())
+                }
+            }
             if (baseX != 0) {
                 style.move(0, baseX)
             }

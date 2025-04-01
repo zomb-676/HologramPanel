@@ -8,6 +8,8 @@ import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.getClassOf
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
@@ -18,6 +20,7 @@ import net.neoforged.fml.config.ModConfig
 import net.neoforged.neoforge.common.ModConfigSpec
 import org.jetbrains.annotations.ApiStatus
 import java.lang.annotation.ElementType
+import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
 import kotlin.streams.asSequence
@@ -26,7 +29,9 @@ import kotlin.streams.asSequence
 internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
     companion object {
         private var INSTANCE: PluginManager? = null
-        private val providerCache: MutableMap<Class<*>, List<ComponentProvider<*, *>>> = mutableMapOf()
+        private val providerCache: Cache<Class<*>, List<ComponentProvider<*, *>>> = CacheBuilder.newBuilder()
+            .expireAfterAccess(120, TimeUnit.SECONDS)
+            .build()
         private val classProvider: MutableMap<Class<*>, List<ComponentProvider<*, *>>> = mutableMapOf()
 
         internal fun getInstance() = INSTANCE!!
@@ -87,7 +92,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             if (targetInstance == null) return listOf()
 
             val targetClass: Class<out T> = targetInstance::class.java
-            val res = providerCache[targetClass]
+            val res = providerCache.getIfPresent(targetClass)
             if (res != null) return res.unsafeCast()
 
             val container = mutableListOf<ComponentProvider<C, T>>()
@@ -100,7 +105,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             } else {
                 removeByPrevent(container)
             }
-            providerCache[targetClass] = finalRes
+            providerCache.put(targetClass, finalRes)
             return finalRes
         }
 
@@ -160,28 +165,27 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
         this.hideEntityTypes.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityTypes))
         this.hideEntityCallback.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityCallback))
 
-        val configBuilder = ModConfigSpec.Builder()
         plugins.forEach { plugin ->
-            configBuilder.stack("plugin:${plugin.location()}") {
-                configBuilder.define("enable", true)
-                plugin.registerClientConfig(configBuilder)
+            val configBuilder = ModConfigSpec.Builder()
+            configBuilder.define("enable", true)
+            plugin.registerClientConfig(configBuilder)
 
-                commonRegistration[plugin]!!.also { registration ->
-                    registration.blockProviders.forEach { provider ->
-                        configBuilder.stack("provider:${provider.location()}") {
-                            configBuilder.define("enable", true)
-                        }
+            commonRegistration[plugin]!!.also { registration ->
+                registration.blockProviders.forEach { provider ->
+                    configBuilder.stack("provider:${provider.location()}") {
+                        val enable = configBuilder.define("enable", true)
                     }
-                    registration.entityProviders.forEach { provider ->
-                        configBuilder.stack("provider:${provider.location()}") {
-                            configBuilder.define("enable", true)
-                        }
+                }
+                registration.entityProviders.forEach { provider ->
+                    configBuilder.stack("provider:${provider.location()}") {
+                        val enable = configBuilder.define("enable", true)
                     }
                 }
             }
+            val container = ModList.get().getModContainerById(HologramPanel.MOD_ID).getOrNull()!!
+            val configName = Config.modFolderConfig("plugins/${plugin.location()}").replace(":", "_")
+            container.registerConfig(ModConfig.Type.CLIENT, configBuilder.build(), configName)
         }
-        val container = ModList.get().getModContainerById(HologramPanel.MOD_ID).getOrNull()!!
-        container.registerConfig(ModConfig.Type.CLIENT, configBuilder.build(), "hologram_panel_plugin_settings")
     }
 
     fun hideBlock(block: Block) = this.hideBlocks.contains(block)
