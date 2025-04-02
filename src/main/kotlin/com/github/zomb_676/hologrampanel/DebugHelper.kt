@@ -176,7 +176,7 @@ object DebugHelper {
                 val font = Minecraft.getInstance().font
                 guiGraphics.drawString(font, "syncRate:${Config.Server.updateInternal.get()}Tick", 10, 10, -1)
                 if (Config.Client.renderNetworkDebugInfo.get()) {
-                    guiGraphics.drawString(font, "synced data size:${totalTickDataSize()}", 10, 20, -1)
+                    guiGraphics.drawString(font, "synced data size:${totalTickDataSize()}, count:${queryUpdateData.size}", 10, 20, -1)
                 } else {
                     guiGraphics.drawString(font, "synced data size: require enable renderNetworkDebugInfo", 10, 20, -1)
                 }

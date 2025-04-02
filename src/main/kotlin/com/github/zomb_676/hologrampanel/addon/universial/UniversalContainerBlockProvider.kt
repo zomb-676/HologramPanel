@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import net.minecraft.core.Holder
 import net.minecraft.core.component.DataComponentPatch
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
@@ -81,11 +82,11 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         if (data.isEmpty()) return
         val buffer = context.warpRegistryFriendlyByteBuf(data)
         val count = buffer.readVarInt()
-        val items = List(count) {
+        val items = MutableList(count) {
             ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
         }
-
         if (items.isNotEmpty()) {
+            items.sortWith(Comparator.comparingInt { BuiltInRegistries.ITEM.getId(it.item) })
             builder.single("items") {
                 itemsInteractive(items, true)
             }

@@ -69,8 +69,8 @@ class ItemInteractivePayload(
                             val stored = cap.getStackInSlot(index)
                             if (!ItemStack.isSameItemSameComponents(stored, payload.itemStack)) continue
                             val extracted = cap.extractItem(index, min(stored.count, toTake), false)
-                            giveItemToPlayer(extracted, payloadContext.player() as ServerPlayer)
                             toTake -= extracted.count
+                            giveItemToPlayer(extracted, payloadContext.player() as ServerPlayer)
                             if (toTake <= 0) break
                         }
                     } else {
@@ -115,7 +115,7 @@ class ItemInteractivePayload(
                                 val current = cap.getStackInSlot(storeIndex)
                                 if (current.count < cap.getSlotLimit(storeIndex)) {
                                     storeIndex++
-                                }
+                                } else break
                             }
                         }
                     }
@@ -178,7 +178,7 @@ class ItemInteractivePayload(
         }
 
         fun query(itemStack: ItemStack, count: Int, context: HologramContext, targetSlot: Int = -1) {
-            if (count <= 0) return
+            if (count < -1) return
             if (targetSlot < 0 && count > itemStack.maxStackSize) return
             val syncUUID = DataQueryManager.Client.queryContextUUID(context) ?: return
             val payload = ItemInteractivePayload(itemStack, count, true, targetSlot, context, syncUUID)
@@ -186,7 +186,7 @@ class ItemInteractivePayload(
         }
 
         fun store(itemStack: ItemStack, count: Int, context: HologramContext, targetSlot: Int = -1) {
-            if (count <= 0) return
+            if (count < -1) return
             if (targetSlot < 0 && count > itemStack.maxStackSize) return
             val syncUUID = DataQueryManager.Client.queryContextUUID(context) ?: return
             val payload = ItemInteractivePayload(itemStack, count, false, targetSlot, context, syncUUID)

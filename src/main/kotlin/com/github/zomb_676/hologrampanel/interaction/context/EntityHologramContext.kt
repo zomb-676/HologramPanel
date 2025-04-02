@@ -29,7 +29,6 @@ import kotlin.jvm.optionals.getOrNull
 class EntityHologramContext(
     private val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
 ) : HologramContext {
-    private var tag: CompoundTag? = null
     private var remember = Remember.create(this)
 
     /**
@@ -68,11 +67,6 @@ class EntityHologramContext(
     override fun getIdentityObject(): Any = entity.uuid
 
     override fun getHitContext(): HitResult? = hitResult
-
-    @ApiStatus.Internal
-    override fun setServerUpdateDat(tag: CompoundTag) {
-        this.tag = tag
-    }
 
     override fun getRememberData(): Remember<EntityHologramContext> = remember
 

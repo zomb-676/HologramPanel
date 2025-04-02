@@ -1,8 +1,8 @@
 package com.github.zomb_676.hologrampanel.widget.component
 
-import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
@@ -12,17 +12,15 @@ import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
-import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
+import com.google.common.collect.ImmutableMap
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.util.Mth
 import net.minecraft.world.phys.Vec3
-import org.joml.Vector3f
 import org.joml.Vector3fc
 import java.util.*
 import kotlin.math.acos
@@ -55,7 +53,7 @@ object DataQueryManager {
             return syncs.inverse()[widget]
         }
 
-        fun receiveData(uuid: UUID, tag: CompoundTag, sizeInBytes: Int) {
+        fun receiveData(uuid: UUID, data: ImmutableMap<ComponentProvider<*, *>, CompoundTag>, sizeInBytes: Int) {
             val widget = syncs[uuid]
             if (widget == null) {
                 SyncClosePayload(uuid).sendToServer()
@@ -63,8 +61,7 @@ object DataQueryManager {
             }
             val context = maps[widget]!!
 
-            context.setServerUpdateDat(tag)
-            context.getRememberData().onReceiveData(tag)
+            context.getRememberData().onReceiveData(data)
             if (context.getRememberData().needUpdate()) {
                 profilerStack("rebuild_hologram_component") {
                     val state = HologramManager.queryHologramState(widget) ?: return@profilerStack
@@ -104,10 +101,12 @@ object DataQueryManager {
 
         fun manualSync(syncUUID: UUID, player: ServerPlayer) {
             val payload = syncs[player]?.get(syncUUID) ?: return
-            val tag = CompoundTag()
-            val changed = append(payload, tag)
-            if (changed) {
-                val payload = ComponentResponseDataPayload.of(payload.uuid, tag)
+            val builder: ImmutableMap.Builder<ComponentProvider<*, *>, CompoundTag> = ImmutableMap.builder()
+            val changed = append(payload, builder)
+            if (!changed) return
+            val data = builder.build()
+            if (data.isNotEmpty()) {
+                val payload = ComponentResponseDataPayload.of(payload.uuid, data)
                 player.connection.send(payload)
             }
         }
@@ -132,10 +131,12 @@ object DataQueryManager {
                         val degree = calculateDegree(player, payload.context.hologramCenterPosition())
                         if (degree > 80) continue
 
-                        val tag = CompoundTag()
-                        val changed = append(payload, tag)
-                        if (changed) {
-                            val payload = ComponentResponseDataPayload.of(payload.uuid, tag)
+                        val builder: ImmutableMap.Builder<ComponentProvider<*, *>, CompoundTag> = ImmutableMap.builder()
+                        val changed = append(payload, builder)
+                        if (!changed) continue
+                        val data = builder.build()
+                        if (data.isNotEmpty()) {
+                            val payload = ComponentResponseDataPayload.of(payload.uuid, data)
                             player.connection.send(payload)
                         }
                     }
@@ -157,11 +158,11 @@ object DataQueryManager {
             return Math.toDegrees(angleInRadius.toDouble())
         }
 
-        private fun <T : HologramContext> append(payload: ComponentRequestDataPayload<T>, tag: CompoundTag): Boolean {
+        private fun <T : HologramContext> append(payload: ComponentRequestDataPayload<T>, tag: ImmutableMap.Builder<ComponentProvider<*, *>, CompoundTag>): Boolean {
             var changed = false
             payload.providers.forEach { provider ->
                 val addTag = CompoundTag()
-                tag.put(AllRegisters.ComponentHologramProviderRegistry.getId(provider).toString(), addTag)
+                tag.put(provider, addTag)
                 changed = changed or provider.appendServerData(payload.additionDataTag, addTag, payload.context)
             }
             return changed

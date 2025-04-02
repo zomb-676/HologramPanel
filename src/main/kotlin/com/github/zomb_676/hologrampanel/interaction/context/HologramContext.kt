@@ -83,10 +83,6 @@ sealed interface HologramContext {
     @EfficientConst
     fun getHitContext(): HitResult?
 
-    @ApiStatus.Internal
-    fun setServerUpdateDat(tag: CompoundTag)
-
-
     /**
      * @see Remember
      * @return notice that the [HologramContext] in generic must be the context it supports

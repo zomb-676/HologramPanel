@@ -40,6 +40,7 @@ class BuildInPlugin : IHologramPlugin {
         register.registerEntityComponent(UniversalFluidItemProvider)
         register.registerEntityComponent(UniversalEnergyEntityProvider)
         register.registerEntityComponent(UniversalEnergyItemProvider)
+        register.registerEntityComponent(PlayerInventoryProvider)
     }
 
     override fun registerClient(register: HologramClientRegistration) {

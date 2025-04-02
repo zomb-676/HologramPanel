@@ -162,6 +162,10 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
 
         override fun getProvider(): ComponentProvider<T, *> = provider
         override fun getIdentityName(): String = identityName
+
+        override fun toString(): String {
+            return "Group(name='$identityName', visual:${this.visualSize}, content:${this.contentSize})"
+        }
     }
 
     class LazyGroup<T : HologramContext>(

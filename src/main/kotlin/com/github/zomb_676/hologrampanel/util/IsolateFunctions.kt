@@ -64,7 +64,7 @@ inline fun <reified T> requireInstanceOf(claz: Class<*>): Class<out T> {
 }
 
 inline fun <reified T> getClassOf(className: String): Class<out T> =
-    requireInstanceOf<T>(Class.forName(className))
+    requireInstanceOf<T>(Class.forName(className, false, Thread.currentThread().contextClassLoader))
 
 inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> Unit) {
     RenderSystem.backupGlState(state)

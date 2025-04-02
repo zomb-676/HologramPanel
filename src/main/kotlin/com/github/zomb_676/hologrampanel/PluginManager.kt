@@ -59,7 +59,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
                             }
                         } catch (e: Exception) {
                             LOGGER.error("failed to load plugin class:{}", it.clazz.className)
-                            LOGGER.traceExit(e)
+                            LOGGER.throwing(e)
                         }
                         plugin
                     }.filterNotNull().toList()

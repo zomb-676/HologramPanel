@@ -44,6 +44,7 @@ import org.lwjgl.glfw.GLFW
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 
 interface IRenderElement {
 
@@ -284,7 +285,7 @@ interface IRenderElement {
     /**
      * similar to [net.minecraft.client.gui.GuiGraphics.renderTooltipInternal]
      */
-    open class ScreenTooltipElement(val item: ItemStack, val tooltipType : TooltipType? = null) : RenderElement() {
+    open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipType? = null) : RenderElement() {
         var sprite = item.get(DataComponents.TOOLTIP_STYLE)
         var tooltips: List<ClientTooltipComponent> = listOf()
         override fun measureContentSize(style: HologramStyle): Size {
@@ -317,13 +318,21 @@ interface IRenderElement {
             style.stack {
                 style.guiGraphics.pose().translate(2.0, 2.0, 400.0)
                 run {
-                    val render = when (tooltipType ?:Config.Style.itemTooltipType.get()) {
+                    val render = when (tooltipType ?: Config.Style.itemTooltipType.get()) {
                         TooltipType.TEXT, TooltipType.SCREEN_NO_BACKGROUND -> false
                         TooltipType.SCREEN_SMART_BACKGROUND -> texture.texture != null
                         TooltipType.SCREEN_ALWAYS_BACKGROUND -> true
                     }
                     if (render) {
-                        TooltipRenderUtil.renderTooltipBackground(style.guiGraphics, 0, 0, contentSize.width - 4, contentSize.height - 5, 0, texture.texture)
+                        TooltipRenderUtil.renderTooltipBackground(
+                            style.guiGraphics,
+                            0,
+                            0,
+                            contentSize.width - 4,
+                            contentSize.height - 5,
+                            0,
+                            texture.texture
+                        )
                     }
                 }
 
@@ -442,7 +451,7 @@ interface IRenderElement {
             const val PADDING = 1
         }
 
-        val count = items.size
+        private val count = items.size
         val lineCount = ceil(items.size.toDouble() / ITEM_EACH_LINE).toInt()
 
         override fun measureContentSize(style: HologramStyle): Size {
@@ -481,7 +490,7 @@ interface IRenderElement {
             val length = ITEM_STACK_LENGTH
             val padding = PADDING
             val index = mouseX / (length + padding) + max(mouseY / (length + padding), 0) * ITEM_EACH_LINE
-            return if ((index in 0..<items.size) || (index == items.size)) {
+            return if ((index in 0..<items.size)) {
                 index
             } else {
                 -1
@@ -533,39 +542,48 @@ interface IRenderElement {
             val index = decodeIndex(mouseX, mouseY)
             val shiftDown = data.modifiers and GLFW.GLFW_MOD_SHIFT != 0
             if (index >= 0) {
-                if (index == items.size) {
-                    if (data.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                        val mainHand = player.mainHandItem
-                        if (mainHand.isEmpty) return true
-                        val count = if (shiftDown) mainHand.count else 1
-                        ItemInteractivePayload.store(mainHand, count, context)
-                    }
-                } else {
-                    val itemStack = items[index]
-                    val isShiftDown = data.modifiers and GLFW.GLFW_MOD_SHIFT != 0
-                    when (data.button) {
-                        GLFW.GLFW_MOUSE_BUTTON_LEFT -> {
-                            val count = if (isShiftDown) itemStack.count else 1
-                            if (!itemStack.isEmpty) {
-                                ItemInteractivePayload.query(itemStack, count, context, index)
-                            }
-                        }
-
-                        GLFW.GLFW_MOUSE_BUTTON_RIGHT -> {
-                            if (itemStack.isEmpty) {
+                val itemStack = items[index]
+                val isShiftDown = data.modifiers and GLFW.GLFW_MOD_SHIFT != 0
+                when (data.button) {
+                    GLFW.GLFW_MOUSE_BUTTON_LEFT -> {
+                        if (!itemStack.isEmpty) {
+                            val count = if (shiftDown) {
                                 val mainHand = player.mainHandItem
-                                if (!mainHand.isEmpty) {
-                                    val count = if (shiftDown) mainHand.count else 1
-                                    ItemInteractivePayload.store(mainHand, count, context, index)
-                                }
-                            } else {
-                                val count = if (isShiftDown) itemStack.maxStackSize - itemStack.count else 1
-                                ItemInteractivePayload.store(itemStack, count, context, index)
+                                if (ItemStack.isSameItemSameComponents(mainHand, itemStack)) {
+                                    if (mainHand.count == mainHand.maxStackSize) itemStack.maxStackSize
+                                    else min(mainHand.maxStackSize - mainHand.count, itemStack.count)
+                                } else min(itemStack.maxStackSize, itemStack.count)
+                            } else 1
+                            ItemInteractivePayload.query(itemStack, count, context, -1)
+                        }
+                    }
+
+                    GLFW.GLFW_MOUSE_BUTTON_RIGHT -> {
+                        if (itemStack.isEmpty) {
+                            val mainHand = player.mainHandItem
+                            if (!mainHand.isEmpty) {
+                                val count = if (shiftDown) mainHand.count else 1
+                                ItemInteractivePayload.store(mainHand, count, context, index)
                             }
+                        } else {
+                            val count = if (isShiftDown) {
+                                val mainHand = player.mainHandItem
+                                if (ItemStack.isSameItemSameComponents(mainHand, itemStack)) mainHand.count
+                                else itemStack.maxStackSize
+                            } else 1
+                            ItemInteractivePayload.store(itemStack, count, context, -1)
                         }
                     }
                 }
+            } else {
+                if (data.button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                    val mainHand = player.mainHandItem
+                    if (mainHand.isEmpty) return true
+                    val count = if (shiftDown) mainHand.count else 1
+                    ItemInteractivePayload.store(mainHand, count, context)
+                }
             }
+
             return true
         }
     }
