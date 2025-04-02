@@ -31,7 +31,6 @@ class BlockHologramContext(
 ) : HologramContext {
 
     private val originalBlock: BlockState = player.level().getBlockState(pos)
-    private var tag: CompoundTag? = null
 
     private val centerPosition = Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f)
     private val remember = Remember.create(this)
@@ -53,11 +52,6 @@ class BlockHologramContext(
     override fun getIdentityObject(): Any = pos
 
     override fun getHitContext(): BlockHitResult? = hitResult
-
-    @ApiStatus.Internal
-    override fun setServerUpdateDat(tag: CompoundTag) {
-        this.tag = tag
-    }
 
     override fun getRememberData(): Remember<BlockHologramContext> = remember
 
