@@ -13,7 +13,6 @@
   "client": [
     "GameRenderMixin",
     "LevelRenderMixin",
-    "MinecraftMixin",
     "MouseHandleMixin"
   ],
   "injectors": {
