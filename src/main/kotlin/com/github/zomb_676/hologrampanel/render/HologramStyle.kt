@@ -407,7 +407,10 @@ interface HologramStyle {
                 val height = descriptionSize.height + SINGLE_INNER_PADDING.vertical
                 return Size.of(width, height)
             } else {
-                val width = max(contentSize.width, descriptionSize.width + SINGLE_INNER_PADDING.horizontal + COLLAPSE_SIZE.width) + SINGLE_INNER_PADDING.horizontal
+                val width = max(
+                    contentSize.width,
+                    descriptionSize.width + SINGLE_INNER_PADDING.horizontal + COLLAPSE_SIZE.width
+                ) + SINGLE_INNER_PADDING.horizontal
                 val height = contentSize.height + descriptionSize.height + SINGLE_INNER_PADDING.up
                 return Size.of(width, height)
             }
@@ -431,25 +434,36 @@ interface HologramStyle {
 
             outline(size, OUTLINE_COLOR)
 
+            //draw collapse indicator
             val matrix = guiGraphics.pose().last().pose()
             val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
-            val centerY = (descriptionSize.height / 2.0f) + SINGLE_INNER_PADDING.up
-            val left = SINGLE_INNER_PADDING.left.toFloat()
-            val right = left + COLLAPSE_SIZE.width.toFloat()
-            val centerX = (left + right) / 2.0f
-            val up = centerY - 2
-            val down = centerY + 2
-            val lineHalfWidth = 0.5f
+            run {
+                val centerY = (descriptionSize.height / 2.0f) + SINGLE_INNER_PADDING.up
+                val left = SINGLE_INNER_PADDING.left.toFloat()
+                val right = left + COLLAPSE_SIZE.width.toFloat()
+                val centerX = (left + right) / 2.0f
+                val up = centerY - 2
+                val down = centerY + 2
+                val lineHalfWidth = 0.5f
 
-            consumer.addVertex(matrix, left, (centerY - lineHalfWidth), 0.0f).setColor(color)
-            consumer.addVertex(matrix, left, (centerY + lineHalfWidth), 0.0f).setColor(color)
-            consumer.addVertex(matrix, right, (centerY + lineHalfWidth), 0.0f).setColor(color)
-            consumer.addVertex(matrix, right, (centerY - lineHalfWidth), 0.0f).setColor(color)
-            if (!collapse) {
-                consumer.addVertex(matrix, centerX - lineHalfWidth, up, 0.0f).setColor(color)
-                consumer.addVertex(matrix, centerX - lineHalfWidth, down, 0.0f).setColor(color)
-                consumer.addVertex(matrix, centerX + lineHalfWidth, down, 0.0f).setColor(color)
-                consumer.addVertex(matrix, centerX + lineHalfWidth, up, 0.0f).setColor(color)
+                consumer.addVertex(matrix, left, (centerY - lineHalfWidth), 0.0f).setColor(color)
+                consumer.addVertex(matrix, left, (centerY + lineHalfWidth), 0.0f).setColor(color)
+                consumer.addVertex(matrix, right, (centerY + lineHalfWidth), 0.0f).setColor(color)
+                consumer.addVertex(matrix, right, (centerY - lineHalfWidth), 0.0f).setColor(color)
+                if (!collapse) {
+                    consumer.addVertex(matrix, centerX - lineHalfWidth, up, 0.0f).setColor(color)
+                    consumer.addVertex(matrix, centerX - lineHalfWidth, down, 0.0f).setColor(color)
+                    consumer.addVertex(matrix, centerX + lineHalfWidth, down, 0.0f).setColor(color)
+                    consumer.addVertex(matrix, centerX + lineHalfWidth, up, 0.0f).setColor(color)
+                }
+            }
+
+            //draw split line
+            run {
+                val left = SINGLE_INNER_PADDING.left * 2
+                val right = size.width - SINGLE_INNER_PADDING.right * 2
+                val y = max(descriptionSize.height, COLLAPSE_SIZE.height) + SINGLE_INNER_PADDING.vertical / 2 + 1
+                this.drawHorizontalLine(left, right, y, 0xff000000.toInt())
             }
         }
 

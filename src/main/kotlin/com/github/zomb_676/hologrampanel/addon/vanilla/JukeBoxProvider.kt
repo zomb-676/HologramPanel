@@ -36,7 +36,7 @@ data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBl
         val songStarted by remember.server(1, 0) { tag -> tag.getLong("song_started") }
 
         if (!songItem.isEmpty) {
-            val playable = songItem.components.get(DataComponents.JUKEBOX_PLAYABLE) ?: return
+            val playable = songItem.getComponents().get(DataComponents.JUKEBOX_PLAYABLE) ?: return
             val song =
                 playable.song().unwrap(context.getLevel().registryAccess()).getOrNull()?.value() ?: return
             builder.single("song_item") {

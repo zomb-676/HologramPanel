@@ -43,6 +43,7 @@ import net.neoforged.neoforge.registries.RegisterEvent
 import net.neoforged.neoforge.server.ServerLifecycleHooks
 import net.neoforged.neoforge.server.command.EnumArgument
 import org.lwjgl.glfw.GLFW
+import kotlin.math.max
 
 object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
@@ -83,18 +84,27 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onRenderLevelStage)
         }
 
-        val panelKey by lazy {
-            KeyMapping(
-                "key.a.selector_panel",
-                KeyConflictContext.IN_GAME,
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_Y,
-                "key.categories.misc"
-            )
-        }
+        val panelKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.selector_panel",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_Y,
+            KeyMapping.CATEGORY_GAMEPLAY
+        )
+
+
+        val scaleKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.scale_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_LEFT_ALT,
+            KeyMapping.CATEGORY_GAMEPLAY
+        )
+
 
         private fun registerKey(event: RegisterKeyMappingsEvent) {
             event.register(panelKey)
+            event.register(scaleKey)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
@@ -138,6 +148,16 @@ object EventHandler {
         private fun onMouseScroll(event: InputEvent.MouseScrollingEvent) {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
+
+            if (scaleKey.isDown) {
+                val scale = Config.Client.globalHologramScale
+                val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                val modifier = if (shiftDown) 0.05 else 0.2
+                scale.setAndSave(max(scale.get() + event.scrollDeltaY * modifier, 0.01))
+                Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
+                event.isCanceled = true
+                return
+            }
 
             val interactiveTarget = HologramManager.getInteractiveTarget()
             if (interactiveTarget != null) {

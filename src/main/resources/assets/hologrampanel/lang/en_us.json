@@ -72,6 +72,10 @@
   "hologram_panel.configuration.search_backend" : "search backend",
   "hologram_panel.configuration.search_backend.tooltip" : "use AUTO in most case",
 
-  "hologram_panel.configuration.section.hologram.panel.plugin.settings": "Plugin Settings"
+  "hologram_panel.configuration.section.hologram.panel.plugin.settings": "Plugin Settings",
+
+
+  "key.hologram_panel.selector_panel": "selector panel",
+  "key.hologram_panel.scale_key": "scale hologram"
 
 }
