@@ -48,7 +48,7 @@ interface SearchBackend {
         override fun available(): Boolean = true
 
         override fun matches(item: ItemStack): Boolean =
-            item.displayName.string.contains(searchText)
+            item.displayName.string.contains(searchText, true)
 
         override fun getSearchString(): String = searchText
 

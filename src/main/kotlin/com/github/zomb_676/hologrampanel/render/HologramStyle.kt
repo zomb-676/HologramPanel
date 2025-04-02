@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
 import net.minecraft.world.item.ItemStack
+import org.jetbrains.annotations.ApiStatus
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector4f
@@ -176,6 +177,7 @@ interface HologramStyle {
         guiGraphics.renderOutline(0, 0, size.width, size.height, color)
     }
 
+    @ApiStatus.NonExtendable
     fun itemStackSize(): Size = ITEM_STACK_SIZE
 
     fun drawItemFilteredBg(itemStack: ItemStack, x: Int, y: Int) {
@@ -459,7 +461,7 @@ interface HologramStyle {
             }
 
             //draw split line
-            run {
+            if (isGroupGlobal) {
                 val left = SINGLE_INNER_PADDING.left * 2
                 val right = size.width - SINGLE_INNER_PADDING.right * 2
                 val y = max(descriptionSize.height, COLLAPSE_SIZE.height) + SINGLE_INNER_PADDING.vertical / 2 + 1
