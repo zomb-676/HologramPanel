@@ -101,7 +101,7 @@ interface HologramStyle {
     }
 
     fun fill(size: Size, color: Int = contextColor) {
-        fill(0, 0, size.width, size.height, contextColor)
+        fill(0, 0, size.width, size.height, color)
     }
 
     fun fill(minX: Int, minY: Int, maxX: Int, maxY: Int, color: Int = contextColor) {
