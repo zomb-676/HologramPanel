@@ -713,7 +713,7 @@ interface IRenderElement {
             val current = if (progress.progressCurrent < 1000) {
                 "${progress.progressCurrent}"
             } else {
-                shortDescription(progress.progressCurrent.toFloat() / 1000)
+                shortDescription(progress.progressCurrent.toFloat())
             }
             val f = if (progress.progressCurrent == progress.progressMax) {
                 current
@@ -721,7 +721,7 @@ interface IRenderElement {
                 val max = if (progress.progressMax < 1000) {
                     "${progress.progressMax}"
                 } else {
-                    shortDescription(progress.progressMax.toFloat() / 1000)
+                    shortDescription(progress.progressMax.toFloat())
                 }
                 "$current/$max"
             }
