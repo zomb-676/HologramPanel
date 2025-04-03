@@ -2,8 +2,8 @@
   "hologram_panel.configuration.title": "Hologram Panel Configuration",
 
 
-  "hologram_panel.configuration.section.hologram.panel.server.toml.title": "Configure Server",
-  "hologram_panel.configuration.section.hologram.panel.server.toml": "Server Configuration",
+  "hologram_panel.configuration.section.hologrampanel.server.toml.title": "Configure Server",
+  "hologram_panel.configuration.section.hologrampanel.server.toml": "Server Configuration",
 
   "hologram_panel.configuration.server_update_internal": "data updater interval on server",
   "hologram_panel.configuration.server_update_internal.tooltip": "measured in ticks",
@@ -18,8 +18,8 @@
   "hologram_panel.configuration.sync_radius.tooltip":"too big will waste network traffic",
 
 
-  "hologram_panel.configuration.section.hologram.panel.client.toml.title": "Client Universal Configuration",
-  "hologram_panel.configuration.section.hologram.panel.client.toml": "Client Universal Configuration",
+  "hologram_panel.configuration.section.hologrampanel.client.toml.title": "Client Universal Configuration",
+  "hologram_panel.configuration.section.hologrampanel.client.toml": "Client Universal Configuration",
 
   "hologram_panel.configuration.drop_none_applicable_widget": "drop none applicable widget",
   "hologram_panel.configuration.drop_none_applicable_widget.tooltip": "widget will never have meaningful information",
@@ -74,6 +74,83 @@
 
   "hologram_panel.configuration.section.hologram.panel.plugin.settings": "Plugin Settings",
 
+
+  "hologram_panel.configuration.section.hologrampanel.style.toml.title": "Hologram Style",
+  "hologram_panel.configuration.section.hologrampanel.style.toml": "Style Configuration",
+
+  "hologram_panel.configuration.item_tooltip_type": "ItemToolTip Style",
+  "hologram_panel.configuration.item_tooltip_type.tooltip": "TEXT will display the normal\nSCREEN, like the bundle, will consider more visual elements\nSMART will only render background if specified",
+
+  "hologram_panel.configuration.section.hologrampanel.plugins.hologram.panel.build.in.toml": "BuildIn Plugin Setting",
+  "hologram_panel.configuration.section.hologrampanel.plugins.hologram.panel.build.in.toml.title": "BuildIn Plugin Setting",
+
+  "hologram_panel.configuration.hologram_panel:build_in_enable_plugin": "enable BuildInPlugin",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:item_entity_tooltip_enable_entity": "Item Entity ToolTip",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:item_entity_tooltip_enable_entity.tooltip": "Item Entity ToolTip",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:living_entity_potion_enable_entity": "Living Entity Potion",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:living_entity_potion_enable_entity.tooltip": "Living Entity Potion",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:lectern_book_enable_block": "Lectern Block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:lectern_book_enable_block.tooltip": "Lectern Block",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:cauldron_enable_block": "Cauldron block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:cauldron_enable_block.tooltip": "Cauldron block",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_container_item_enable_entity": "Item Container for Item",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_container_item_enable_entity.tooltip": "Item Container for Item",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:abstract_furnace_block_enable_block": "Furnace Block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:abstract_furnace_block_enable_block.tooltip": "Furnace Block",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:camp_fire_enable_block": "Campfire Block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:camp_fire_enable_block.tooltip": "Campfire Block",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:health_display_enable_entity": "Entity Health",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:health_display_enable_entity.tooltip": "Entity Health",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:player_inventory_enable_entity": "Player Inventory",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:player_inventory_enable_entity.tooltip": "Player Inventory",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:brewing_stand_enable_block": "BrewStand",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:brewing_stand_enable_block.tooltip": "BrewStand",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_fluid_entity_enable_entity": "Fluid for Entity",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_fluid_entity_enable_entity.tooltip": "Fluid for Entity",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:juke_box_enable_block": "JukeBox",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:juke_box_enable_block.tooltip": "JukeBox",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:item_entity_enable_entity": "Item for Item",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:item_entity_enable_entity.tooltip": "Item for Item",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_entity_enable_entity.tooltip": "Energy for Entity",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_entity_enable_entity": "Energy for Entity",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:ender_chest_enable_block.tooltip": "EnderChest",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:ender_chest_enable_block": "EnderChest",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_fluid_item_enable_entity.tooltip": "Fluid For Entity",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_fluid_item_enable_entity": "Fluid For Entity",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_block_enable_block.tooltip": "Energy for Block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_block_enable_block": "Energy for Block",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:inventory_carrier_enable_entity.tooltip": "for village, piglin, Allay an so on",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:inventory_carrier_enable_entity": "Inventory Carrier",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_fluid_block_enable_block.tooltip": "Fluid for Block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_fluid_block_enable_block": "Fluid for Block",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_container_entity_enable_entity.tooltip": "Item for Entity",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_container_entity_enable_entity": "Item for Entity",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_container_block_enable_block.tooltip": "Item for Block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_container_block_enable_block": "Item for Block",
+
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_item_enable_entity.tooltip": "Energy for Block",
+  "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_item_enable_entity": "Energy for Block",
 
   "key.hologram_panel.selector_panel": "selector panel",
   "key.hologram_panel.scale_key": "scale hologram"

@@ -2,11 +2,11 @@ package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.HologramPanel.Companion.LOGGER
 import com.github.zomb_676.hologrampanel.api.*
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.getClassOf
-import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
@@ -29,10 +29,18 @@ import kotlin.streams.asSequence
 internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
     companion object {
         private var INSTANCE: PluginManager? = null
+
+        /**
+         * use a cache mapping actual type to all available providers, already considering Inherit Tree
+         */
         private val providerCache: Cache<Class<*>, List<ComponentProvider<*, *>>> = CacheBuilder.newBuilder()
             .expireAfterAccess(120, TimeUnit.SECONDS)
             .build()
-        private val classProvider: MutableMap<Class<*>, List<ComponentProvider<*, *>>> = mutableMapOf()
+
+        /**
+         * mapping from [ComponentProvider.targetClass] to the provider
+         */
+        private val classProvider: MutableMap<Class<*>, MutableList<ComponentProvider<*, *>>> = mutableMapOf()
 
         internal fun getInstance() = INSTANCE!!
 
@@ -67,9 +75,11 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             INSTANCE = PluginManager(plugins)
         }
 
-        internal fun onLoadComplete() {
+        internal fun collectProvidersFromRegistry() {
             classProvider.clear()
-            classProvider.putAll(AllRegisters.ComponentHologramProviderRegistry.REGISTRY.groupBy { it.targetClass() })
+            AllRegisters.ComponentHologramProviderRegistry.REGISTRY.forEach { provider ->
+                classProvider.computeIfAbsent(provider.targetClass()) { mutableListOf() }.add(provider)
+            }
         }
 
         internal fun queryProviders(context: BlockHologramContext): List<ComponentProvider<BlockHologramContext, *>> {
@@ -158,34 +168,74 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     internal val hideEntityTypes: MutableSet<EntityType<*>> = mutableSetOf()
     internal val hideEntityCallback: MutableSet<Predicate<Entity>> = mutableSetOf()
 
-    internal fun onClientRegisterEnd() {
+    internal val globalPluginSettingsMap: MutableMap<ModConfigSpec, PluginGlobalSetting> = mutableMapOf()
+    internal val globalPluginSettings: MutableMap<IHologramPlugin, PluginGlobalSetting> = mutableMapOf()
+
+    internal fun registerPluginConfigs() {
         this.block.addAll(flatten(clientRegistration, HologramClientRegistration::blockPopup))
         this.entity.addAll(flatten(clientRegistration, HologramClientRegistration::entityPopup))
-        this.hideBlocks.addAll(flatten(clientRegistration, HologramClientRegistration::hideBlocks))
-        this.hideEntityTypes.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityTypes))
-        this.hideEntityCallback.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityCallback))
 
         plugins.forEach { plugin ->
             val configBuilder = ModConfigSpec.Builder()
-            configBuilder.define("enable", true)
+            val pluginEnable = configBuilder.define("${plugin.location()}_enable_plugin", true)
             plugin.registerClientConfig(configBuilder)
 
+            val providerEnableData: MutableMap<ComponentProvider<*, *>, ModConfigSpec.BooleanValue> = mutableMapOf()
             commonRegistration[plugin]!!.also { registration ->
                 registration.blockProviders.forEach { provider ->
-                    configBuilder.stack("provider:${provider.location()}") {
-                        val enable = configBuilder.define("enable", true)
-                    }
+                    val enable = configBuilder.define("${plugin.location()}_${provider.location()}_enable_block", true)
+                    providerEnableData.put(provider, enable)
                 }
                 registration.entityProviders.forEach { provider ->
-                    configBuilder.stack("provider:${provider.location()}") {
-                        val enable = configBuilder.define("enable", true)
-                    }
+                    val enable = configBuilder.define("${plugin.location()}_${provider.location()}_enable_entity", true)
+                    providerEnableData.put(provider, enable)
                 }
             }
             val container = ModList.get().getModContainerById(HologramPanel.MOD_ID).getOrNull()!!
             val configName = Config.modFolderConfig("plugins/${plugin.location()}").replace(":", "_")
-            container.registerConfig(ModConfig.Type.CLIENT, configBuilder.build(), configName)
+            val configSpec = configBuilder.build()
+            container.registerConfig(ModConfig.Type.CLIENT, configSpec, configName)
+            val globalSetting = PluginGlobalSetting(plugin, pluginEnable, providerEnableData)
+            globalPluginSettings[plugin] = globalSetting
+            globalPluginSettingsMap[configSpec] = globalSetting
         }
+    }
+
+    class PluginGlobalSetting(
+        val plugin: IHologramPlugin,
+        val enable: ModConfigSpec.BooleanValue,
+        val providerEnableData: Map<ComponentProvider<*, *>, ModConfigSpec.BooleanValue>
+    )
+
+    fun onPluginSettingChange(config: ModConfig) {
+        globalPluginSettingsMap[config.spec] ?: return
+        //clear and re-collect providers
+        collectProvidersFromRegistry()
+        //clear all cache
+        this.block.clear()
+        this.entity.clear()
+        this.hideBlocks.clear()
+        this.hideEntityTypes.clear()
+        this.hideEntityCallback.clear()
+        //re-collect by condition
+        globalPluginSettings.forEach { (plugin, setting) ->
+            if (!setting.enable.get()) return@forEach
+            setting.providerEnableData.forEach { (provider, enable) ->
+                if (!enable.get()) {
+                    classProvider[provider.targetClass()]?.remove(provider)
+                }
+            }
+            val registration = clientRegistration[plugin]!!
+            block.addAll(registration.blockPopup)
+            entity.addAll(registration.entityPopup)
+            hideBlocks.addAll(registration.hideBlocks)
+            hideEntityTypes.addAll(registration.hideEntityTypes)
+            hideEntityCallback.addAll(registration.hideEntityCallback)
+        }
+        //invalidate cache
+        providerCache.invalidateAll()
+        //remove all, some provider may have disappeared
+        HologramManager.clearAllHologram()
     }
 
     fun hideBlock(block: Block) = this.hideBlocks.contains(block)
