@@ -652,7 +652,8 @@ interface IRenderElement {
         override fun measureContentSize(
             style: HologramStyle
         ): Size {
-            return Size.of(floor(barWidth).toInt(), style.font.lineHeight + 2).scale()
+            //+2 is the outline part of the progress
+            return Size.of(floor(barWidth + 2).toInt(), style.font.lineHeight + 2).scale()
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {
@@ -815,7 +816,7 @@ interface IRenderElement {
 
             val buffer = style.guiGraphics.bufferSource
             val consumer = buffer.getBuffer(RenderType.gui())
-            val width = this.contentSize.width.toFloat()
+            val width = this.barWidth
 
             val pose = style.poseMatrix()
 
