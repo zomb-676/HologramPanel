@@ -27,8 +27,8 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
     ) {
         val remember = builder.context.getRememberData()
         val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
-        val energyStored by remember.server(0, 0) { tag -> tag.getInt("energy_stored") }
-        val progress = remember.keep(0, ::ProgressData)
+        val energyStored by remember.server(1, 0) { tag -> tag.getInt("energy_stored") }
+        val progress = remember.keep(2, ::ProgressData)
         if (energyMax > 0) {
             builder.single("energy") {
                 progress.current(energyStored).max(energyMax)
