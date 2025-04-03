@@ -85,6 +85,21 @@ class EntityHologramContext(
             return EntityHologramContext(entity, player, hit)
         }
 
+        val VEC3_STREAM_CODE = object : StreamCodec<FriendlyByteBuf, Vec3> {
+            override fun decode(buffer: FriendlyByteBuf): Vec3 {
+                val x = buffer.readDouble()
+                val y = buffer.readDouble()
+                val z = buffer.readDouble()
+                return Vec3(x, y, z)
+            }
+
+            override fun encode(buffer: FriendlyByteBuf, value: Vec3) {
+                buffer.writeDouble(value.x)
+                buffer.writeDouble(value.y)
+                buffer.writeDouble(value.z)
+            }
+        }
+
         val STREAM_CODE: StreamCodec<FriendlyByteBuf, EntityHologramContext> =
             object : StreamCodec<FriendlyByteBuf, EntityHologramContext> {
                 override fun decode(buffer: FriendlyByteBuf): EntityHologramContext {
@@ -94,7 +109,7 @@ class EntityHologramContext(
                         val level = server.getLevel(levelKey)!!
                         val entity = level.getEntity(buffer.readVarInt())!!
                         val player = server.playerList.getPlayer(UUIDUtil.STREAM_CODEC.decode(buffer))!!
-                        val location = buffer.readOptional(Vec3.STREAM_CODEC).getOrNull()
+                        val location = buffer.readOptional(VEC3_STREAM_CODE).getOrNull()
                         val hit = if (location != null) {
                             EntityHitResult(entity, location)
                         } else null
@@ -108,7 +123,7 @@ class EntityHologramContext(
                     AllRegisters.Codecs.LEVEL_STREAM_CODE.encode(buffer, value.entity.level().dimension())
                     buffer.writeVarInt(value.entity.id)
                     UUIDUtil.STREAM_CODEC.encode(buffer, value.player.uuid)
-                    buffer.writeOptional(Optional.ofNullable(value.hitResult?.location), Vec3.STREAM_CODEC)
+                    buffer.writeOptional(Optional.ofNullable(value.hitResult?.location), VEC3_STREAM_CODE)
                 }
             }
     }

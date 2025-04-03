@@ -131,7 +131,7 @@ object Config {
         private val builder = ModConfigSpec.Builder()
 
         val itemTooltipType: ModConfigSpec.EnumValue<TooltipType> = builder
-            .defineEnum("item_tooltip_type", TooltipType.SCREEN_SMART_BACKGROUND)
+            .defineEnum("item_tooltip_type", TooltipType.SCREEN_NO_BACKGROUND)
 
         val space: ModConfigSpec = builder.build()
     }

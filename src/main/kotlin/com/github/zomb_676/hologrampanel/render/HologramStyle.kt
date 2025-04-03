@@ -9,7 +9,7 @@ import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.renderer.CoreShaders
+import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
 import net.minecraft.util.FormattedCharSequence
@@ -280,7 +280,7 @@ interface HologramStyle {
             }
         }
 
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+        RenderSystem.setShader(GameRenderer::getPositionColorShader)
         val tesselator = Tesselator.getInstance()
         val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
 
@@ -347,7 +347,7 @@ interface HologramStyle {
             }
         }
 
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+        RenderSystem.setShader(GameRenderer::getPositionColorShader)
         val tesselator = Tesselator.getInstance()
         val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
 

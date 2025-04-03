@@ -69,7 +69,7 @@ neoForge {
         }
 
         data {
-            clientData()
+            data()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
@@ -120,14 +120,14 @@ dependencies {
     jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10"))
     additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:2.1.10"
 
-    runtimeOnly("curse.maven:jade-324717:6170888")
+//    runtimeOnly("curse.maven:jade-324717:6170888")
     compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.800")
 
     runtimeOnly("icyllis.modernui:ModernUI-Core:${modernui_core_version}", modernUIExcludes)
     additionalRuntimeClasspath("icyllis.modernui:ModernUI-Core:${modernui_core_version}", modernUIExcludes)
-    additionalRuntimeClasspath("icyllis.modernui:ModernUI-Markdown:${modernui_core_version}", modernUIExcludes)
     runtimeOnly("icyllis.modernui:ModernUI-Markdown:${modernui_core_version}", modernUIExcludes)
-    runtimeOnly "icyllis.modernui:ModernUI-NeoForge:${minecraft_version}-${modernui_forge_version}"
+    additionalRuntimeClasspath("icyllis.modernui:ModernUI-Markdown:${modernui_core_version}", modernUIExcludes)
+    runtimeOnly("icyllis.modernui:ModernUI-NeoForge:${minecraft_version}-${modernui_forge_version}")
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

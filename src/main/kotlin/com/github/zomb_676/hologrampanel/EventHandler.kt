@@ -35,9 +35,11 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent
+import net.neoforged.neoforge.event.entity.living.LivingConversionEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import net.neoforged.neoforge.event.level.LevelEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
+import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.registries.RegisterEvent
 import net.neoforged.neoforge.server.ServerLifecycleHooks
@@ -61,6 +63,7 @@ object EventHandler {
         modBus.addListener(EventHandler::onRegistryEvent)
         modBus.addListener(EventHandler::onClientSetup)
         modBus.addListener(EventHandler::onLoadComplete)
+        forgeBus.addListener(EventHandler::onLivingConversation)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
             forgeBus.addListener(::onEntityJoinLevel)
@@ -461,5 +464,12 @@ object EventHandler {
         if (level.isClientSide) {
             EntityConversationPayload.onEntityJoin(event.entity)
         }
+    }
+
+    private fun onLivingConversation(event: LivingConversionEvent.Post) {
+        val oldMob = event.entity
+        val newMob = event.outcome
+        val payload = EntityConversationPayload(oldMob.id, newMob.id, newMob.level().dimension())
+        PacketDistributor.sendToPlayersTrackingEntity(oldMob, payload)
     }
 }

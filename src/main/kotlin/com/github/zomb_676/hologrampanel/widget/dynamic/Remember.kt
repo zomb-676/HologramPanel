@@ -6,6 +6,7 @@ import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.unsafeCast
+import com.google.common.collect.ImmutableMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import net.minecraft.nbt.CompoundTag
@@ -196,9 +197,9 @@ class Remember<T : HologramContext> private constructor() {
         }.put(key, holder)
     }
 
-    fun onReceiveData(tag: CompoundTag) {
+    fun onReceiveData(data: ImmutableMap<ComponentProvider<*, *>, CompoundTag>) {
         this.servers.values.forEach { holder ->
-            holder.tryUpdate(tag.getCompound(holder.provider.location().toString()))
+            holder.tryUpdate(data.getValue(holder.provider))
         }
     }
 

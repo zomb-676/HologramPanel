@@ -11,6 +11,7 @@ import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import net.minecraft.client.Minecraft
 import org.joml.Vector3f
+import kotlin.math.acos
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
@@ -80,8 +81,8 @@ class HologramRenderState(
         ).normalize()
 
         val dot = viewVector.dot(sourceVector)
-        val angleInRadius = JomlMath.acos(dot)
-        val angel = JomlMath.toDegrees(angleInRadius)
+        val angleInRadius = acos(dot.toDouble())
+        val angel = Math.toDegrees(angleInRadius.toDouble())
         val pass = angel < 80f
         this.displayed = pass
         return pass

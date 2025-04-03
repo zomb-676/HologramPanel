@@ -14,6 +14,7 @@ import com.github.zomb_676.hologrampanel.widget.DisplayType
 import net.minecraft.client.Minecraft
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Vec3i
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.AABB
@@ -30,7 +31,9 @@ object PopupManager {
             val aabb = AABB.ofSize(player.position(), radius, radius, radius)
 
             val manager = PluginManager.getInstance()
-            for (pos: BlockPos in BlockPos.betweenClosed(aabb)) {
+            val playerBlockPos = player.blockPosition()
+            val offset = Vec3i(radius.toInt(), radius.toInt(), radius.toInt())
+            for (pos: BlockPos in BlockPos.betweenClosed(BlockPos(playerBlockPos.offset(offset)), playerBlockPos.offset(offset.multiply(-1)))) {
                 if (HologramManager.checkIdentityExist(pos)) continue
                 val ticket = manager.popUpBlock(pos, level)
                 if (ticket.isEmpty()) continue

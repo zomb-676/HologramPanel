@@ -59,9 +59,9 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         furnace.items.forEach {
             ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, it)
         }
-        buffer.writeVarInt(furnace.litTimeRemaining)
-        buffer.writeVarInt(furnace.litTotalTime)
-        buffer.writeVarInt(furnace.cookingTimer)
+        buffer.writeVarInt(furnace.litTime)
+        buffer.writeVarInt(furnace.litDuration)
+        buffer.writeVarInt(furnace.cookingProgress)
         buffer.writeVarInt(furnace.cookingTotalTime)
         targetData.putByteArray("f", buffer.extractArray())
         return true

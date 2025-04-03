@@ -7,10 +7,10 @@ import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
 import net.neoforged.neoforge.client.GlStateBackup
 import net.neoforged.neoforge.common.ModConfigSpec
+import net.neoforged.neoforge.server.ServerLifecycleHooks
 import org.lwjgl.opengl.GL46
 
 @Suppress("UNCHECKED_CAST")
@@ -72,7 +72,7 @@ inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> 
     RenderSystem.restoreGlState(state)
 }
 
-inline val profiler: ProfilerFiller get() = Profiler.get()
+inline val profiler: ProfilerFiller get() = Minecraft.getInstance().profiler
 
 /**
  * @param code must be crossinline, as the paired pop must be called

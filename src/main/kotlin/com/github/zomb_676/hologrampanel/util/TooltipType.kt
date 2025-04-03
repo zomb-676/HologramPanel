@@ -11,13 +11,5 @@ enum class TooltipType {
      */
     SCREEN_NO_BACKGROUND,
 
-    /**
-     * use [net.minecraft.core.component.DataComponents.TOOLTIP_STYLE] if not missing
-     */
-    SCREEN_SMART_BACKGROUND,
-
-    /**
-     * use [net.minecraft.core.component.DataComponents.TOOLTIP_STYLE] always
-     */
-    SCREEN_ALWAYS_BACKGROUND
+    SCREEN_BACKGROUND,
 }

@@ -19,11 +19,11 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.CoreShaders
+import net.minecraft.client.renderer.GameRenderer
+import net.minecraft.client.renderer.LevelRenderer
 import net.minecraft.client.renderer.LightTexture
-import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.util.ARGB
+import net.minecraft.util.FastColor
 import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import net.neoforged.neoforge.network.handling.IPayloadContext
@@ -75,14 +75,14 @@ object DebugHelper {
         }
 
         fun fill(pos: Vector3fc, color: Int, poseStack: PoseStack, builder: BufferBuilder) {
-            val r = ARGB.redFloat(color)
-            val g = ARGB.greenFloat(color)
-            val b = ARGB.blueFloat(color)
-            val a = ARGB.alphaFloat(color)
+            val r = FastColor.ARGB32.red(color) / 255f
+            val g = FastColor.ARGB32.green(color) / 255f
+            val b = FastColor.ARGB32.blue(color) / 255f
+            val a = FastColor.ARGB32.alpha(color) / 255f
             val x = pos.x()
             val y = pos.y()
             val z = pos.z()
-            ShapeRenderer.addChainedFilledBoxVertices(
+            LevelRenderer.addChainedFilledBoxVertices(
                 poseStack, builder, x - OFFSET, y - OFFSET, z - OFFSET, x + OFFSET, y + OFFSET, z + OFFSET, r, g, b, a
             )
         }
@@ -115,13 +115,13 @@ object DebugHelper {
 
             if (Config.Client.renderDebugBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-                RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+                RenderSystem.setShader(GameRenderer::getPositionColorShader)
                 RenderSystem.disableDepthTest()
                 if (queryUpdateData.isNotEmpty()) {
                     val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
                     while (iterator.hasNext()) {
                         val next = iterator.next()
-                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, 0x00ffffff.toInt(), -1)
+                        val color = FastColor.ARGB32.lerp((next.intValue + partialTick) / UPDATE_TINE, 0x00ffffff.toInt(), -1)
                         val position = next.key.state.sourcePosition(partialTick)
                         fill(position, color, pose, builder)
                     }
@@ -131,7 +131,7 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, 0x000000ff.toInt(), 0xff0000ff.toInt())
+                            FastColor.ARGB32.lerp((next.intValue + partialTick) / POPUP_TIME, 0x000000ff.toInt(), 0xff0000ff.toInt())
                         fill(next.key.sourcePosition(partialTick), color, pose, builder)
                     }
                 }
@@ -140,7 +140,7 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, 0x00ff0000.toInt(), 0xffff0000.toInt())
+                            FastColor.ARGB32.lerp((next.intValue + partialTick) / REMOVE_TIME, 0x00ff0000.toInt(), 0xffff0000.toInt())
                         fill(next.key.sourcePosition(partialTick), color, pose, builder)
                     }
                 }

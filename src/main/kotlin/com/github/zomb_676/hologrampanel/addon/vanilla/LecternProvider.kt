@@ -42,7 +42,7 @@ data object LecternProvider : ServerDataProvider<BlockHologramContext, LecternBl
         if (!bookItem.isEmpty) {
             builder.single("book") {
                 itemStack(bookItem).smallItem()
-                component(bookItem.itemName)
+                component(bookItem.displayName)
             }
         }
     }

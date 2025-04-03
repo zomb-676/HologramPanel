@@ -16,6 +16,11 @@ import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.util.stackIf
 import com.mojang.blaze3d.platform.Lighting
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferUploader
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.client.Minecraft
@@ -24,6 +29,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil
 import net.minecraft.client.player.LocalPlayer
+import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
@@ -40,6 +46,7 @@ import net.neoforged.neoforge.client.textures.FluidSpriteCache
 import net.neoforged.neoforge.fluids.FluidType
 import org.joml.Quaternionf
 import org.joml.Vector3f
+import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -202,7 +209,7 @@ interface IRenderElement {
 
                 dispatcher.setRenderShadow(false)
                 dispatcher.render(
-                    entity, 0.0, 0.0, 0.0, 1.0f, guiGraphics.pose(), guiGraphics.bufferSource, LightTexture.FULL_BRIGHT
+                    entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, guiGraphics.pose(), guiGraphics.bufferSource, LightTexture.FULL_BRIGHT
                 )
                 guiGraphics.flush()
                 dispatcher.setRenderShadow(true)
@@ -287,10 +294,8 @@ interface IRenderElement {
      * similar to [net.minecraft.client.gui.GuiGraphics.renderTooltipInternal]
      */
     open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipType? = null) : RenderElement() {
-        var sprite = item.get(DataComponents.TOOLTIP_STYLE)
         var tooltips: List<ClientTooltipComponent> = listOf()
         override fun measureContentSize(style: HologramStyle): Size {
-            sprite = item.get(DataComponents.TOOLTIP_STYLE)
             val window = Minecraft.getInstance().window
             tooltips = ClientHooks.gatherTooltipComponents(
                 item,
@@ -305,50 +310,42 @@ interface IRenderElement {
             var height = if (tooltips.size == 1) -1 else 0
             tooltips.forEach { tooltip ->
                 width = max(width, tooltip.getWidth(style.font))
-                height += tooltip.getHeight(style.font)
+                height += tooltip.height
             }
             return Size.of(width + 6, height + 6).scale()
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {
             val font = style.font
-            val texture = ClientHooks.onRenderTooltipTexture(
-                item, style.guiGraphics, 0, 0, font, tooltips, sprite
-            )
             var height = 0
             style.stack {
                 style.guiGraphics.pose().translate(2.0, 2.0, 400.0)
-                run {
-                    val render = when (tooltipType ?: Config.Style.itemTooltipType.get()) {
-                        TooltipType.TEXT, TooltipType.SCREEN_NO_BACKGROUND -> false
-                        TooltipType.SCREEN_SMART_BACKGROUND -> texture.texture != null
-                        TooltipType.SCREEN_ALWAYS_BACKGROUND -> true
-                    }
-                    if (render) {
-                        TooltipRenderUtil.renderTooltipBackground(
-                            style.guiGraphics,
-                            0,
-                            0,
-                            contentSize.width - 4,
-                            contentSize.height - 5,
-                            0,
-                            texture.texture
-                        )
-                    }
+                val render = when (tooltipType ?: Config.Style.itemTooltipType.get()) {
+                    TooltipType.TEXT, TooltipType.SCREEN_NO_BACKGROUND -> false
+                    TooltipType.SCREEN_BACKGROUND -> true
                 }
-
+                if (render) {
+                    TooltipRenderUtil.renderTooltipBackground(
+                        style.guiGraphics,
+                        0,
+                        0,
+                        contentSize.width - 4,
+                        contentSize.height - 5,
+                        0,
+                    )
+                }
                 tooltips.forEachIndexed { index, tooltip ->
                     tooltip.renderText(
                         font, 0, height, style.poseMatrix(), style.guiGraphics.bufferSource
                     )
-                    height += tooltip.getHeight(font)
+                    height += tooltip.height
                 }
                 height = 0
                 tooltips.forEachIndexed { index, tooltip ->
                     tooltip.renderImage(
-                        font, 0, height, contentSize.width, contentSize.height, style.guiGraphics
+                        font, 0, height, style.guiGraphics
                     )
-                    height += tooltip.getHeight(font)
+                    height += tooltip.height
                 }
             }
         }
@@ -380,7 +377,7 @@ interface IRenderElement {
         }
 
         protected val tooltipElement by lazy {
-            ScreenTooltipElement(itemStack, TooltipType.SCREEN_ALWAYS_BACKGROUND)
+            ScreenTooltipElement(itemStack, TooltipType.SCREEN_BACKGROUND)
         }
 
         override fun renderInteractive(
@@ -545,7 +542,7 @@ interface IRenderElement {
                     val index = decodeIndex(mouseX, mouseY)
                     if (index >= 0) {
                         val tooltip = map.computeIfAbsent(index) {
-                            ScreenTooltipElement(items[index], TooltipType.SCREEN_ALWAYS_BACKGROUND)
+                            ScreenTooltipElement(items[index], TooltipType.SCREEN_BACKGROUND)
                         }
                         if (tooltip.item.isEmpty) return@stack
                         tooltip.contentSize = tooltip.measureContentSize(style)
@@ -634,7 +631,7 @@ interface IRenderElement {
             style: HologramStyle, partialTicks: Float
         ) {
             val size = this.contentSize
-            style.guiGraphics.blitSprite(RenderType::guiTextured, sprite, 0, 0, size.width, size.height)
+            style.guiGraphics.blit(0, 0, 0, size.width, size.height, sprite)
         }
 
         fun setRenderSize(width: Int, height: Int) {
@@ -652,7 +649,7 @@ interface IRenderElement {
         override fun measureContentSize(
             style: HologramStyle
         ): Size {
-            return Size.of(floor(barWidth).toInt(), style.font.lineHeight + 2).scale()
+            return Size.of(floor(barWidth).toInt() + 2, style.font.lineHeight + 2).scale()
         }
 
         override fun render(style: HologramStyle, partialTicks: Float) {
@@ -748,8 +745,10 @@ interface IRenderElement {
             val tintColor = handle.tintColor
             val sprite: TextureAtlasSprite = FluidSpriteCache.getSprite(handle.stillTexture)
 
+            RenderSystem.setShaderTexture(0, sprite.atlasLocation())
+            RenderSystem.setShader(GameRenderer::getPositionTexColorShader)
             val matrix = style.poseMatrix()
-            val consumer = style.guiGraphics.bufferSource.getBuffer(RenderType.guiTextured(sprite.atlasLocation()))
+            val consumer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
 
             val maxU = (((sprite.u1 - sprite.u0) * percent) + sprite.u0).toFloat()
             val maxV = (((sprite.v1 - sprite.v0) * percent) + sprite.v0).toFloat()
@@ -758,6 +757,7 @@ interface IRenderElement {
             consumer.addVertex(matrix, left, height, 0f).setUv(sprite.u0, maxV).setColor(tintColor)
             consumer.addVertex(matrix, right, height, 0f).setUv(maxU, maxV).setColor(tintColor)
             consumer.addVertex(matrix, right, 0f, 0f).setUv(maxU, sprite.v0).setColor(tintColor)
+            BufferUploader.drawWithShader(consumer.buildOrThrow())
         }
 
         override fun getDescription(percent: Float): Component {
@@ -815,7 +815,7 @@ interface IRenderElement {
 
             val buffer = style.guiGraphics.bufferSource
             val consumer = buffer.getBuffer(RenderType.gui())
-            val width = this.contentSize.width.toFloat()
+            val width = this.barWidth.toFloat()
 
             val pose = style.poseMatrix()
 

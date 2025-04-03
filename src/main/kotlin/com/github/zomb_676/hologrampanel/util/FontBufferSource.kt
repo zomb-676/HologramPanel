@@ -34,7 +34,7 @@ class FontBufferSource : MultiBufferSource {
             if (meshData != null) {
                 if (type.sortOnUpload()) {
                     val buffer = buffers[type]!!
-                    meshData.sortQuads(buffer, RenderSystem.getProjectionType().vertexSorting())
+                    meshData.sortQuads(buffer, RenderSystem.getVertexSorting())
                 }
                 type.draw(meshData)
             }
