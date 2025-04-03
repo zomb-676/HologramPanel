@@ -37,12 +37,14 @@ object Config {
         if (event.config.spec == Client.space) {
             Client.tryValidate()
         }
+        PluginManager.getInstance().onPluginSettingChange(event.config)
     }
 
     private fun onReload(event: ModConfigEvent.Reloading) {
         if (event.config.spec == Client.space) {
             Client.tryValidate()
         }
+        PluginManager.getInstance().onPluginSettingChange(event.config)
     }
 
     object Server {

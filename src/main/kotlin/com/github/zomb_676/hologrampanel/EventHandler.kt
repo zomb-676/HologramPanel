@@ -452,8 +452,8 @@ object EventHandler {
      * we use this event to know that all registries have frozen
      */
     fun onRegistryEnd() {
-        PluginManager.onLoadComplete()
-        PluginManager.getInstance().onClientRegisterEnd()
+        PluginManager.collectProvidersFromRegistry()
+        PluginManager.getInstance().registerPluginConfigs()
     }
 
     private fun onEntityJoinLevel(event: EntityJoinLevelEvent) {
