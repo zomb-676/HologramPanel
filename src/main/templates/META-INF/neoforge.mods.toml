@@ -9,10 +9,7 @@ displayName = "${mod_name}"
 # A URL to query for updates for this mod. See the JSON update specification https://docs.neoforge.net/docs/misc/updatechecker/
 #updateJSONURL="https://change.me.example.invalid/updates.json" #optional
 displayURL = "https://github.com/zomb-676/HologramPanel"
-# A file name (in the root of the mod JAR) containing a logo for display
-#logoFile="hologrampanel.png" #optional
-# A text field displayed in the mod UI
-#credits="" #optional
+logoFile="logo.png"
 authors = "${mod_authors}"
 description = '''${mod_description}'''
 [[mixins]]
