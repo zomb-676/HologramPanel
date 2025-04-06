@@ -333,6 +333,11 @@ object EventHandler {
                         HologramManager.clearAllHologram()
                     }
                 }
+                "clear_all_cache" {
+                    execute {
+                        PluginManager.ProviderManager.invalidateCache()
+                    }
+                }
                 "search" {
                     "str"(StringArgumentType.string()) {
                         execute {
@@ -452,7 +457,7 @@ object EventHandler {
      * we use this event to know that all registries have frozen
      */
     fun onRegistryEnd() {
-        PluginManager.collectProvidersFromRegistry()
+        PluginManager.ProviderManager.collectProvidersFromRegistry()
         PluginManager.getInstance().registerPluginConfigs()
     }
 

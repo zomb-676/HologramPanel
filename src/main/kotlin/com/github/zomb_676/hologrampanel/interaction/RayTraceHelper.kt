@@ -80,7 +80,7 @@ object RayTraceHelper {
         val widget: DynamicBuildWidget<T> = when (context) {
             is EntityHologramContext -> {
                 val builder: HologramWidgetBuilder<EntityHologramContext> = HologramWidgetBuilder(context)
-                val providers: List<ComponentProvider<EntityHologramContext, *>> = PluginManager.queryProviders(context)
+                val providers: List<ComponentProvider<EntityHologramContext, *>> = PluginManager.ProviderManager.queryProviders(context)
                 if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
                 applyProvider(providers, builder, displayType)
                 val widget =
@@ -91,7 +91,7 @@ object RayTraceHelper {
 
             is BlockHologramContext -> {
                 val builder: HologramWidgetBuilder<BlockHologramContext> = HologramWidgetBuilder(context)
-                val providers: List<ComponentProvider<BlockHologramContext, *>> = PluginManager.queryProviders(context)
+                val providers: List<ComponentProvider<BlockHologramContext, *>> = PluginManager.ProviderManager.queryProviders(context)
                 if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
                 applyProvider(providers, builder, displayType)
                 builder.build(BuildInPlugin.Companion.DefaultBlockDescriptionProvider, displayType, providers)
