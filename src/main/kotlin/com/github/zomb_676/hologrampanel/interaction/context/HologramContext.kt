@@ -8,7 +8,9 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import io.netty.buffer.Unpooled
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.core.RegistryAccess
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.codec.StreamCodec
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.neoforged.neoforge.common.extensions.ICommonPacketListener
@@ -82,5 +84,22 @@ sealed interface HologramContext {
         return RegistryFriendlyByteBuf(
             Unpooled.wrappedBuffer(data), getRegistryAccess(), getConnection().connectionType
         )
+    }
+
+    companion object {
+        val STREAM_CODE: StreamCodec<FriendlyByteBuf, HologramContext> =
+            object : StreamCodec<FriendlyByteBuf, HologramContext> {
+                override fun decode(buffer: FriendlyByteBuf): HologramWorldContext = when (buffer.readShort()) {
+                    0.toShort() -> HologramWorldContext.STREAM_CODE.decode(buffer)
+                    else -> throw RuntimeException()
+                }
+
+                override fun encode(buffer: FriendlyByteBuf, value: HologramContext) = when (value) {
+                    is HologramWorldContext -> {
+                        buffer.writeShort(1)
+                        HologramWorldContext.STREAM_CODE.encode(buffer, value)
+                    }
+                }
+            }
     }
 }

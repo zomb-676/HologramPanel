@@ -2,11 +2,12 @@ package com.github.zomb_676.hologrampanel.api
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import net.minecraft.client.Minecraft
 
 @FunctionalInterface
-interface HologramTicket<in T : HologramWorldContext> {
+interface HologramTicket<in T : HologramContext> {
     /**
      * this is guaranteed to be called every client tick
      */

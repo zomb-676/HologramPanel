@@ -58,8 +58,5 @@ interface ComponentProvider<T : HologramContext, V> {
 
     fun appliesToByInstance(context: T, check: V) = true
 
-    /**
-     * this will only be called when [T] is [HologramWorldContext]
-     */
     fun attachTicket(context: T, tick: TicketAdder<T>) {}
 }

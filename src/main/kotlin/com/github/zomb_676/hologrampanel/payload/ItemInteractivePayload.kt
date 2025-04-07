@@ -42,7 +42,7 @@ class ItemInteractivePayload(
             ByteBufCodecs.VAR_INT, ItemInteractivePayload::count,
             ByteBufCodecs.BOOL, ItemInteractivePayload::take,
             ByteBufCodecs.INT, ItemInteractivePayload::targetSlot,
-            HologramWorldContext.STREAM_CODE, ItemInteractivePayload::context,
+            HologramContext.STREAM_CODE, ItemInteractivePayload::context,
             UUIDUtil.STREAM_CODEC, ItemInteractivePayload::syncUUID,
             ::ItemInteractivePayload
         )
