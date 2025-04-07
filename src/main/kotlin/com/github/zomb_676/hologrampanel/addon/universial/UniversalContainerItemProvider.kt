@@ -35,6 +35,7 @@ data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramCo
     }
 
     override fun appendComponent(
+        data: ItemEntity,
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
     ) {
@@ -61,7 +62,7 @@ data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramCo
     override fun replaceProvider(target: ResourceLocation): Boolean =
         target == UniversalContainerEntityProvider.location()
 
-    override fun appliesTo(
+    override fun appliesToByType(
         context: EntityHologramContext,
         check: ItemEntity
     ): Boolean {

@@ -38,8 +38,7 @@ class InheritSearcher<T> {
         }
     }
 
-    fun <I : Any?> collectByInstance(targetInstance: I, code: BiPredicate<I, T>): List<T> {
-        if (targetInstance == null) return listOf()
+    fun <I : Any> collectByInstance(targetInstance: I, code: BiPredicate<I, T>): List<T> {
 
         val targetClass: Class<out I> = targetInstance::class.java
         val res = providerCache.getIfPresent(targetClass)

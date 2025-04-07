@@ -34,7 +34,7 @@ data object BrewStandProvider : ServerDataProvider<BlockHologramContext, Brewing
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
+        data: BrewingStandBlock, builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
     ) {
         val context = builder.context
         val remember = context.getRememberData()

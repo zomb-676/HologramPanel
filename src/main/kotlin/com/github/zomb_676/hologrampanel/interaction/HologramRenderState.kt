@@ -3,7 +3,7 @@ package com.github.zomb_676.hologrampanel.interaction
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.HologramTicket
 import com.github.zomb_676.hologrampanel.api.TicketAdder
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -16,7 +16,7 @@ import kotlin.math.sqrt
 
 class HologramRenderState(
     val widget: HologramWidget,
-    val context: HologramContext,
+    val context: HologramWorldContext,
     displayType: DisplayType,
     additionTicket: List<HologramTicket<*>>
 ) {
@@ -37,14 +37,16 @@ class HologramRenderState(
             }
         }
 
-    internal val hologramTicks: MutableList<HologramTicket<HologramContext>> = run {
+    internal val hologramTicks: MutableList<HologramTicket<HologramWorldContext>> = run {
         @Suppress("UNCHECKED_CAST")
-        fun <T : HologramContext> f(context: T): MutableList<HologramTicket<T>> {
+        fun <T : HologramWorldContext> f(context: T): MutableList<HologramTicket<T>> {
             val list: MutableList<HologramTicket<T>> = additionTicket.toMutableList().unsafeCast()
             val adder = TicketAdder(list)
             if (widget is DynamicBuildWidget<*>) {
-                (widget.providers as List<ComponentProvider<T, *>>).forEach {
-                    it.attachTicket(context.unsafeCast(), adder)
+                widget.providerContainer.providers().forEach { (_, providers) ->
+                    providers.forEach {
+                        it.unsafeCast<ComponentProvider<T, *>>().attachTicket(context, adder)
+                    }
                 }
             }
             return list

@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.api
 
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 import net.minecraft.client.player.LocalPlayer

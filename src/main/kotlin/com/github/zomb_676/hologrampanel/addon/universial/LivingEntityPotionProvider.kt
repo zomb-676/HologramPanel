@@ -50,6 +50,7 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
     }
 
     override fun appendComponent(
+        data: LivingEntity,
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
     ) {

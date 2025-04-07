@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.api
 
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.resources.ResourceLocation
@@ -20,7 +21,7 @@ interface ComponentProvider<T : HologramContext, V> {
     /**
      * this is called when any data changed or ar displayType change
      */
-    fun appendComponent(builder: HologramWidgetBuilder<T>, displayType: DisplayType)
+    fun appendComponent(data: V, builder: HologramWidgetBuilder<T>, displayType: DisplayType)
 
     /**
      * @return the game object class you want to display.
@@ -53,7 +54,12 @@ interface ComponentProvider<T : HologramContext, V> {
      * only called during collecting providers based on class
      */
     @EfficientConst
-    fun appliesTo(context: T, check: V): Boolean = true
+    fun appliesToByType(context: T, check: V): Boolean = true
 
+    fun appliesToByInstance(context: T, check: V) = true
+
+    /**
+     * this will only be called when [T] is [HologramWorldContext]
+     */
     fun attachTicket(context: T, tick: TicketAdder<T>) {}
 }

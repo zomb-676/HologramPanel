@@ -36,7 +36,7 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
+        data: Entity, builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
     ) {
         val context = builder.context
         val remember = builder.context.getRememberData()
@@ -68,7 +68,7 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_entity")
 
-    override fun appliesTo(
+    override fun appliesToByType(
         context: EntityHologramContext, check: Entity
     ): Boolean {
         return check.getCapability(Capabilities.FluidHandler.ENTITY, null) != null

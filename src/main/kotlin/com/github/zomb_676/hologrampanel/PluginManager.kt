@@ -6,12 +6,15 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.util.InheritSearcher
+import com.github.zomb_676.hologrampanel.util.ProviderTargetContainer
 import com.github.zomb_676.hologrampanel.util.getClassOf
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.core.BlockPos
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.neoforged.fml.ModList
@@ -69,10 +72,13 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     object ProviderManager {
         private val mapper = InheritSearcher<ComponentProvider<*, *>>()
 
-        private fun <V, C : HologramContext> InheritSearcher<ComponentProvider<*, *>>.collectByInstance(context: C, instance: V) =
-            this.collectByInstance(instance) { i, p ->
-                p.unsafeCast<ComponentProvider<C, V>>().appliesTo(context, i)
-            }
+        fun <V : Any, C : HologramContext> collectByInstance(
+            context: C,
+            instance: V
+        ): List<ComponentProvider<C, *>> =
+            mapper.collectByInstance(instance) { i, p ->
+                p.unsafeCast<ComponentProvider<C, V>>().appliesToByType(context, i)
+            }.unsafeCast()
 
         internal fun collectProvidersFromRegistry() {
             mapper.resetMapper()
@@ -81,32 +87,20 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             }
         }
 
-        internal fun queryProviders(context: BlockHologramContext): List<ComponentProvider<BlockHologramContext, *>> {
-            val list: MutableList<ComponentProvider<BlockHologramContext, *>> = mutableListOf()
-            list.addAll(mapper.collectByInstance(context, context.getBlockState().block).unsafeCast())
-            list.addAll(mapper.collectByInstance(context, context.getFluidState().fluidType).unsafeCast())
-            list.addAll(mapper.collectByInstance(context, context.getBlockEntity()).unsafeCast())
-            return removeByPrevent(list)
+        internal fun queryProviders(context: BlockHologramContext): ProviderTargetContainer<BlockHologramContext> {
+            val container = ProviderTargetContainer(context)
+            container.addSource { c -> c.getBlockState().block }
+            container.addSource { c -> c.getFluidState().fluidType }
+            container.addSource { c -> c.getBlockEntity() }
+            container.doPreventRemove()
+            return container
         }
 
-        internal fun queryProviders(context: EntityHologramContext): List<ComponentProvider<EntityHologramContext, *>> {
-            val list: MutableList<ComponentProvider<EntityHologramContext, *>> = mutableListOf()
-            list.addAll(mapper.collectByInstance(context, context.getEntity()).unsafeCast())
-            return removeByPrevent(list)
-        }
-
-        private fun <T : ComponentProvider<*, *>> removeByPrevent(container: MutableList<T>): MutableList<T> {
-            if (container.size <= 1) return container
-            val backup = container.toMutableList()
-            val iterator = container.listIterator()
-            while (iterator.hasNext()) {
-                val provider = iterator.next()
-                val location = provider.location()
-                if (backup.any { it.replaceProvider(location) }) {
-                    backup.remove(provider)
-                    iterator.remove()
-                }
-            }
+        internal fun queryProviders(context: EntityHologramContext): ProviderTargetContainer<EntityHologramContext> {
+            val container = ProviderTargetContainer(context)
+            container.addSource { c -> c.getEntity() }
+            container.addSource { c -> (c.getEntity() as? ItemEntity?)?.item }
+            container.doPreventRemove()
             return container
         }
 

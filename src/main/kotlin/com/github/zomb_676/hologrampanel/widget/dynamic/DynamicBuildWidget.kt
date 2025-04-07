@@ -2,7 +2,9 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
+import com.github.zomb_676.hologrampanel.util.ProviderTargetContainer
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
@@ -13,7 +15,7 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponen
  * widget that support re-build partial when some [ComponentProvider] data have changed
  */
 class DynamicBuildWidget<T : HologramContext>(
-    target: T, val container: DynamicBuildComponentWidget.Group<T>, val providers: List<ComponentProvider<T, *>>
+    target: T, val container: DynamicBuildComponentWidget.Group<T>, val providerContainer: ProviderTargetContainer<T>
 ) : HologramComponentWidget<T>(target, container) {
 
     private var maps: Map<ComponentProvider<T, *>, List<DynamicBuildComponentWidget<T>>> =
@@ -28,7 +30,7 @@ class DynamicBuildWidget<T : HologramContext>(
             if (remember.consumerRebuild(provider)) {
                 builder.rebuildScope(provider) {
                     remember.providerScope(provider) {
-                        provider.appendComponent(builder, displayType)
+                        providerContainer.appendProviderComponent(provider, builder, displayType)
                     }
                 }
             } else {

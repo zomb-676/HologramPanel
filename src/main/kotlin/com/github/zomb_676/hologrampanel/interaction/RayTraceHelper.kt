@@ -3,12 +3,12 @@ package com.github.zomb_676.hologrampanel.interaction
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.PluginManager
 import com.github.zomb_676.hologrampanel.addon.BuildInPlugin
-import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
+import com.github.zomb_676.hologrampanel.util.ProviderTargetContainer
 import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -26,9 +26,9 @@ import net.minecraft.world.phys.HitResult
 
 object RayTraceHelper {
     /**
-     * use ray-trace to create a satisfied [HologramContext]
+     * use ray-trace to create a satisfied [HologramWorldContext]
      */
-    fun findTarget(radius: Double, partialTicks: Float): HologramContext? = profilerStack("hologram_find_target") {
+    fun findTarget(radius: Double, partialTicks: Float): HologramWorldContext? = profilerStack("hologram_find_target") {
         val player = Minecraft.getInstance().player!!
         val blockHit = player.pick(radius, partialTicks, true)
         val entityHit = run {
@@ -74,27 +74,27 @@ object RayTraceHelper {
     /**
      * create the widget by the context
      */
-    fun <T : HologramContext> createHologramWidget(
+    fun <T : HologramWorldContext> createHologramWidget(
         context: T, displayType: DisplayType
     ): HologramWidget? = profilerStack("create_hologram") {
         val widget: DynamicBuildWidget<T> = when (context) {
             is EntityHologramContext -> {
                 val builder: HologramWidgetBuilder<EntityHologramContext> = HologramWidgetBuilder(context)
-                val providers: List<ComponentProvider<EntityHologramContext, *>> = PluginManager.ProviderManager.queryProviders(context)
-                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
-                applyProvider(providers, builder, displayType)
+                val providerContainer: ProviderTargetContainer<EntityHologramContext> = PluginManager.ProviderManager.queryProviders(context)
+                if (providerContainer.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
+                applyProvider(providerContainer, builder, displayType)
                 val widget =
-                    builder.build(BuildInPlugin.Companion.DefaultEntityDescriptionProvider, displayType, providers)
+                    builder.build(BuildInPlugin.Companion.DefaultEntityDescriptionProvider, displayType, providerContainer)
                 (context.getEntity() as HologramHolder).setWidget(widget)
                 widget
             }
 
             is BlockHologramContext -> {
                 val builder: HologramWidgetBuilder<BlockHologramContext> = HologramWidgetBuilder(context)
-                val providers: List<ComponentProvider<BlockHologramContext, *>> = PluginManager.ProviderManager.queryProviders(context)
-                if (providers.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
-                applyProvider(providers, builder, displayType)
-                builder.build(BuildInPlugin.Companion.DefaultBlockDescriptionProvider, displayType, providers)
+                val providerContainer: ProviderTargetContainer<BlockHologramContext> = PluginManager.ProviderManager.queryProviders(context)
+                if (providerContainer.isEmpty() && Config.Client.dropNonApplicableWidget.get()) return@profilerStack null
+                applyProvider(providerContainer, builder, displayType)
+                builder.build(BuildInPlugin.Companion.DefaultBlockDescriptionProvider, displayType, providerContainer)
             }
         }.unsafeCast()
         val syncProviders: List<ServerDataProvider<T, *>> = context.getRememberDataUnsafe<T>().serverDataEntries()
@@ -109,16 +109,24 @@ object RayTraceHelper {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : HologramContext> applyProvider(
-        providers: List<ComponentProvider<T, *>>, builder: HologramWidgetBuilder<T>, displayType: DisplayType
+    private fun <T : HologramWorldContext> applyProvider(
+        providerContainer: ProviderTargetContainer<T>, builder: HologramWidgetBuilder<T>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberDataUnsafe<T>()
-        providers.forEach { provider ->
-            remember.providerScope(provider) {
-                builder.currentProvider = provider
-                provider.appendComponent(builder, displayType)
-                builder.currentProvider = null
+
+        fun <V : Any> applyForIns(ins: ProviderTargetContainer.Ins<T, V>) {
+            val (f, providers) = ins
+            val data = f.invoke(builder.context)
+            providers.forEach { provider ->
+                remember.providerScope(provider) {
+                    builder.currentProvider = provider
+                    provider.appendComponent(data, builder, displayType)
+                    builder.currentProvider = null
+                }
             }
         }
+
+        providerContainer.providers().forEach { applyForIns(it) }
     }
+
 }

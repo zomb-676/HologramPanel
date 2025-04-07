@@ -11,6 +11,7 @@ import net.minecraft.world.entity.item.ItemEntity
 
 data object ItemEntityLifeSpanProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendComponent(
+        data: ItemEntity,
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
     ) {

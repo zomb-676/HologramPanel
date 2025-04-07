@@ -18,6 +18,7 @@ import java.util.Arrays
 data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
 
     override fun appendComponent(
+        data: AbstractFurnaceBlock,
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
     ) {

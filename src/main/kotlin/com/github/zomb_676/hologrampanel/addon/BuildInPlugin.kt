@@ -47,8 +47,9 @@ class BuildInPlugin : IHologramPlugin {
     }
 
     companion object {
-        data object DefaultBlockDescriptionProvider : ComponentProvider<BlockHologramContext, Block> {
+        data object DefaultBlockDescriptionProvider : DefaultProvider.DefaultBlockProvider {
             override fun appendComponent(
+                data: Block,
                 builder: HologramWidgetBuilder<BlockHologramContext>,
                 displayType: DisplayType
             ) {
@@ -64,8 +65,9 @@ class BuildInPlugin : IHologramPlugin {
             override fun location(): ResourceLocation = HologramPanel.Companion.rl("default_block_description_provider")
         }
 
-        data object DefaultEntityDescriptionProvider : ComponentProvider<EntityHologramContext, Entity> {
+        data object DefaultEntityDescriptionProvider : DefaultProvider.DefaultEntityProvider {
             override fun appendComponent(
+                data: Entity,
                 builder: HologramWidgetBuilder<EntityHologramContext>,
                 displayType: DisplayType
             ) {

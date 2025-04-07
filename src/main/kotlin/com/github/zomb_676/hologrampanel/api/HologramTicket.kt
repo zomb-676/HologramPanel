@@ -2,11 +2,11 @@ package com.github.zomb_676.hologrampanel.api
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import net.minecraft.client.Minecraft
 
 @FunctionalInterface
-interface HologramTicket<in T : HologramContext> {
+interface HologramTicket<in T : HologramWorldContext> {
     /**
      * this is guaranteed to be called every client tick
      */
@@ -24,8 +24,8 @@ interface HologramTicket<in T : HologramContext> {
         fun byPopUpDistance() = ByDistance(Config.Client.popUpDistance.get().toDouble())
     }
 
-    data class ByDistance(val distance: Double) : HologramTicket<HologramContext> {
-        override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean {
+    data class ByDistance(val distance: Double) : HologramTicket<HologramWorldContext> {
+        override fun stillValid(context: HologramWorldContext, state: HologramRenderState): Boolean {
             val pos = context.hologramCenterPosition()
             val playerPos = Minecraft.getInstance().player?.position() ?: return false
             val dis = pos.distance(playerPos.x.toFloat(), playerPos.y.toFloat(), playerPos.z.toFloat())
@@ -36,7 +36,7 @@ interface HologramTicket<in T : HologramContext> {
     /**
      * the generic parameter type is useless here
      */
-    class ByTick(tick: Int) : HologramTicket<HologramContext> {
+    class ByTick(tick: Int) : HologramTicket<HologramWorldContext> {
         init {
             require(tick > 0)
         }
@@ -44,17 +44,17 @@ interface HologramTicket<in T : HologramContext> {
         var tick: Int = tick
             private set
 
-        override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean = --tick > 0
+        override fun stillValid(context: HologramWorldContext, state: HologramRenderState): Boolean = --tick > 0
         override fun toString(): String {
             return "ByTick(tick=$tick)"
         }
     }
 
-    data object BySee : HologramTicket<HologramContext> {
-        override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean = state.isLookingAt()
+    data object BySee : HologramTicket<HologramWorldContext> {
+        override fun stillValid(context: HologramWorldContext, state: HologramRenderState): Boolean = state.isLookingAt()
     }
 
-    class ByTickAfterNotSee(val aliveTick: Int) : HologramTicket<HologramContext> {
+    class ByTickAfterNotSee(val aliveTick: Int) : HologramTicket<HologramWorldContext> {
         init {
             require(aliveTick > 0)
         }
@@ -62,7 +62,7 @@ interface HologramTicket<in T : HologramContext> {
         var tick: Int = aliveTick
             private set
 
-        override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean {
+        override fun stillValid(context: HologramWorldContext, state: HologramRenderState): Boolean {
             if (state.isLookingAt()) {
                 this.tick = this.aliveTick
             }

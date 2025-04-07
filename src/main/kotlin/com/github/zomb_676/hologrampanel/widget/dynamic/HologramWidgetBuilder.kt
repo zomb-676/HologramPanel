@@ -2,7 +2,9 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.util.ProgressData
+import com.github.zomb_676.hologrampanel.util.ProviderTargetContainer
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -113,16 +115,16 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     /**
      * this provider can only and must produce exactly one single
      */
-    internal fun build(
-        provider: ComponentProvider<T, *>,
+    internal fun <V> build(
+        provider: ComponentProvider<T, V>,
         displayType: DisplayType,
-        providers: List<ComponentProvider<T, *>>
+        providerContainer: ProviderTargetContainer<T>
     ): DynamicBuildWidget<T> {
         val currentCount = this.stack.peek().size
         helper.begin()
         this.currentProvider = provider
         context.getRememberDataUnsafe<T>().providerScope(provider) {
-            provider.appendComponent(this, displayType)
+            provider.appendComponent(providerContainer.getDataForProvider(provider), this, displayType)
         }
         val currentStack = stack.pop()
         require(currentCount + 1 == currentStack.size) { "can only produce on single" }
@@ -130,7 +132,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         val desc =
             currentStack.removeLast().unsafeCast<DynamicBuildComponentWidget.Single<T>>("must be single not group")
         if (currentStack.isEmpty()) {
-            if (providers.isEmpty()) {
+            if (providerContainer.isEmpty()) {
                 currentStack.add(DynamicBuildComponentWidget.onNoApplicableProvider(context))
             } else {
                 currentStack.add(DynamicBuildComponentWidget.onNoActiveProvider(context))
@@ -142,7 +144,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         val global = createGroupForElements(currentStack, desc, false, "global", true)!!
         require(stack.isEmpty())
         this.currentProvider = null
-        return DynamicBuildWidget(context, global, providers)
+        return DynamicBuildWidget(context, global, providerContainer)
     }
 
     inner class Helper() {

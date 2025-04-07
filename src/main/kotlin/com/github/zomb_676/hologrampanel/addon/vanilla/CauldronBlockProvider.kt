@@ -13,6 +13,7 @@ import net.neoforged.neoforge.capabilities.Capabilities
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object CauldronBlockProvider : ComponentProvider<BlockHologramContext, AbstractCauldronBlock> {
     override fun appendComponent(
+        data: AbstractCauldronBlock,
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
     ) {

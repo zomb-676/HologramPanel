@@ -25,7 +25,7 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
+        data: BlockEntity, builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
         val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
@@ -43,7 +43,7 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_block")
 
-    override fun appliesTo(
+    override fun appliesToByType(
         context: BlockHologramContext, check: BlockEntity
     ): Boolean {
         val level = context.getLevel()

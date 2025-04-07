@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.google.common.collect.ImmutableMap
@@ -149,7 +150,7 @@ class Remember<T : HologramContext> private constructor() {
     ): Holder<T, ItemStack> {
         return server(identity, ItemStack.EMPTY, equals) { tag ->
             ItemStack.parseOptional(
-                context.getLevel().registryAccess(), tag.getCompound(keyName)
+                context.getRegistryAccess(), tag.getCompound(keyName)
             )
         }
     }

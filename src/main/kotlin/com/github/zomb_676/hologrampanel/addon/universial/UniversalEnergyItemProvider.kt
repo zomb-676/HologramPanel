@@ -23,7 +23,7 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
+        data: ItemEntity, builder: HologramWidgetBuilder<EntityHologramContext>, displayType: DisplayType
     ) {
         val remember = builder.context.getRememberData()
         val energyMax by remember.server(0, 0) { tag -> tag.getInt("energy_max") }
@@ -43,7 +43,7 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
 
     override fun replaceProvider(target: ResourceLocation): Boolean = target == UniversalEnergyEntityProvider.location()
 
-    override fun appliesTo(
+    override fun appliesToByType(
         context: EntityHologramContext, check: ItemEntity
     ): Boolean {
         return check.item.getCapability(Capabilities.EnergyStorage.ITEM) != null

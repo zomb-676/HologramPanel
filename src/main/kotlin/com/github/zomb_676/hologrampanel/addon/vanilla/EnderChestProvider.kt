@@ -37,6 +37,7 @@ data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderC
     }
 
     override fun appendComponent(
+        data: EnderChestBlock,
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
     ) {

@@ -5,7 +5,6 @@ import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.BlockPos
 import net.minecraft.core.UUIDUtil
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.entity.player.Player
@@ -15,7 +14,6 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.phys.BlockHitResult
 import net.neoforged.neoforge.server.ServerLifecycleHooks
-import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3f
 import org.joml.Vector3fc
 import java.util.*
@@ -28,7 +26,7 @@ class BlockHologramContext(
     val pos: BlockPos,
     private val player: Player,
     private val hitResult: BlockHitResult?
-) : HologramContext {
+) : HologramWorldContext {
 
     private val originalBlock: BlockState = player.level().getBlockState(pos)
 
@@ -38,8 +36,6 @@ class BlockHologramContext(
     override fun getLevel(): Level = player.level()
 
     override fun getPlayer(): Player = player
-
-    override fun getLogicSide(): DistType = DistType.from(getLevel())
 
     @EfficientConst
     override fun hologramCenterPosition(): Vector3fc = centerPosition

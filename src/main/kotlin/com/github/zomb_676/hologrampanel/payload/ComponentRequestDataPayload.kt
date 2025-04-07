@@ -4,9 +4,7 @@ import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
-import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
-import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import net.minecraft.core.UUIDUtil
@@ -20,7 +18,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
-class ComponentRequestDataPayload<T : HologramContext>(
+class ComponentRequestDataPayload<T : HologramWorldContext>(
     val uuid: UUID, val additionDataTag: CompoundTag, val providers: List<ServerDataProvider<T, *>>, val context: T
 ) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<out ComponentRequestDataPayload<*>> = TYPE
@@ -36,7 +34,7 @@ class ComponentRequestDataPayload<T : HologramContext>(
                     val providers = List(providerSize) { _ ->
                         AllRegisters.ComponentHologramProviderRegistry.STREAM_CODEC.decode(buffer)
                     }
-                    val context = HologramContext.STREAM_CODE.decode(buffer)
+                    val context = HologramWorldContext.STREAM_CODE.decode(buffer)
                     return ComponentRequestDataPayload(uuid, additionDataTag, providers.unsafeCast(), context)
                 }
 
@@ -51,7 +49,7 @@ class ComponentRequestDataPayload<T : HologramContext>(
                             buffer, provider as ComponentProvider<*, *>
                         )
                     }
-                    HologramContext.STREAM_CODE.encode(buffer, value.context)
+                    HologramWorldContext.STREAM_CODE.encode(buffer, value.context)
                 }
             }
         val HANDLE = object : IPayloadHandler<ComponentRequestDataPayload<*>> {

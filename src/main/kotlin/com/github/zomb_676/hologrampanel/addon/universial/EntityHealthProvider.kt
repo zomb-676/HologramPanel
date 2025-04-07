@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity
 
 data object EntityHealthProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
     override fun appendComponent(
+        data: LivingEntity,
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
     ) {

@@ -6,7 +6,6 @@ import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.IgnorePacketException
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.UUIDUtil
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.util.Mth
@@ -17,7 +16,6 @@ import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
 import net.neoforged.neoforge.server.ServerLifecycleHooks
-import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3f
 import org.joml.Vector3fc
 import java.util.*
@@ -28,7 +26,7 @@ import kotlin.jvm.optionals.getOrNull
  */
 class EntityHologramContext(
     private val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
-) : HologramContext {
+) : HologramWorldContext {
     private var remember = Remember.create(this)
 
     /**
@@ -47,8 +45,6 @@ class EntityHologramContext(
     override fun getLevel(): Level = player.level()
 
     override fun getPlayer(): Player = player
-
-    override fun getLogicSide(): DistType = DistType.from(getLevel())
 
     override fun hologramCenterPosition(): Vector3fc =
         Vector3f(entity.x.toFloat(), entity.y.toFloat() + (entity.bbHeight), entity.z.toFloat())

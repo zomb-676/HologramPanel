@@ -37,7 +37,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
     }
 
     override fun appendComponent(
-        builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
+        data: BlockEntity, builder: HologramWidgetBuilder<BlockHologramContext>, displayType: DisplayType
     ) {
         val context = builder.context
         val remember = builder.context.getRememberData()
@@ -69,7 +69,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_block")
 
-    override fun appliesTo(
+    override fun appliesToByType(
         context: BlockHologramContext, check: BlockEntity
     ): Boolean {
         val level = context.getLevel()

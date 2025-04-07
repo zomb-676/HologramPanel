@@ -8,6 +8,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.payload.ComponentRequestDataPayload
 import com.github.zomb_676.hologrampanel.payload.ComponentResponseDataPayload
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
@@ -35,7 +36,7 @@ object DataQueryManager {
 
         fun syncCount() = syncs.size
 
-        fun <T : HologramContext> query(
+        fun <T : HologramWorldContext> query(
             widget: DynamicBuildWidget<T>,
             additionDataTag: CompoundTag,
             providers: List<ServerDataProvider<T, *>>,
@@ -95,7 +96,7 @@ object DataQueryManager {
         fun syncCountForPlayer(serverPlayer: ServerPlayer) =
             syncs[serverPlayer]?.size ?: 0
 
-        fun <T : HologramContext> create(player: ServerPlayer, payload: ComponentRequestDataPayload<T>) {
+        fun <T : HologramWorldContext> create(player: ServerPlayer, payload: ComponentRequestDataPayload<T>) {
             syncs.computeIfAbsent(player) { mutableMapOf() }[payload.uuid] = (payload)
         }
 
@@ -158,7 +159,7 @@ object DataQueryManager {
             return Math.toDegrees(angleInRadius.toDouble())
         }
 
-        private fun <T : HologramContext> append(payload: ComponentRequestDataPayload<T>, tag: ImmutableMap.Builder<ComponentProvider<*, *>, CompoundTag>): Boolean {
+        private fun <T : HologramWorldContext> append(payload: ComponentRequestDataPayload<T>, tag: ImmutableMap.Builder<ComponentProvider<*, *>, CompoundTag>): Boolean {
             var changed = false
             payload.providers.forEach { provider ->
                 val addTag = CompoundTag()

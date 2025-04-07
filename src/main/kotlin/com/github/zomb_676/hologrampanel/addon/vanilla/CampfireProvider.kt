@@ -8,15 +8,11 @@ import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
-import io.netty.buffer.ByteBuf
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.CampfireBlock
 import net.minecraft.world.level.block.entity.CampfireBlockEntity
-import org.apache.http.entity.ByteArrayEntity
 import java.util.Arrays
 
 data object CampfireProvider : ServerDataProvider<BlockHologramContext, CampfireBlock> {
@@ -41,6 +37,7 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
     }
 
     override fun appendComponent(
+        data: CampfireBlock,
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
     ) {

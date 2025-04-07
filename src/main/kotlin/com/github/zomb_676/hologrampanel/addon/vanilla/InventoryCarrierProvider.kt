@@ -36,6 +36,7 @@ data object InventoryCarrierProvider : ServerDataProvider<EntityHologramContext,
     }
 
     override fun appendComponent(
+        data: InventoryCarrier,
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
     ) {

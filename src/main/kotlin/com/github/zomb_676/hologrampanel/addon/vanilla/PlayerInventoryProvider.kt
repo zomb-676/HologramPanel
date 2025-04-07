@@ -21,10 +21,11 @@ object PlayerInventoryProvider : ServerDataProvider<EntityHologramContext, Playe
     }
 
     override fun appendComponent(
+        data: Player,
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
     ) {
-        return UniversalContainerEntityProvider.appendComponent(builder, displayType)
+        return UniversalContainerEntityProvider.appendComponent(data, builder, displayType)
     }
 
     override fun targetClass(): Class<Player> = Player::class.java

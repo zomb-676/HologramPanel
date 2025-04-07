@@ -81,8 +81,8 @@ neoForge {
             // "REGISTRYDUMP": For getting the contents of all registries.
             systemProperty 'forge.logging.markers', 'REGISTRIES'
 
-            jvmArguments.add("-Dmixin.debug=true")
-            jvmArguments.add("-Dmixin.debug.export=true")
+//            jvmArguments.add("-Dmixin.debug=true")
+//            jvmArguments.add("-Dmixin.debug.export=true")
 
             // Recommended logging level for the console
             // You can set various levels here.
@@ -120,7 +120,7 @@ dependencies {
     jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10"))
     additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:2.1.10"
 
-    runtimeOnly("curse.maven:jade-324717:6170888")
+//    runtimeOnly("curse.maven:jade-324717:6170888")
     compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.800")
 
     runtimeOnly("icyllis.modernui:ModernUI-Core:${modernui_core_version}", modernUIExcludes)

@@ -10,6 +10,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -138,7 +139,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         }.unsafeCast()
     }
 
-    class OrdinarySingle<T : HologramContext>(
+    class OrdinarySingle<T : HologramWorldContext>(
         provider: ComponentProvider<T, *>, element: IRenderElement, identityName: String
     ) : Single<T>(provider, listOf(element), identityName)
 

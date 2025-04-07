@@ -26,6 +26,7 @@ data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBl
     }
 
     override fun appendComponent(
+        data: JukeboxBlock,
         builder: HologramWidgetBuilder<BlockHologramContext>,
         displayType: DisplayType
     ) {

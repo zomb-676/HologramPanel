@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.RayTraceHelper
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
@@ -51,9 +51,9 @@ object PopupManager {
     }
 
     private fun tryAdd(
-        context: HologramContext,
+        context: HologramWorldContext,
         displayType: DisplayType,
-        ticket: List<HologramTicket<HologramContext>>
+        ticket: List<HologramTicket<HologramWorldContext>>
     ): HologramRenderState? {
         val widget = RayTraceHelper.createHologramWidget(context, displayType) ?: return null
         return HologramManager.tryAddWidget(widget, context, DisplayType.NORMAL, ticket)

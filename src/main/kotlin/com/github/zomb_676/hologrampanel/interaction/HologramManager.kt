@@ -5,7 +5,7 @@ import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramTicket
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.JomlMath
@@ -42,7 +42,7 @@ object HologramManager {
 
     fun tryAddWidget(
         widget: HologramWidget,
-        context: HologramContext,
+        context: HologramWorldContext,
         displayType: DisplayType,
         ticket: List<HologramTicket<*>>,
     ): HologramRenderState? {

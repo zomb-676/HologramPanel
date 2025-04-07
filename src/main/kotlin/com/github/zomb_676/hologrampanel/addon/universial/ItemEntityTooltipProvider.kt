@@ -15,6 +15,7 @@ import net.minecraft.world.item.TooltipFlag
 
 data object ItemEntityTooltipProvider : ComponentProvider<EntityHologramContext, ItemEntity> {
     override fun appendComponent(
+        data: ItemEntity,
         builder: HologramWidgetBuilder<EntityHologramContext>,
         displayType: DisplayType
     ) {

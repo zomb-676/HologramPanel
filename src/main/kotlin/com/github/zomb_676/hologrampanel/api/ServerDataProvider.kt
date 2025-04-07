@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.api
 
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import net.minecraft.nbt.CompoundTag
 
 /**

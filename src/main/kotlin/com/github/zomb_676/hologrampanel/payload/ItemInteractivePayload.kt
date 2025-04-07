@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import net.minecraft.core.UUIDUtil
 import net.minecraft.network.RegistryFriendlyByteBuf
@@ -41,7 +42,7 @@ class ItemInteractivePayload(
             ByteBufCodecs.VAR_INT, ItemInteractivePayload::count,
             ByteBufCodecs.BOOL, ItemInteractivePayload::take,
             ByteBufCodecs.INT, ItemInteractivePayload::targetSlot,
-            HologramContext.STREAM_CODE, ItemInteractivePayload::context,
+            HologramWorldContext.STREAM_CODE, ItemInteractivePayload::context,
             UUIDUtil.STREAM_CODEC, ItemInteractivePayload::syncUUID,
             ::ItemInteractivePayload
         )

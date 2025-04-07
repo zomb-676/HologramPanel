@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.util
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.HologramWorldContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
