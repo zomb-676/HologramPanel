@@ -22,10 +22,29 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 
 object HologramManager {
+    /**
+     * mapping from [HologramContext.getIdentityObject] to [HologramWidget]
+     */
     private val widgets = mutableMapOf<Any, HologramWidget>()
+
+    /**
+     * mapping from [HologramWidget] to [HologramRenderState]
+     */
     internal val states = mutableMapOf<HologramWidget, HologramRenderState>()
+
+    /**
+     * the widget that is looking
+     */
     private var lookingWidget: HologramRenderState? = null
+
+    /**
+     * the entry that is interacted
+     */
     private var interactiveTarget: InteractiveEntry? = null
+
+    /**
+     * the entry that should response collapse operation
+     */
     private var collapseTarget: HologramWidgetComponent.Group<*>? = null
 
     fun clearAllHologram() {
@@ -36,10 +55,19 @@ object HologramManager {
 
     private var needArrange = false
 
+    /**
+     * check via [HologramContext.getIdentityObject]
+     */
     fun checkIdentityExist(any: Any): Boolean {
         return widgets.containsKey(any)
     }
 
+    /**
+     * @return not null if added success
+     *
+     * check if [HologramContext.getIdentityObject] exists
+     * update internal state and warp it as [HologramRenderState]
+     */
     fun tryAddWidget(
         widget: HologramWidget,
         context: HologramContext,
@@ -59,6 +87,11 @@ object HologramManager {
         return null
     }
 
+    /**
+     * trig Hologram by [HologramTicket.ByTickAfterNotSee]
+     *
+     * update [HologramRenderState], [lookingWidget], [interactiveTarget], [collapseTarget] and do render
+     */
     internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
         val context = RayTraceHelper.findTarget(32.0, partialTicks)
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
@@ -91,7 +124,6 @@ object HologramManager {
             val displayType = state.displayType
             val widgetSize = state.measure(displayType, style)
 
-            if (!state.viewVectorDegreeCheckPass(partialTicks)) return@forEach
             style.stack {
 
                 val screenPos = state.updateScreenPosition(partialTicks).equivalentSmooth(style)
@@ -109,17 +141,20 @@ object HologramManager {
                     Config.Client.renderMaxDistance.get()
                 ) * scaleValue
 
-                state.displayed = if (scale * widgetSize.width < 5 || scale * widgetSize.height < 3) {
-                    false
-                } else {
-                    state.setDisplaySize(scale)
-                    state.displayAreaInScreen()
+                if (scale * widgetSize.width < 5 || scale * widgetSize.height < 3) {
+                    state.displayed = false
+                    return@stack
                 }
+                state.setDisplayScale(scale)
+                style.scale(scale, scale)
+
+                style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
+
+                state.displayed = state.displayAreaInScreen(style.poseMatrix())
                 if (!state.displayed) return@stack
 
+                style.outline(state.displaySize, 0xffff00ff.toInt())
 
-                style.scale(scale, scale)
-                style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
                 style.fill(0, 0, widgetSize.width, widgetSize.height, 0x7fffffff)
 
                 val interactiveSet = this.getInteractiveTarget() != null
@@ -134,12 +169,16 @@ object HologramManager {
         }
         this.updateLookingAt()
 
-//        this.renderHologramStateTip(style, InteractionModeManager.getSelectedHologram(), style.contextColor, 5)
         this.renderHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), 8)
-//        this.renderHologramStateTip(style, InteractionModeManager.getFindCandidateHologram(), 0xff_efe4b0.toInt(), 11)
         profiler.pop()
     }
 
+    /**
+     * the tip line that indicates some HologramState that should be highlighted
+     *
+     * @param color the highlight line color
+     * @param baseOffset distance between Hologram and the highlight line
+     */
     private fun renderHologramStateTip(
         style: HologramStyle,
         target: HologramRenderState?,
@@ -151,13 +190,14 @@ object HologramManager {
         style.stack {
             val screenPos = target.centerScreenPos.equivalentSmooth(style)
 
-            val displayWidth = target.size.width * target.displayScale
-            val displayHeight = target.size.height * target.displayScale
+            val displayWidth = target.displaySize.width
+            val displayHeight = target.displaySize.height
 
-            val left = (screenPos.x - displayWidth / 2.0) - (baseOffset * target.displayScale)
-            val right = (screenPos.x + displayWidth / 2.0) + (baseOffset * target.displayScale)
-            val up = (screenPos.y - displayHeight / 2.0) - (baseOffset * target.displayScale)
-            val down = (screenPos.y + displayHeight / 2.0) + (baseOffset * target.displayScale)
+            val scaledOffset = baseOffset * target.displayScale
+            val left = (screenPos.x - displayWidth / 2.0) - scaledOffset
+            val right = (screenPos.x + displayWidth / 2.0) + scaledOffset
+            val up = (screenPos.y - displayHeight / 2.0) - scaledOffset
+            val down = (screenPos.y + displayHeight / 2.0) + scaledOffset
 
             val horizontalLength = (displayWidth * 0.2).toInt()
             val verticalLength = (displayHeight * 0.2).toInt()
@@ -194,6 +234,9 @@ object HologramManager {
         }
     }
 
+    /**
+     * find the widget that is looking
+     */
     private fun updateLookingAt() {
         val window: Window = Minecraft.getInstance().window
         val checkX = window.guiScaledWidth / 2
@@ -220,7 +263,7 @@ object HologramManager {
     }
 
     /**
-     * this will do all the staffs if a widget should be removed from client
+     * this will do all the staffs if a widget should be removed from the client side
      */
     fun remove(widget: HologramWidget) {
         val state = this.states.remove(widget)
@@ -265,8 +308,14 @@ object HologramManager {
         }
     }
 
+    /**
+     * the [HologramRenderState] by [HologramWidget]
+     */
     fun queryHologramState(widget: HologramWidget?): HologramRenderState? = states[widget]
 
+    /**
+     * the widget count that is in memory, used for statistics
+     */
     fun widgetCount(): Int = states.size
 
     fun submitInteractive(interactiveEntry: InteractiveEntry) {
