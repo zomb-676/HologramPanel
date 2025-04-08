@@ -4,6 +4,9 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
 
+/**
+ * the builder for [CycleSelector], use [buildScope]
+ */
 class CycleSelectorBuilder {
     class GroupEntryBuilder {
         val children: MutableList<CycleEntry> = mutableListOf()

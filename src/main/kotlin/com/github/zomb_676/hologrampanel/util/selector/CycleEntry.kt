@@ -3,6 +3,11 @@ package com.github.zomb_676.hologrampanel.util.selector
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 
+/**
+ * entry interface to define operation and render in [CycleSelector]
+ *
+ * not implementation this in mose case
+ */
 sealed interface CycleEntry {
     fun onClick(callback: SelectorCallback)
     fun onClose() {}

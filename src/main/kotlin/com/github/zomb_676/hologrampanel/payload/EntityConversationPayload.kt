@@ -20,6 +20,11 @@ import net.minecraft.world.level.Level
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 
+/**
+ * notify the client that a mob is converted into another
+ *
+ * notice that, due to many reasons, old and new entity can't be guaranteed to be existed at client side
+ */
 class EntityConversationPayload(val oldEntityID: Int, val newEntityID: Int, val level: ResourceKey<Level>) :
     CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<EntityConversationPayload> = TYPE

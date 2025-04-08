@@ -20,6 +20,14 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
+/**
+ * notify the sever to sync data to the client for [ServerDataProvider]
+ *
+ * @param uuid the [UUID] identify used during data sync
+ * @param additionDataTag correspond to [ServerDataProvider.additionInformationForServer]
+ * @param providers providers require sync
+ * @param context context object for the hologram
+ */
 class ComponentRequestDataPayload<T : HologramContext>(
     val uuid: UUID, val additionDataTag: CompoundTag, val providers: List<ServerDataProvider<T, *>>, val context: T
 ) : CustomPacketPayload {

@@ -13,6 +13,9 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
+/**
+ * notify the sever to stop the sync progress for a specific Hologram by [uuid]
+ */
 class SyncClosePayload(val uuid: UUID) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<SyncClosePayload> = TYPE
 

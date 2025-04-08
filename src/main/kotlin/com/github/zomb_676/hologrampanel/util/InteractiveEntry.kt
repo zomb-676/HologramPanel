@@ -11,6 +11,8 @@ import org.joml.Matrix4f
 import org.joml.Vector4f
 
 /**
+ * wrapper class, record required parameters for interact operations
+ *
  * @param interactiveSize coordinate based on measured
  * @param poseMatrix the matrix used to draw the interactive content, can be changed safely
  *

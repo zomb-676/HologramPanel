@@ -16,6 +16,13 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/**
+ * cycle selector for some convenience operations in game
+ *
+ * call [tryBegin] to trig a CycleSelector and [tryEnd] to close
+ *
+ * use [CycleSelectorBuilder] to builder the actual instance
+ */
 class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     /**

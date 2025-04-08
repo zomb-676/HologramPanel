@@ -10,6 +10,9 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 
+/**
+ * notify the servet to begin/end send statistics data to clinet
+ */
 class QueryDebugStatisticsPayload(val enable: Boolean) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<QueryDebugStatisticsPayload> = TYPE
 

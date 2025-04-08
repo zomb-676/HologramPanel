@@ -5,6 +5,9 @@ import com.google.common.cache.CacheBuilder
 import java.util.concurrent.TimeUnit
 import java.util.function.BiPredicate
 
+/**
+ * search and cache a mapping from [Class] to [T] by the Inherit Tree
+ */
 class InheritSearcher<T> {
     /**
      * use a cache mapping actual type to all available providers, already considering Inherit Tree
