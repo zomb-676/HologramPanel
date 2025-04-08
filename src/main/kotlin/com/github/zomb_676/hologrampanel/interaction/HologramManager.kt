@@ -122,12 +122,21 @@ object HologramManager {
                 return@forEach
             }
             val displayType = state.displayType
+            //measure size
+            profiler.push("measure")
             val widgetSize = state.measure(displayType, style)
+            profiler.pop()
 
+            //clip hologram at back
+            if (!state.viewVectorDegreeCheckPass(partialTicks)) {
+                state.displayed = false
+                return@forEach
+            }
             style.stack {
-
+                //calculate screen position by world position
                 val screenPos = state.updateScreenPosition(partialTicks).equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
+                //change scale according to distance
                 val distance = state.distanceToCamera(partialTicks)
 
                 fun calculateScale(distance: Double, start: Double, end: Double): Double = when {
@@ -141,6 +150,7 @@ object HologramManager {
                     Config.Client.renderMaxDistance.get()
                 ) * scaleValue
 
+                //skip tp small widget
                 if (scale * widgetSize.width < 5 || scale * widgetSize.height < 3) {
                     state.displayed = false
                     return@stack
@@ -148,17 +158,20 @@ object HologramManager {
                 state.setDisplayScale(scale)
                 style.scale(scale, scale)
 
+                //anchored by hologram's left-up
                 style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
 
+                //check if any part in screen
                 state.displayed = state.displayAreaInScreen(style.poseMatrix())
                 if (!state.displayed) return@stack
 
-                style.outline(state.displaySize, 0xffff00ff.toInt())
-
+                //hologram background
                 style.fill(0, 0, widgetSize.width, widgetSize.height, 0x7fffffff)
 
+                //check if interact submitted during render
                 val interactiveSet = this.getInteractiveTarget() != null
                 style.stack {
+                    //do actual render
                     widget.render(state, style, displayType, partialTicks)
                 }
                 val currentInteractive = this.getInteractiveTarget()

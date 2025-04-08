@@ -33,7 +33,7 @@
   "hologram_panel.configuration.popup_distance": "pop up scan radius",
   "hologram_panel.configuration.popup_distance.tooltip": "measured in block distance",
 
-  "hologram_panel.configuration.popup_all_nearby_entity": "pop up all nearby distance",
+  "hologram_panel.configuration.popup_all_nearby_entity": "pop up all nearby entities",
   "hologram_panel.configuration.popup_all_nearby_entity.tooltip": "enable for entities",
 
   "hologram_panel.configuration.popup_all_nearby_block": "pop up all nearby blocks",

@@ -129,6 +129,28 @@ class HologramRenderState(
     }
 
     /**
+     * clip Hologram that is at the back of the view
+     */
+    fun viewVectorDegreeCheckPass(partialTick: Float): Boolean {
+        val camera = Minecraft.getInstance().gameRenderer.mainCamera
+        val viewVector = camera.lookVector
+        val cameraPosition = camera.position
+        val sourcePosition = this.sourcePosition(partialTick)
+        val sourceVector = Vector3f(
+            (sourcePosition.x() - cameraPosition.x).toFloat(),
+            (sourcePosition.y() - cameraPosition.y).toFloat(),
+            (sourcePosition.z() - cameraPosition.z).toFloat()
+        ).normalize()
+
+        val dot = viewVector.dot(sourceVector)
+        val angleInRadius = JomlMath.acos(dot)
+        val angel = JomlMath.toDegrees(angleInRadius)
+        val pass = angel < 80f
+        this.displayed = pass
+        return pass
+    }
+
+    /**
      * update [displaySize]
      *
      * @return if the current widget has any part in the screen
