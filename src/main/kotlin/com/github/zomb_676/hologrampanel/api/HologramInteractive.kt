@@ -1,30 +1,83 @@
 package com.github.zomb_676.hologrampanel.api
 
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager.Key
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager.MouseButton
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager.MouseScroll
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.Size
 import net.minecraft.client.player.LocalPlayer
-import net.neoforged.neoforge.client.event.InputEvent
-import org.jetbrains.annotations.ApiStatus
+import net.minecraft.world.entity.player.Player
 
 interface HologramInteractive {
     /**
-     * @return true will consume the input
+     * @param data mouse related operation data
+     * @param interactiveSize the size the interactive target that takes
+     * @param mouseX mouse position related to left-up of interactive target
+     * @param mouseY mouse position related to left-up of interactive target
+     *
+     * @return true will consume the input, will prevent [net.neoforged.neoforge.client.event.InputEvent.MouseButton]
      */
     fun onMouseClick(player: LocalPlayer, data: MouseButton, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean =
         false
 
     /**
-     * @return true will consume the input
+     * @param data mouse related operation data
+     * @param interactiveSize the size the interactive target that takes
+     * @param mouseX mouse position related to left-up of interactive target
+     * @param mouseY mouse position related to left-up of interactive target
+     *
+     * @return true will consume the input, will prevent [net.neoforged.neoforge.client.event.InputEvent.MouseScrollingEvent]
      */
     fun onMouseScroll(player: LocalPlayer, data: MouseScroll, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean =
         false
 
     /**
+     * @param data mouse related operation data
+     * @param interactiveSize the size the interactive target that takes
+     * @param mouseX mouse position related to left-up of interactive target
+     * @param mouseY mouse position related to left-up of interactive target
+     *
      * @return true will consume the input
      */
     fun onKey(player: LocalPlayer, data: Key, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean = false
 
+    /**
+     * this is called when a drag begin operation happens
+     *
+     * @return null means not trig drag
+     */
+    fun onTrigDrag(
+        player: Player,
+        data: Key,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ): HologramInteractionManager.DragDataContext<*>? = null
+
+    /**
+     * this is called when the drag data move over the interactive target
+     */
+    fun onDragPass(dragDataContext: HologramInteractionManager.DragDataContext<*>) {
+
+    }
+
+    /**
+     * this is called when mouse released over the interactive target, call [HologramInteractionManager.DragDataContext.consumeDrag]
+     */
+    fun onDragTransform(dragDataContext: HologramInteractionManager.DragDataContext<*>) {
+
+    }
+
+    /**
+     * this is called when mouse is over this, used to render some tips
+     *
+     * @param renderInteractiveHint a flag that set by user to decide to render a hint or not
+     * this function is called not take this flag into consideration, you can skip render something
+     * that is not important when the flag is true
+     */
     fun renderInteractive(
         style: HologramStyle,
         context: HologramContext,
@@ -35,38 +88,5 @@ interface HologramInteractive {
         partialTicks: Float,
         renderInteractiveHint: Boolean
     ) {
-    }
-
-    data class Key(val key: Int, val scanCode: Int, val action: Int, val modifiers: Int) {
-        companion object {
-            @ApiStatus.Internal
-            internal fun create(event: InputEvent.Key): Key = Key(event.key, event.scanCode, event.action, event.modifiers)
-        }
-    }
-
-    data class MouseScroll(
-        val scrollDeltaX: Double,
-        val scrollDeltaY: Double,
-        val mouseX: Double,
-        val mouseY: Double,
-        val leftDown: Boolean,
-        val middleDown: Boolean,
-        val rightDown: Boolean,
-    ) {
-        companion object {
-            @ApiStatus.Internal
-            internal fun create(event: InputEvent.MouseScrollingEvent): MouseScroll {
-                return MouseScroll(
-                    event.scrollDeltaX, event.scrollDeltaY, event.mouseX, event.mouseY, event.isLeftDown, event.isMiddleDown, event.isRightDown
-                )
-            }
-        }
-    }
-
-    data class MouseButton(val button: Int, val action: Int, val modifiers: Int) {
-        companion object {
-            @ApiStatus.Internal
-            internal fun create(event: InputEvent.MouseButton): MouseButton = MouseButton(event.button, event.action, event.modifiers)
-        }
     }
 }

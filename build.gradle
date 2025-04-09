@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
     id 'idea'
     id 'net.neoforged.moddev' version '2.0.78'
-    id 'org.jetbrains.kotlin.jvm' version '2.1.10'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.20'
 }
 
 version = "$minecraft_version-$mod_version"
@@ -116,9 +116,9 @@ Closure<ModuleDependency> modernUIExcludes = { ModuleDependency dep ->
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
-    jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10"))
-    additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:2.1.10"
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")
+    jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.20"))
+    additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
 
     runtimeOnly("curse.maven:jade-324717:6170888")
     compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.800")

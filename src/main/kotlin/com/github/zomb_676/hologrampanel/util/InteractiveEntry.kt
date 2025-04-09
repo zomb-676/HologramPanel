@@ -2,11 +2,12 @@ package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import net.minecraft.client.Minecraft
+import net.minecraft.client.player.LocalPlayer
 import net.minecraft.network.chat.Component
-import net.neoforged.neoforge.client.event.InputEvent
 import org.joml.Matrix4f
 import org.joml.Vector4f
 
@@ -36,37 +37,16 @@ class InteractiveEntry(
         this.mouseY = vector.y.toInt()
     }
 
-    fun onKey(event: InputEvent.Key): Boolean {
-        if (Config.Server.allowHologramInteractive.get()) {
-            val player = Minecraft.getInstance().player ?: return false
-            val key = HologramInteractive.Key.create(event)
-            return interactive.onKey(player, key, context, interactiveSize, mouseX, mouseY)
-        } else {
-            Minecraft.getInstance().gui.setOverlayMessage(FORBIDEN_COMPONENT, false)
-            return true
-        }
+    fun onKey(data: HologramInteractionManager.Key, player: LocalPlayer): Boolean {
+        return interactive.onKey(player, data, context, interactiveSize, mouseX, mouseY)
     }
 
-    fun onMouseScroll(event: InputEvent.MouseScrollingEvent): Boolean {
-        if (Config.Server.allowHologramInteractive.get()) {
-            val player = Minecraft.getInstance().player ?: return false
-            val mouseScroll = HologramInteractive.MouseScroll.create(event)
-            return interactive.onMouseScroll(player, mouseScroll, context, interactiveSize, mouseX, mouseY)
-        } else {
-            Minecraft.getInstance().gui.setOverlayMessage(FORBIDEN_COMPONENT, false)
-            return true
-        }
+    fun onMouseScroll(data: HologramInteractionManager.MouseScroll, player: LocalPlayer): Boolean {
+        return interactive.onMouseScroll(player, data, context, interactiveSize, mouseX, mouseY)
     }
 
-    fun onMouseClick(event: InputEvent.MouseButton): Boolean {
-        if (Config.Server.allowHologramInteractive.get()) {
-            val player = Minecraft.getInstance().player ?: return false
-            val button = HologramInteractive.MouseButton.create(event)
-            return interactive.onMouseClick(player, button, context, interactiveSize, mouseX, mouseY)
-        } else {
-            Minecraft.getInstance().gui.setOverlayMessage(FORBIDEN_COMPONENT, false)
-            return true
-        }
+    fun onMouseClick(data: HologramInteractionManager.MouseButton, player: LocalPlayer): Boolean {
+        return interactive.onMouseClick(player, data, context, interactiveSize, mouseX, mouseY)
     }
 
     fun renderInteractive(style: HologramStyle, widgetSize: Size, partialTicks: Float) {

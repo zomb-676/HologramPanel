@@ -7,11 +7,18 @@ import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import kotlin.math.max
 
+/**
+ * the basic interface for all Hologram component
+ */
 interface HologramWidgetComponent<T : Any> {
+
+    /**
+     * the size for content, not take padding, margin into consideration
+     */
     val contentSize: Size
 
     /**
-     * set by [Group.measureSize]
+     * set by [Group.measureSize], bigger than [contentSize], take padding and margin into consideration or layout
      */
     val visualSize: Size
 
@@ -20,6 +27,14 @@ interface HologramWidgetComponent<T : Any> {
      */
     fun measureSize(target: T, style: HologramStyle, displayType: DisplayType): Size
 
+    /**
+     * do actual render, implementation should move [com.mojang.blaze3d.vertex.PoseStack]
+     * at make left-top as coordinate as origin point (0,0)
+     *
+     * area next is [contentSize], should have already taken layout into consideration
+     *
+     * the implementation of the method should only do [contentSize] render
+     */
     fun render(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float)
 
     fun isGroup(): Boolean
@@ -30,9 +45,14 @@ interface HologramWidgetComponent<T : Any> {
         final override var visualSize: Size = contentSize
             internal set
 
-        override fun isGroup(): Boolean = false
+        final override fun isGroup(): Boolean = false
     }
 
+    /**
+     * the group has description area
+     *
+     * @property collapse if the widget is collapsed or not
+     */
     abstract class Group<T : Any>(
         val isGlobal: Boolean,
         open val children: List<HologramWidgetComponent<T>>,
@@ -44,8 +64,12 @@ interface HologramWidgetComponent<T : Any> {
         final override var visualSize: Size = contentSize
             private set
 
-        override fun isGroup(): Boolean = true
+        final override fun isGroup(): Boolean = true
 
+        /**
+         * recursively measure size and addon padding by [HologramStyle.elementPadding]
+         * and cache the measured size
+         */
         final override fun measureSize(
             target: T, style: HologramStyle, displayType: DisplayType
         ): Size {
@@ -76,6 +100,9 @@ interface HologramWidgetComponent<T : Any> {
             return this.contentSize
         }
 
+        /**
+         * recursively render
+         */
         override fun render(
             target: T,
             style: HologramStyle,
@@ -128,15 +155,5 @@ interface HologramWidgetComponent<T : Any> {
         abstract fun descriptionSize(target: T, style: HologramStyle, displayType: DisplayType): Size
 
         abstract fun renderGroupDescription(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float)
-
-        fun traverseRecursively(code: (HologramWidgetComponent<T>) -> Unit) {
-            code.invoke(this)
-            for (child in this.children) {
-                when (child) {
-                    is Group<T> -> child.traverseRecursively(code)
-                    is Single<T> -> code.invoke(child)
-                }
-            }
-        }
     }
 }

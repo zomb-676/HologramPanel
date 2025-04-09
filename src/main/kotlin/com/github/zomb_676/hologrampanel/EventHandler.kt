@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.util.SearchBackend
@@ -141,11 +141,7 @@ object EventHandler {
                 HologramManager.trySwitchWidgetCollapse()
             }
 
-            val interactiveTarget = HologramManager.getInteractiveTarget()
-            if (interactiveTarget != null) {
-                val res = interactiveTarget.onKey(event)
-                if (res) return
-            }
+            HologramInteractionManager.onKey(event)
         }
 
         private fun onMouseScroll(event: InputEvent.MouseScrollingEvent) {
@@ -162,15 +158,8 @@ object EventHandler {
                 return
             }
 
-            val interactiveTarget = HologramManager.getInteractiveTarget()
-            if (interactiveTarget != null) {
-                Minecraft.getInstance().player ?: return
-                HologramInteractive.MouseScroll.create(event)
-                val res = interactiveTarget.onMouseScroll(event)
-                if (res) {
-                    event.isCanceled = true
-                    return
-                }
+            if (HologramInteractionManager.onMouseScroll(event)) {
+                event.isCanceled = true
             }
         }
 
@@ -186,15 +175,8 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (event.action == GLFW.GLFW_PRESS) {
-                val interactiveTarget = HologramManager.getInteractiveTarget()
-                if (interactiveTarget != null) {
-                    val res = interactiveTarget.onMouseClick(event)
-                    if (res) {
-                        event.isCanceled = true
-                        return
-                    }
-                }
+            if (HologramInteractionManager.onMouseClick(event)) {
+                event.isCanceled = true
             }
         }
 

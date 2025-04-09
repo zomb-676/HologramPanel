@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ItemInteractivePayload
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -414,7 +415,7 @@ interface IRenderElement {
 
         override fun onMouseClick(
             player: LocalPlayer,
-            data: HologramInteractive.MouseButton,
+            data: HologramInteractionManager.MouseButton,
             context: HologramContext,
             interactiveSize: Size,
             mouseX: Int,
@@ -560,7 +561,7 @@ interface IRenderElement {
         ItemsElement(items, itemEachLine, addition) {
         override fun onMouseClick(
             player: LocalPlayer,
-            data: HologramInteractive.MouseButton,
+            data: HologramInteractionManager.MouseButton,
             context: HologramContext,
             interactiveSize: Size,
             mouseX: Int,

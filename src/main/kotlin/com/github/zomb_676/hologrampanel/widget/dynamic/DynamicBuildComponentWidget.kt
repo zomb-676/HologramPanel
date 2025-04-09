@@ -17,10 +17,17 @@ import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponen
 import net.minecraft.network.chat.Component
 import kotlin.math.max
 
+/**
+ * the actual usage, not store the instance of class across frames
+ * as they will be rebuilt when data changes
+ */
 sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidgetComponent<T> {
     fun getProvider(): ComponentProvider<T, *>
     fun getIdentityName(): String
 
+    /**
+     * is made up of [IRenderElement], layout in a horizontal way
+     */
     open class Single<T : HologramContext>(
         private val provider: ComponentProvider<T, *>, val elements: List<IRenderElement>, private val identityName: String
     ) : HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
@@ -142,6 +149,9 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         provider: ComponentProvider<T, *>, element: IRenderElement, identityName: String
     ) : Single<T>(provider, listOf(element), identityName)
 
+    /**
+     * the group has an addition [Single] for description usages
+     */
     open class Group<T : HologramContext>(
         isGlobal: Boolean,
         private val provider: ComponentProvider<T, *>,
@@ -168,6 +178,9 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         }
     }
 
+    /**
+     * a lazy loaded and collapsed by default variant of [Group]
+     */
     class LazyGroup<T : HologramContext>(
         provider: ComponentProvider<T, *>,
         descriptionWidget: Single<T>,
@@ -194,17 +207,5 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             } else {
                 field
             }
-
-        override fun descriptionSize(target: T, style: HologramStyle, displayType: DisplayType): Size {
-            return super.descriptionSize(target, style, displayType)
-        }
-
-        override fun renderGroupDescription(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
-            super.renderGroupDescription(target, style, displayType, partialTicks)
-        }
-
-        override fun render(target: T, style: HologramStyle, displayType: DisplayType, partialTicks: Float) {
-            super.render(target, style, displayType, partialTicks)
-        }
     }
 }
