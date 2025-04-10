@@ -59,7 +59,7 @@ interface HologramStyle {
     fun moveAfterDrawGroupOutline(descriptionSize: Size)
     fun moveAfterDrawSingleOutline()
 
-    fun outlineSelected(size: Size)
+    fun drawOutlineSelected(size: Size)
 
     @EfficientConst
     fun elementPadding(): Int
@@ -394,7 +394,7 @@ interface HologramStyle {
 
         override var contextColor: Int = (0xff000000).toInt()
 
-        override fun outlineSelected(size: Size) {
+        override fun drawOutlineSelected(size: Size) {
             outline(size, SELECTED_COLOR)
         }
 
@@ -421,7 +421,7 @@ interface HologramStyle {
         override fun drawSingleOutline(size: Size, color: Int) {
             if (this.checkMouseInSize(size)) {
                 stack {
-                    outlineSelected(size)
+                    drawOutlineSelected(size)
                 }
             }
         }

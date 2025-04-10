@@ -1,16 +1,17 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.payload.DebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.payload.QueryDebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.FontBufferSource
-import com.github.zomb_676.hologrampanel.util.glDebugStack
+import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
+import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -31,6 +32,26 @@ import org.joml.Vector3fc
 import kotlin.math.max
 
 object DebugHelper {
+    private class DrawHelper(val guiGraphics: GuiGraphics, val padding: Int = 2) {
+        private val font = Minecraft.getInstance().font
+        private var x: Int = 0
+        private var y: Int = 0
+        private var xBegin = 0
+        private var yStep = 0
+        fun drawString(str: String): DrawHelper {
+            guiGraphics.drawString(font, str, x, y, -1)
+            x += font.width(str)
+            yStep = max(yStep, font.lineHeight)
+            return this
+        }
+
+        fun nextLine() {
+            x = xBegin
+            y += yStep + padding
+            yStep = 0
+        }
+    }
+
     object Client {
         private val UPDATE_TINE: Int get() = max(Config.Server.updateInternal.get(), 20)
         private const val POPUP_TIME = 30
@@ -173,24 +194,40 @@ object DebugHelper {
             override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
-                val font = Minecraft.getInstance().font
-                guiGraphics.drawString(font, "syncRate:${Config.Server.updateInternal.get()}Tick", 10, 10, -1)
+                val drawHelper = DrawHelper(guiGraphics)
+                drawHelper.drawString("syncRate:${Config.Server.updateInternal.get()}Tick").nextLine()
                 if (Config.Client.renderNetworkDebugInfo.get()) {
-                    guiGraphics.drawString(font, "synced data size:${totalTickDataSize()}, count:${queryUpdateData.size}", 10, 20, -1)
+                    drawHelper.drawString("synced data size:${totalTickDataSize()}, count:${queryUpdateData.size}").nextLine()
                 } else {
-                    guiGraphics.drawString(font, "synced data size: require enable renderNetworkDebugInfo", 10, 20, -1)
+                    drawHelper.drawString("synced data size: require enable renderNetworkDebugInfo").nextLine()
                 }
-                guiGraphics.drawString(font, "current widget count : ${HologramManager.widgetCount()}", 10, 30, -1)
-                guiGraphics.drawString(font, querySyncString(), 10, 40, -1)
-                guiGraphics.drawString(font, "displayed:${HologramManager.states.values.count { it.displayed }}", 10, 50, -1)
-                guiGraphics.drawString(font, "collapseTarget:${HologramManager.getCollapseTarget()}", 10, 60, -1)
-                guiGraphics.drawString(font, "lookingRenderElement:${lookingRenderElement}", 10, 70, -1)
+                drawHelper.drawString("current widget count : ${HologramManager.widgetCount()}").nextLine()
+                drawHelper.drawString(querySyncString()).nextLine()
+                drawHelper.drawString("displayed:${HologramManager.states.values.count { it.displayed }}").nextLine()
+                drawHelper.drawString("collapseTarget:${HologramManager.getCollapseTarget()}").nextLine()
+                drawHelper.drawString("lookingRenderElement:${lookingRenderElement}").nextLine()
                 val enable = Config.Server.allowHologramInteractive.get()
-                guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}, enable:$enable", 10, 80, -1)
-                val lookingHologram = HologramManager.getLookingHologram() ?: return
-                guiGraphics.drawString(font, "lookingHologramContext:${lookingHologram.context}", 10, 90, -1)
-                val tickets = lookingHologram.hologramTicks.joinToString()
-                guiGraphics.drawString(font, "lookTicket:$tickets", 10, 100, -1)
+                drawHelper.drawString("interactiveTarget:${HologramManager.getInteractiveTarget()}, enable:$enable").nextLine()
+                when (val lookingHologram = HologramManager.getLookingHologram()) {
+                    is HologramRenderState -> {
+                        drawHelper.drawString("lookingHologramContext:${lookingHologram.context}").nextLine()
+                        val tickets = lookingHologram.hologramTicks.joinToString()
+                        drawHelper.drawString("lookTicket:$tickets").nextLine()
+                    }
+                }
+                when (val draggingSource = HologramInteractionManager.draggingSource) {
+                    is InteractiveEntry -> {
+                        drawHelper.drawString("draggingSource:$draggingSource").nextLine()
+                    }
+                }
+                when (val dragContext = HologramInteractionManager.dragData) {
+                    is HologramInteractionManager.DragDataContext<*> -> {
+                        drawHelper.drawString(
+                            "dragContext:(data:${dragContext.getDragData()},valid:${dragContext.isStillValid()}," +
+                                    "type:${dragContext.getDragDataClass()?.simpleName})"
+                        ).nextLine()
+                    }
+                }
             }
         }
 

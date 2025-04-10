@@ -27,6 +27,4 @@ abstract class HologramComponentWidget<T : Any>(val target: T, val component: Ho
         return this.component.visualSize
     }
 
-    override fun onSelected() {}
-    override fun onDisSelected() {}
 }

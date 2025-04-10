@@ -34,7 +34,7 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
         if (energyMax > 0) {
             builder.single("energy") {
                 progress.current(energyStored).max(energyMax)
-                energyBar(progress)
+                energyBar("block_energy", progress)
             }
         }
     }

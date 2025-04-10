@@ -116,7 +116,7 @@ interface HologramWidgetComponent<T : Any> {
             if (style.checkMouseInSize(this.visualSize)) {
                 style.stack {
                     style.pose().translate(0f, 0f, 100f)
-                    style.outlineSelected(this.visualSize)
+                    style.drawOutlineSelected(this.visualSize)
                 }
             }
             style.drawGroupOutline(this.isGlobal, this.visualSize, descriptionSize, this.collapse)

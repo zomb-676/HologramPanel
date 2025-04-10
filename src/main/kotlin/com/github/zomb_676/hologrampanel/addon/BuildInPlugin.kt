@@ -54,8 +54,8 @@ class BuildInPlugin : IHologramPlugin {
             ) {
                 val context = builder.context
                 builder.single("default_block") {
-                    item(context.getBlockState().block.asItem()).setScale(0.75)
-                    component(context.getBlockState().block.name).setScale(1.5)
+                    item("block_logo", context.getBlockState().block.asItem()).setScale(0.75)
+                    component("block_name", context.getBlockState().block.name).setScale(1.5)
                 }
             }
 
@@ -72,16 +72,16 @@ class BuildInPlugin : IHologramPlugin {
                 val context = builder.context
                 builder.single("default_entity") {
                     val entity = context.getEntity()
-                    entity(entity)
-                    vertical {
+                    entity("entity", entity)
+                    vertical("name_container") {
                         val typeName = entity.type.description
-                        component(typeName)
+                        component("type_name", typeName)
                         if (entity.hasCustomName()) {
-                            component(entity.customName!!).setScale(0.8)
+                            component("custom_name", entity.customName!!).setScale(0.8)
                         } else {
                             val name = entity.name
                             if (name !== typeName && name.string != typeName.string) {
-                                component(name)
+                                component("name", name)
                             }
                         }
                     }

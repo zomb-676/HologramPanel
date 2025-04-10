@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.AbstractFurnaceBlock
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
-import java.util.Arrays
+import java.util.*
 
 data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
 
@@ -38,12 +38,12 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         progressBar.current(cookingTimer).max(cookingTotalTime)
 
         builder.single("working") {
-            itemInteractive(item0, 0)
-            itemInteractive(item1, 1)
+            itemInteractive("furnace_input_0", item0, 0)
+            itemInteractive("furnace_input_1", item1, 1)
             if (litTimeRemaining != 0) {
-                workingArrowProgress(progressBar).setPositionOffset(1, 2)
+                workingArrowProgress("furnace_progress", progressBar).setPositionOffset(1, 2)
             }
-            if (!item2.isEmpty) itemInteractive(item2, 2)
+            if (!item2.isEmpty) itemInteractive("furnace_output", item2, 2)
         }
     }
 

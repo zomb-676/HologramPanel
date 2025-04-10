@@ -88,7 +88,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         if (items.isNotEmpty()) {
             items.sortWith(Comparator.comparingInt { BuiltInRegistries.ITEM.getId(it.item) })
             builder.single("items") {
-                itemsInteractive(items)
+                itemsInteractive("container_items", items)
             }
         }
     }

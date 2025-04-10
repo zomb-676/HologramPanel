@@ -49,7 +49,7 @@ data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologram
         }
         if (items.isNotEmpty()) {
             builder.single("items") {
-                items(items)
+                items("entity_items", items)
             }
         }
     }

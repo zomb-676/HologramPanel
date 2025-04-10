@@ -72,9 +72,10 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
                 val effectTextures = Minecraft.getInstance().mobEffectTextures
                 data.forEachIndexed { index, effect ->
                     builder.single("effect_$index") {
-                        sprite(effectTextures.get(effect.effect)).setRenderSize(9, 9)
-                        component(getEffectName(effect))
+                        sprite("effect_texture", effectTextures.get(effect.effect)).setRenderSize(9, 9)
+                        component("effect_name", getEffectName(effect))
                         component(
+                            "effect_duration",
                             MobEffectUtil.formatDuration(
                                 effect,
                                 1.0f,

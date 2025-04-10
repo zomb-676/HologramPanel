@@ -50,7 +50,7 @@ data object InventoryCarrierProvider : ServerDataProvider<EntityHologramContext,
         }
         if (items.isNotEmpty()) {
             builder.single("items") {
-                items(items)
+                items("inv_carrier_items",items)
             }
         }
     }

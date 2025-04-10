@@ -25,7 +25,7 @@ data object CauldronBlockProvider : ComponentProvider<BlockHologramContext, Abst
             if (!fluidStack.isEmpty) {
                 progress.current(fluidStack.amount).max(cap.getTankCapacity(0))
                 builder.single("fluid") {
-                    fluid(progress, fluidStack.fluidType)
+                    fluid("cauldron_fluid",progress, fluidStack.fluidType)
                 }
             }
         }

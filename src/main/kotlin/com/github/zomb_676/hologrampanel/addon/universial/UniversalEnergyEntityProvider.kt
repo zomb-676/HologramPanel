@@ -33,7 +33,7 @@ data object UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramCon
         if (energyMax > 0) {
             builder.single("energy") {
                 progress.current(energyStored).max(energyMax)
-                energyBar(progress)
+                energyBar("entity_energy", progress)
             }
         }
     }

@@ -12,6 +12,8 @@ import net.minecraft.world.entity.player.Player
 
 interface HologramInteractive {
     /**
+     * only be called when [org.lwjgl.glfw.GLFW.GLFW_RELEASE] happened
+     *
      * @param data mouse related operation data
      * @param interactiveSize the size the interactive target that takes
      * @param mouseX mouse position related to left-up of interactive target
@@ -50,7 +52,6 @@ interface HologramInteractive {
      */
     fun onTrigDrag(
         player: Player,
-        data: Key,
         context: HologramContext,
         interactiveSize: Size,
         mouseX: Int,
@@ -60,14 +61,26 @@ interface HologramInteractive {
     /**
      * this is called when the drag data move over the interactive target
      */
-    fun onDragPass(dragDataContext: HologramInteractionManager.DragDataContext<*>) {
+    fun onDragPass(
+        dragDataContext: HologramInteractionManager.DragDataContext<*>,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ) {
 
     }
 
     /**
      * this is called when mouse released over the interactive target, call [HologramInteractionManager.DragDataContext.consumeDrag]
      */
-    fun onDragTransform(dragDataContext: HologramInteractionManager.DragDataContext<*>) {
+    fun onDragTransform(
+        dragDataContext: HologramInteractionManager.DragDataContext<*>,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ) {
 
     }
 

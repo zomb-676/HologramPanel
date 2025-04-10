@@ -2,7 +2,8 @@ package com.github.zomb_676.hologrampanel.util.selector
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.stack
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
+import com.github.zomb_676.hologrampanel.widget.element.ItemStackElement
+import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
@@ -167,13 +168,13 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
                 val builder = CycleSelectorBuilder()
                 this.instance = builder.buildScope {
                     repeat(5) { index ->
-                        add(IRenderElement.StringRenderElement(index.toString())) {
+                        add(ComponentRenderElement(index.toString())) {
                             Minecraft.getInstance().gui.chat.addMessage(Component.literal("$index"))
                         }
                     }
-                    addGroup(IRenderElement.ItemStackElement(false, ItemStack(Items.DIRT))) {
+                    addGroup(ItemStackElement(false, ItemStack(Items.DIRT))) {
                         repeat(5) { index ->
-                            add(IRenderElement.StringRenderElement("inner$index")) {
+                            add(ComponentRenderElement("inner$index")) {
                                 Minecraft.getInstance().gui.chat.addMessage(Component.literal("inner$index"))
                             }
                         }

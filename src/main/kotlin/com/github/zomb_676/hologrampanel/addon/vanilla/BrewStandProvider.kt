@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.BrewingStandBlock
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity
-import java.util.Arrays
+import java.util.*
 
 data object BrewStandProvider : ServerDataProvider<BlockHologramContext, BrewingStandBlock> {
 
@@ -49,18 +49,18 @@ data object BrewStandProvider : ServerDataProvider<BlockHologramContext, Brewing
         }
 
         builder.single("brew_state") {
-            itemInteractive(items[4], 4)
-            text("fuel:$fuel").setPositionOffset(0, 4)
+            itemInteractive("brew_items", items[4], 4)
+            text("brew_fuel", "fuel:$fuel").setPositionOffset(0, 4)
         }
         builder.single("brew_items") {
             if (brewTime > 0) {
                 progress.current(BREW_TOTAL_TIME - brewTime)
-                workingTorusProgress(progress).noCalculateSize().setScale(0.8)
+                workingTorusProgress("brew_progress", progress).noCalculateSize().setScale(0.8)
             }
-            itemInteractive(items[3], 3)
-            itemInteractive(items[0], 0)
-            itemInteractive(items[1], 1)
-            itemInteractive(items[2], 2)
+            itemInteractive("item3", items[3], 3)
+            itemInteractive("item0", items[0], 0)
+            itemInteractive("item1", items[1], 1)
+            itemInteractive("item2", items[2], 2)
         }
     }
 

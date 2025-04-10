@@ -3,23 +3,25 @@ package com.github.zomb_676.hologrampanel.interaction
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
+import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.lookingWidget
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.InteractiveEntry
-import com.github.zomb_676.hologrampanel.util.JomlMath
-import com.github.zomb_676.hologrampanel.util.profiler
-import com.github.zomb_676.hologrampanel.util.profilerStack
-import com.github.zomb_676.hologrampanel.util.stack
+import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
+import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import org.joml.Matrix4f
 
 object HologramManager {
     /**
@@ -183,6 +185,9 @@ object HologramManager {
         this.updateLookingAt()
 
         this.renderHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), 8)
+
+        HologramInteractionManager.renderTick()
+
         profiler.pop()
     }
 
@@ -331,8 +336,18 @@ object HologramManager {
      */
     fun widgetCount(): Int = states.size
 
-    fun submitInteractive(interactiveEntry: InteractiveEntry) {
-        this.interactiveTarget = interactiveEntry
+    /**
+     * @param size the size the interactive take
+     * @param hologramStyle query actual position from its matrix
+     */
+    fun <T> submitInteractive(
+        container: Any,
+        interactive: T,
+        context: HologramContext,
+        size: Size,
+        hologramStyle: HologramStyle
+    ) where T : HologramInteractive, T : RebuildValue<IRenderElement?> {
+        this.interactiveTarget = InteractiveEntry(container, interactive, context, size, Matrix4f(hologramStyle.poseMatrix()), this.interactiveTarget)
     }
 
     fun getInteractiveTarget(): InteractiveEntry? = this.interactiveTarget

@@ -14,31 +14,43 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
+import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent.Group
+import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent.Single
+import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
+import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
+import com.google.common.collect.ImmutableBiMap
 import net.minecraft.network.chat.Component
 import kotlin.math.max
 
 /**
- * the actual usage, not store the instance of class across frames
- * as they will be rebuilt when data changes
+ * the actual usage, not directly use the instance of class across frames
+ * as they will be rebuilt when data changes, use [getCurrent] or use property get delegate
  */
-sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidgetComponent<T> {
+sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidgetComponent<T>, RebuildValue<DynamicBuildComponentWidget<T>?> {
     fun getProvider(): ComponentProvider<T, *>
     fun getIdentityName(): String
 
     /**
-     * is made up of [IRenderElement], layout in a horizontal way
+     * should be called when the [DynamicBuildWidget] is removed
+     */
+    fun setNoNewReplace()
+    override fun getCurrent(): DynamicBuildComponentWidget<T>?
+
+    /**
+     * is made up of [com.github.zomb_676.hologrampanel.widget.element.IRenderElement], layout in a horizontal way
      */
     open class Single<T : HologramContext>(
-        private val provider: ComponentProvider<T, *>, val elements: List<IRenderElement>, private val identityName: String
+        private val provider: ComponentProvider<T, *>, val elements: ImmutableBiMap<IRenderElement, String>, private val identityName: String
     ) : HologramWidgetComponent.Single<T>(), DynamicBuildComponentWidget<T> {
         private var baseY: Int = 0
         private val padding = 1
+        private var current: Single<T>? = this
 
         override fun measureSize(target: T, style: HologramStyle, displayType: DisplayType): Size {
             var width = 0
             var height = 0
             var calculatedSizeElement = 0
-            this.elements.forEach {
+            this.elements.keys.forEach {
                 it.contentSize = it.measureContentSize(style)
                 val offset = it.getPositionOffset()
                 if (it.hasCalculateSize()) {
@@ -64,7 +76,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             if (baseY != 0) {
                 style.move(0, baseY)
             }
-            this.elements.forEach { element ->
+            this.elements.keys.forEach { element ->
                 val offset = element.getPositionOffset()
                 val size = element.contentSize
                 style.stackIf(offset != ScreenPosition.ZERO, { style.move(offset) }) {
@@ -78,7 +90,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                                 }
                             }
                             if (element is HologramInteractive) {
-                                HologramManager.submitInteractive(InteractiveEntry.of(element, target, size, style))
+                                HologramManager.submitInteractive(this, element, target, size, style)
                             }
                         }
                         val addLayer = element.additionLayer()
@@ -95,12 +107,32 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
 
         override fun getProvider(): ComponentProvider<T, *> = provider
         override fun getIdentityName(): String = this.identityName
+
+        override fun getCurrent(): Single<T>? {
+            var current: Single<T> = current ?: return null
+            while (current != current.current) {
+                current = current.current ?: run {
+                    this.current = null
+                    return null
+                }
+            }
+            this.current = current
+            return current
+        }
+
+        fun setReplacedBy(newCurrent: Single<T>) {
+            this.current = newCurrent
+        }
+
+        override fun setNoNewReplace() {
+            this.current = null
+        }
     }
 
     companion object {
-        private val noActiveProvider = IRenderElement.StringRenderElement(Component.literal("No Active"))
-        private val noApplicableProvider = IRenderElement.StringRenderElement(Component.literal("No Applicable"))
-        private val requireServerDataElement = IRenderElement.StringRenderElement(Component.literal("Waiting Server Packet"))
+        private val noActiveProvider = ComponentRenderElement(Component.literal("No Active"))
+        private val noApplicableProvider = ComponentRenderElement(Component.literal("No Applicable"))
+        private val requireServerDataElement = ComponentRenderElement(Component.literal("Waiting Server Packet"))
 
         object NoActiveProvider {
             val block: Single<BlockHologramContext> = OrdinarySingle<BlockHologramContext>(
@@ -147,7 +179,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
 
     class OrdinarySingle<T : HologramContext>(
         provider: ComponentProvider<T, *>, element: IRenderElement, identityName: String
-    ) : Single<T>(provider, listOf(element), identityName)
+    ) : Single<T>(provider, ImmutableBiMap.of(element, identityName), identityName)
 
     /**
      * the group has an addition [Single] for description usages
@@ -160,6 +192,9 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
         private val identityName: String,
         collapse: Boolean
     ) : HologramWidgetComponent.Group<T>(isGlobal, children, collapse), DynamicBuildComponentWidget<T> {
+
+        private var current: Group<T>? = this
+
         override fun descriptionSize(
             target: T, style: HologramStyle, displayType: DisplayType
         ): Size = descriptionWidget.measureSize(target, style, displayType)
@@ -175,6 +210,26 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
 
         override fun toString(): String {
             return "Group(name='$identityName', visual:${this.visualSize}, content:${this.contentSize})"
+        }
+
+        override fun getCurrent(): Group<T>? {
+            var current: Group<T> = current ?: return null
+            while (current != current.current) {
+                current = current.current ?: run {
+                    this.current = null
+                    return null
+                }
+            }
+            this.current = current
+            return current
+        }
+
+        fun setReplacedBy(newCurrent: Group<T>) {
+            this.current = newCurrent
+        }
+
+        override fun setNoNewReplace() {
+            this.current = null
         }
     }
 

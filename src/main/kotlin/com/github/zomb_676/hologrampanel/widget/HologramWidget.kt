@@ -20,9 +20,6 @@ interface HologramWidget {
      */
     fun render(state: HologramRenderState, style: HologramStyle, displayType: DisplayType, partialTicks: Float)
 
-    fun onSelected() {}
-    fun onDisSelected() {}
-
     fun closeWidget() {
         HologramManager.remove(this)
         this.onRemove()
@@ -31,5 +28,8 @@ interface HologramWidget {
     fun onRemove() {}
     fun onAdd() {}
 
+    /**
+     * if the hologram only has ordinaryContent, we can skip render it to save performance
+     */
     fun hasNoneOrdinaryContent(): Boolean = true
 }
