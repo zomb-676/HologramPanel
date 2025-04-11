@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.util.SearchBackend
@@ -234,6 +234,8 @@ object EventHandler {
             ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
         ).playBidirectional(
             MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE
+        ).playToServer(
+            TransTargetPayload.TYPE, TransTargetPayload.STREAM_CODEC, TransTargetPayload.HANDLE
         )
     }
 
