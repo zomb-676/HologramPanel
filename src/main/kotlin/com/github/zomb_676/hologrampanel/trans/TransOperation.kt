@@ -45,15 +45,17 @@ data class TransOperation<in S1 : Any, in S2 : Any, H1 : Any, H2 : Any, R : Any>
     }
 
     fun run(querySource: S1, storeSource: S2) {
+        //test first to avoid something is extracted but can't be inserted
         val queryTest = this.query.queryTest(querySource, this.queryPath) ?: return
-        if (this.queryPath.getCount(queryTest) <= 0) return
-        val remainTest = this.store.storeTest(storeSource, this.storePath, queryTest)
-        if (remainTest != null && this.queryPath.getCount(remainTest) > 0) {
-            this.storePath.count = this.queryPath.getCount(queryTest) - this.queryPath.getCount(remainTest)
+        if (this.queryPath.isEmpty(queryTest)) return
+        val remainTest = this.store.storeTest(storeSource, this.storePath, queryTest) ?: return
+        if (!this.queryPath.isEmpty(remainTest) && this.queryPath.getCount(remainTest) > 0) {
+            //correct the query count
+            this.queryPath.count = this.queryPath.getCount(queryTest) - this.storePath.getCount(remainTest)
             if (this.storePath.count <= 0) return
         }
 
-
+        //do actual operation
         val queryActual = this.query.queryActual(querySource, this.queryPath) ?: return
         val remain = this.store.storeActual(storeSource, this.storePath, queryActual) ?: return
         if (this.storePath.getCount(remain) > 0) {
