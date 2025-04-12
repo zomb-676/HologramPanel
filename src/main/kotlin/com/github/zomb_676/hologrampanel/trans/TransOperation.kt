@@ -51,8 +51,10 @@ data class TransOperation<in S1 : Any, in S2 : Any, H1 : Any, H2 : Any, R : Any>
         val remainTest = this.store.storeTest(storeSource, this.storePath, queryTest) ?: return
         if (!this.queryPath.isEmpty(remainTest) && this.queryPath.getCount(remainTest) > 0) {
             //correct the query count
-            this.queryPath.count = this.queryPath.getCount(queryTest) - this.storePath.getCount(remainTest)
-            if (this.storePath.count <= 0) return
+            val transCount = this.queryPath.getCount(queryTest) - this.storePath.getCount(remainTest)
+            if (transCount <= 0) return
+            this.queryPath.count = transCount
+            this.storePath.count = transCount
         }
 
         //do actual operation
