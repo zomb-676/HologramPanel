@@ -2,6 +2,8 @@ package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.trans.TransHandle
+import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -22,6 +24,7 @@ import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.fluids.FluidType
+import net.neoforged.neoforge.items.IItemHandler
 import java.util.*
 
 class HologramWidgetBuilder<T : HologramContext>(val context: T) {
@@ -210,9 +213,15 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return ItemStackElement(itemStack = itemStack).attach(name)
         }
 
-        fun itemInteractive(name: String, item: ItemStack, interactiveSlot: Int): InteractiveItemElement {
+        fun <S : Any> itemInteractive(
+            name: String,
+            item: ItemStack,
+            interactiveSlot: Int,
+            source: TransSource<S>,
+            transPath: TransHandle<S, IItemHandler>
+        ): InteractiveItemElement {
             require(interactiveSlot >= 0)
-            return InteractiveItemElement(item, interactiveSlot).attach(name)
+            return InteractiveItemElement.create(item, interactiveSlot, source, transPath).attach(name)
         }
 
         fun workingArrowProgress(name: String, progress: ProgressData): WorkingArrowProgressBarElement {

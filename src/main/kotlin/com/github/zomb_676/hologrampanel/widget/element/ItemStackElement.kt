@@ -53,42 +53,4 @@ open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack:
             }
         }
     }
-
-    override fun onTrigDrag(
-        player: Player,
-        context: HologramContext,
-        interactiveSize: Size,
-        mouseX: Int,
-        mouseY: Int
-    ): HologramInteractionManager.DragDataContext<*>? {
-        return HologramInteractionManager.DragDataContext(object : HologramInteractionManager.DragCallback<ItemStack> {
-            override fun processTransformRemain(remainData: ItemStack) {
-                println("process transform remain")
-            }
-            override fun dragSourceStillValid(): Boolean = this@ItemStackElement.getCurrentUnsafe<ItemStackElement>() != null
-            override fun getDragData(): ItemStack? = this@ItemStackElement.getCurrentUnsafe<ItemStackElement>()?.itemStack
-        })
-    }
-
-    override fun onDragPass(
-        dragDataContext: HologramInteractionManager.DragDataContext<*>,
-        context: HologramContext,
-        interactiveSize: Size,
-        mouseX: Int,
-        mouseY: Int
-    ) {
-        println("onDragPass:${dragDataContext.getDragData()}")
-    }
-
-    override fun onDragTransform(
-        dragDataContext: HologramInteractionManager.DragDataContext<*>,
-        context: HologramContext,
-        interactiveSize: Size,
-        mouseX: Int,
-        mouseY: Int
-    ) {
-        dragDataContext.consumeTyped<ItemStack> {
-            it.copyWithCount(1)
-        }
-    }
 }

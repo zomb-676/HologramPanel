@@ -5,13 +5,38 @@ import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.ItemInteractivePayload
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.trans.TransHandle
+import com.github.zomb_676.hologrampanel.trans.TransOperation
+import com.github.zomb_676.hologrampanel.trans.TransPath
+import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.unsafeCast
+import net.minecraft.client.Minecraft
 import net.minecraft.client.player.LocalPlayer
+import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
+import net.neoforged.neoforge.items.IItemHandler
 import org.lwjgl.glfw.GLFW
 
-open class InteractiveItemElement(item: ItemStack, val interactiveSlot: Int) : ItemStackElement(true, item),
+open class InteractiveItemElement private constructor(
+    item: ItemStack,
+    val interactiveSlot: Int,
+    val source: TransSource<*>,
+    val transPath: TransHandle<*, IItemHandler>
+) : ItemStackElement(true, item),
     HologramInteractive {
+
+    companion object {
+        fun <S : Any> create(
+            item: ItemStack,
+            interactiveSlot: Int,
+            source: TransSource<S>,
+            transPath: TransHandle<S, IItemHandler>
+        ): InteractiveItemElement {
+            return InteractiveItemElement(item, interactiveSlot, source, transPath)
+        }
+    }
 
     override fun render(style: HologramStyle, partialTicks: Float) {
         if (itemStack.isEmpty) {
@@ -50,5 +75,56 @@ open class InteractiveItemElement(item: ItemStack, val interactiveSlot: Int) : I
             }
         }
         return true
+    }
+
+    override fun onTrigDrag(
+        player: Player,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ): HologramInteractionManager.DragDataContext<*>? {
+        return HologramInteractionManager.DragDataContext(object : HologramInteractionManager.DragCallback<ItemStack> {
+            fun getLatest() = this@InteractiveItemElement.getCurrentUnsafe<ItemStackElement>()
+
+            override fun dragSourceStillValid(): Boolean = getLatest() != null
+            override fun getDragData(): ItemStack? = getLatest()?.itemStack
+            override fun <R : Any, H : Any> getTransInfo(): Triple<TransSource<R>, TransHandle<R, H>, TransPath<H, ItemStack>>? {
+                return Triple(source, transPath, TransPath.Item.ByIndex(interactiveSlot, getDragData()!!.count)).unsafeCast()
+            }
+        })
+    }
+
+    override fun onDragPass(
+        dragDataContext: HologramInteractionManager.DragDataContext<*>,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ) {
+        if (dragDataContext.isDataOfType<ItemStack>()) {
+            Minecraft.getInstance().gui.setOverlayMessage(Component.literal("trans support"), false)
+        } else {
+            Minecraft.getInstance().gui.setOverlayMessage(Component.literal("trans not supported"), false)
+        }
+    }
+
+    fun <S : Any> getTransData(count: Int): Triple<TransSource<S>, TransHandle<S, IItemHandler>, TransPath<IItemHandler, ItemStack>> {
+        return Triple(this.source, this.transPath, TransPath.Item.ByIndex(this.interactiveSlot, count)).unsafeCast()
+    }
+
+    override fun onDragTransform(
+        dragDataContext: HologramInteractionManager.DragDataContext<*>,
+        context: HologramContext,
+        interactiveSize: Size,
+        mouseX: Int,
+        mouseY: Int
+    ) {
+        if (dragDataContext.isDataOfType<ItemStack>()) {
+            val x = dragDataContext
+                .callback.unsafeCast<HologramInteractionManager.DragCallback<ItemStack>>()
+            TransOperation.create(x.getTransInfo()!!, this.getTransData(64)).sendToServer()
+            dragDataContext.consumeTyped<ItemStack> { null }
+        }
     }
 }

@@ -6,15 +6,29 @@ import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.items.IItemHandler
 
-sealed interface TransPath<H : Any, R : Any> {
+/**
+ * query/store actual/test object in handles
+ */
+sealed interface TransPath<in H : Any, R : Any> {
     fun extractActual(handle: H): R?
     fun extractTest(handle: H): R?
 
     fun storeActual(handle: H, store: R): R?
     fun storeTest(handle: H, store: R): R?
 
+    fun setCount(count: Int, obj: R)
+    fun getCount(obj: R): Int
+
+    var count: Int
+
     sealed interface Item : TransPath<IItemHandler, ItemStack> {
-        data class ByIndex(val index: Int, val count: Int, val target: ItemStack = ItemStack.EMPTY) : Item {
+        override fun setCount(count: Int, obj: ItemStack) {
+            obj.count = count
+        }
+
+        override fun getCount(obj: ItemStack): Int = obj.count
+
+        data class ByIndex(val index: Int, override var count: Int, val target: ItemStack = ItemStack.EMPTY) : Item {
             override fun extractActual(handle: IItemHandler): ItemStack? {
                 if (index >= 0 && index < handle.slots) {
                     if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, handle.getStackInSlot(index))) return null
@@ -62,6 +76,8 @@ sealed interface TransPath<H : Any, R : Any> {
         }
 
         data class ByItem(val itemStack: ItemStack) : Item {
+            override var count: Int = itemStack.count
+
             override fun extractActual(handle: IItemHandler): ItemStack? {
                 var count = 0
                 val itemReturn = itemStack.copyWithCount(0)

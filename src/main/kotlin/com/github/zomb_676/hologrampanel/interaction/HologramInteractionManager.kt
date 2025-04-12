@@ -1,6 +1,10 @@
 package com.github.zomb_676.hologrampanel.interaction
 
 import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager.dragData
+import com.github.zomb_676.hologrampanel.trans.TransPath
+import com.github.zomb_676.hologrampanel.trans.TransSource
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.Minecraft
@@ -132,7 +136,7 @@ object HologramInteractionManager {
         /**
          * @param remainData data consumed after [DragDataContext.consumeDrag]
          */
-        fun processTransformRemain(remainData: T)
+        fun processTransformRemain(remainData: T) {}
 
         /**
          * check the drag source is still valid or not
@@ -146,6 +150,11 @@ object HologramInteractionManager {
         fun dragSourceStillValid(): Boolean
 
         fun getDragData(): T?
+
+        /**
+         * when call is function, should guarantee the return value of [getDragData] is not null
+         */
+        fun <S : Any, H : Any> getTransInfo(): Triple<TransSource<S>, TransHandle<S, H>, TransPath<H, T>>? = null
     }
 
     /**
@@ -166,7 +175,7 @@ object HologramInteractionManager {
          */
         fun consumeDrag(code: (data: T) -> T?) {
             if (!dragDataConsumed) {
-                val dragData =  getDragData() ?: return
+                val dragData = getDragData() ?: return
                 val remainData = code.invoke(dragData) ?: return
                 this.callback.processTransformRemain(remainData)
             } else throw RuntimeException("don't consume drag data multi-times")

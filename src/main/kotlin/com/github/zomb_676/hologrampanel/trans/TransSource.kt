@@ -11,7 +11,10 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.server.ServerLifecycleHooks
 
-sealed interface TransSource<T> {
+/**
+ * describe the source of the handles, like CapabilityProvider
+ */
+sealed interface TransSource<out T : Any> {
     fun getTarget(): T?
 
     class BlockEntitySource(val pos: BlockPos, val level: ResourceKey<Level>) : TransSource<BlockEntity> {
