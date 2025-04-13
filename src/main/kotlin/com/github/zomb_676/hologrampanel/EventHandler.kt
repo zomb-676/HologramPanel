@@ -445,6 +445,7 @@ object EventHandler {
         PluginManager.getInstance().clientRegistration.forEach { (plugin, reg) ->
             plugin.registerClient(reg)
         }
+        PluginManager.getInstance().onClientRegisterEnd()
     }
 
     private fun onLoadComplete(event: FMLLoadCompleteEvent) {

@@ -134,9 +134,6 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     internal val globalPluginSettings: MutableMap<IHologramPlugin, PluginGlobalSetting> = mutableMapOf()
 
     internal fun registerPluginConfigs() {
-        this.block.addAll(flatten(clientRegistration, HologramClientRegistration::blockPopup))
-        this.entity.addAll(flatten(clientRegistration, HologramClientRegistration::entityPopup))
-
         plugins.forEach { plugin ->
             val configBuilder = ModConfigSpec.Builder()
             val pluginEnable = configBuilder.define("${plugin.location()}_enable_plugin", true)
@@ -198,6 +195,14 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
         ProviderManager.invalidateCache()
         //remove all, some provider may have disappeared
         HologramManager.clearAllHologram()
+    }
+
+    fun onClientRegisterEnd() {
+        this.block.addAll(flatten(clientRegistration, HologramClientRegistration::blockPopup))
+        this.entity.addAll(flatten(clientRegistration, HologramClientRegistration::entityPopup))
+        this.hideBlocks.addAll(flatten(clientRegistration, HologramClientRegistration::hideBlocks))
+        this.hideEntityTypes.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityTypes))
+        this.hideEntityCallback.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityCallback))
     }
 
     fun hideBlock(block: Block) = this.hideBlocks.contains(block)
