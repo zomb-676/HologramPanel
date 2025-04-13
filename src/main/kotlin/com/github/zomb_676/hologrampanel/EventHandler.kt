@@ -87,12 +87,14 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onRenderLevelStage)
         }
 
+        const val KEY_CATEGORY = "key.categories.${HologramPanel.MOD_ID}"
+
         val panelKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.selector_panel",
+            "key.${HologramPanel.MOD_ID}.selector_panel_key",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_Y,
-            KeyMapping.CATEGORY_GAMEPLAY
+            KEY_CATEGORY
         )
 
 
@@ -101,13 +103,22 @@ object EventHandler {
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_LEFT_ALT,
-            KeyMapping.CATEGORY_GAMEPLAY
+            KEY_CATEGORY
+        )
+
+        val collapseKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.collapse_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_TAB,
+            KEY_CATEGORY
         )
 
 
         private fun registerKey(event: RegisterKeyMappingsEvent) {
             event.register(panelKey)
             event.register(scaleKey)
+            event.register(collapseKey)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
@@ -137,7 +148,7 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (event.action == GLFW.GLFW_PRESS && event.key == GLFW.GLFW_KEY_TAB) {
+            if (event.action == GLFW.GLFW_PRESS && event.key == collapseKey.key.value) {
                 HologramManager.trySwitchWidgetCollapse()
             }
 

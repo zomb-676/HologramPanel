@@ -31,6 +31,8 @@ interface HologramStyle {
     val guiGraphics: GuiGraphics
     var contextColor: Int
 
+    fun drawFullyBackground(size : Size)
+
     /**
      * @param contentSize [HologramWidgetComponent.Single.contentSize]
      * @return [HologramWidgetComponent.Single.visualSize]
@@ -394,6 +396,11 @@ interface HologramStyle {
 
         override var contextColor: Int = (0xff000000).toInt()
 
+        override fun drawFullyBackground(size: Size) {
+            val color = Config.Style.widgetBackgroundAlpha.get() shl 24 or 0x00ffffff
+            this.fill(0, 0, size.width, size.height, color)
+        }
+
         override fun drawOutlineSelected(size: Size) {
             outline(size, SELECTED_COLOR)
         }
@@ -461,7 +468,7 @@ interface HologramStyle {
             }
 
             //draw split line
-            if (isGroupGlobal) {
+            if (isGroupGlobal && !collapse) {
                 val left = SINGLE_INNER_PADDING.left * 2
                 val right = size.width - SINGLE_INNER_PADDING.right * 2
                 val y = max(descriptionSize.height, COLLAPSE_SIZE.height) + SINGLE_INNER_PADDING.vertical / 2 + 1

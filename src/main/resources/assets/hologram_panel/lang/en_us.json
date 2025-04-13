@@ -152,7 +152,9 @@
   "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_item_enable_entity.tooltip": "Energy for Block",
   "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_item_enable_entity": "Energy for Block",
 
-  "key.hologram_panel.selector_panel": "selector panel",
-  "key.hologram_panel.scale_key": "scale hologram"
+  "key.categories.hologram_panel" : "Hologram Panel",
+  "key.hologram_panel.selector_panel_key": "selector panel",
+  "key.hologram_panel.scale_key": "scale hologram",
+  "key.hologram_panel.collapse_key": "collapse hologram"
 
 }

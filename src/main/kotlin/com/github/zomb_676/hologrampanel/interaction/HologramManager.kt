@@ -168,7 +168,7 @@ object HologramManager {
                 if (!state.displayed) return@stack
 
                 //hologram background
-                style.fill(0, 0, widgetSize.width, widgetSize.height, 0x7fffffff)
+                style.drawFullyBackground(widgetSize)
 
                 //check if interact submitted during render
                 val interactiveSet = this.getInteractiveTarget() != null
@@ -184,7 +184,11 @@ object HologramManager {
         }
         this.updateLookingAt()
 
-        this.renderHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), 8)
+        if (Config.Style.renderLookIndicator.get()) {
+            val distance = Config.Style.lookIndicatorDistance.get()
+            val percent = Config.Style.lookIndicatorPercent.get()
+            this.renderHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), distance, percent)
+        }
 
         HologramInteractionManager.renderTick()
 
@@ -201,7 +205,8 @@ object HologramManager {
         style: HologramStyle,
         target: HologramRenderState?,
         color: Int,
-        baseOffset: Int
+        baseOffset: Int,
+        percent: Double
     ) {
         val target = target ?: return
         if (!target.displayed) return
@@ -217,8 +222,8 @@ object HologramManager {
             val up = (screenPos.y - displayHeight / 2.0) - scaledOffset
             val down = (screenPos.y + displayHeight / 2.0) + scaledOffset
 
-            val horizontalLength = (displayWidth * 0.2).toInt()
-            val verticalLength = (displayHeight * 0.2).toInt()
+            val horizontalLength = (displayWidth * percent).toInt()
+            val verticalLength = (displayHeight * percent).toInt()
 
             fun drawVerticalLine(up: Double, down: Double, x: Double) {
                 style.stack {
