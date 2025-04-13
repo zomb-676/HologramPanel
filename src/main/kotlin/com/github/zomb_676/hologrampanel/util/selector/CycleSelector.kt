@@ -1,9 +1,11 @@
 package com.github.zomb_676.hologrampanel.util.selector
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryBegin
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryEnd
 import com.github.zomb_676.hologrampanel.util.stack
-import com.github.zomb_676.hologrampanel.widget.element.ItemStackElement
 import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
+import com.github.zomb_676.hologrampanel.widget.element.ItemStackElement
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
@@ -148,7 +150,9 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             val window = Minecraft.getInstance().window
             if (GLFW.glfwGetInputMode(window.window, GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_NORMAL) {
                 setCursorMode(GLFW.GLFW_CURSOR_NORMAL)
-                GLFW.glfwSetCursorPos(window.window, (window.width / 2).toDouble(), (window.height / 2).toDouble())
+                Minecraft.getInstance().mouseHandler.xpos = window.screenWidth / 2.0
+                Minecraft.getInstance().mouseHandler.ypos = window.screenHeight / 2.0
+                GLFW.glfwSetCursorPos(window.window, (window.screenWidth / 2).toDouble(), (window.screenHeight / 2).toDouble())
             }
         }
 
