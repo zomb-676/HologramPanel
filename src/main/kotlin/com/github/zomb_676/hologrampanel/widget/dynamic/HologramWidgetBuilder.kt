@@ -202,8 +202,13 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return ItemsElement(items).attach(name)
         }
 
-        fun itemsInteractive(name: String, items: List<ItemStack>): InteractiveItemsElement {
-            return InteractiveItemsElement(items).attach(name)
+        fun <S : Any> itemsInteractive(
+            name: String,
+            items: List<ItemStack>,
+            source: TransSource<S>,
+            handle: TransHandle<S, IItemHandler>
+        ): InteractiveItemsElement {
+            return InteractiveItemsElement.create(items, source, handle, true).attach(name)
         }
 
         /**

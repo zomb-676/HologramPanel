@@ -12,6 +12,9 @@ import net.neoforged.neoforge.items.IItemHandler
 
 /**
  * query/store actual/test object in handles
+ *
+ * @param H handle type, same in [TransHandle]
+ * @param R result type, represent by the data hold by [H]
  */
 sealed interface TransPath<in H : Any, R : Any> {
 
@@ -68,7 +71,7 @@ sealed interface TransPath<in H : Any, R : Any> {
 
         override fun isEmpty(obj: ItemStack): Boolean = obj.isEmpty
 
-        fun IItemHandler.isInRange(index: Int) = index >= 0 && index < count
+        fun IItemHandler.isInRange(index: Int) = index >= 0 && index < this.slots
 
         /**
          * operate items at specific slot and
@@ -129,12 +132,11 @@ sealed interface TransPath<in H : Any, R : Any> {
                 }
 
             override fun extractActual(handle: IItemHandler): ItemStack {
-                var count = 0
                 val itemReturn = itemStack.copyWithCount(0)
                 for (index in 0..<handle.slots) {
-                    if (count < itemStack.count) {
+                    if (itemReturn.count < itemStack.count) {
                         if (ItemStack.isSameItemSameComponents(itemStack, handle.getStackInSlot(index))) {
-                            count += handle.extractItem(index, itemStack.count - count, true).count
+                            itemReturn.count += handle.extractItem(index, itemStack.count - itemReturn.count, false).count
                         }
                     } else break
                 }
@@ -142,12 +144,11 @@ sealed interface TransPath<in H : Any, R : Any> {
             }
 
             override fun extractTest(handle: IItemHandler): ItemStack {
-                var count = 0
                 val itemReturn = itemStack.copyWithCount(0)
                 for (index in 0..<handle.slots) {
-                    if (count < itemStack.count) {
+                    if (itemReturn.count < itemStack.count) {
                         if (ItemStack.isSameItemSameComponents(itemStack, handle.getStackInSlot(index))) {
-                            count += handle.extractItem(index, itemStack.count - count, false).count
+                            itemReturn.count += handle.extractItem(index, itemStack.count - itemReturn.count, true).count
                         }
                     } else break
                 }

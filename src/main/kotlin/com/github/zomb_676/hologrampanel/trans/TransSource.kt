@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.trans
 
 import com.github.zomb_676.hologrampanel.AllRegisters
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import net.minecraft.core.BlockPos
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
@@ -13,6 +14,8 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks
 
 /**
  * describe the source of the handles, like CapabilityProvider
+ *
+ * @param T the source type
  */
 sealed interface TransSource<out T : Any> {
     fun getTarget(): T?

@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.trans
 
+import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.payload.TransTargetPayload
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.network.RegistryFriendlyByteBuf
@@ -61,7 +62,7 @@ data class TransOperation<in S1 : Any, in S2 : Any, H1 : Any, H2 : Any, R : Any>
         val queryActual = this.query.queryActual(querySource, this.queryPath) ?: return
         val remain = this.store.storeActual(storeSource, this.storePath, queryActual) ?: return
         if (this.storePath.getCount(remain) > 0) {
-            println(remain)
+            HologramPanel.LOGGER.info("found something that is not inserted successfully")
         }
     }
 }

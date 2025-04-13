@@ -12,10 +12,15 @@ import net.neoforged.neoforge.items.IItemHandler
 
 /**
  * get the handle form [TransSource], like getCapability
+ *
+ * @param S source type, same in [TransSource]
+ * @param H handle type, same in [TransPath]
  */
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 sealed interface TransHandle<in S : Any, out H : Any> {
     fun getHandle(source: S): H?
+
+    fun hasHandle(source: S) : Boolean = getHandle(source) != null
 
     fun <R : Any> queryActual(source: S, path: TransPath<H, R>): R? = getHandle(source)?.run(path::extractActual)
     fun <R : Any> queryTest(source: S, path: TransPath<H, R>): R? = getHandle(source)?.run(path::extractTest)
