@@ -2,9 +2,9 @@ package com.github.zomb_676.hologrampanel.interaction
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager.dragData
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.trans.TransPath
 import com.github.zomb_676.hologrampanel.trans.TransSource
-import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.Minecraft
@@ -64,7 +64,7 @@ object HologramInteractionManager {
         val player = Minecraft.getInstance().player ?: return
         val currentInteractive = HologramManager.getInteractiveTarget()
         if (currentInteractive != null) {
-            if (dragData == null && mouseClicked) {
+            if (dragData == null && mouseClicked && draggingSource == null) {
                 this.draggingSource = currentInteractive
                 val data = currentInteractive.trigDrag(player) ?: return
                 this.dragData = data
@@ -81,7 +81,12 @@ object HologramInteractionManager {
     }
 
     fun onMouseClick(event: InputEvent.MouseButton.Pre): Boolean {
-        val interactiveTarget = HologramManager.getInteractiveTarget() ?: return false
+        val interactiveTarget = HologramManager.getInteractiveTarget()
+        if (interactiveTarget == null) {
+            draggingSource = null
+            dragData = null
+            return false
+        }
         if (Config.Server.allowHologramInteractive.get()) {
             if (event.action == GLFW.GLFW_RELEASE) {
                 if (draggingSource != null && dragData != null && event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
@@ -127,6 +132,11 @@ object HologramInteractionManager {
             Minecraft.getInstance().gui.setOverlayMessage(FORBIDDEN_COMPONENT, false)
             return true
         }
+    }
+
+    fun clearState() {
+        this.draggingSource = null
+        this.dragData = null
     }
 
     /**
