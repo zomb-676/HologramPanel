@@ -3,6 +3,8 @@ package com.github.zomb_676.hologrampanel.render
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.EfficientConst
 import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
@@ -90,8 +92,8 @@ interface HologramStyle {
         this.translate(x.toFloat(), y.toFloat())
     }
 
-    fun move(screenPosition: ScreenPosition) {
-        this.move(screenPosition.x, screenPosition.y)
+    fun move(alignedScreenPosition: AlignedScreenPosition) {
+        this.move(alignedScreenPosition.x, alignedScreenPosition.y)
     }
 
     fun translate(x: Float, y: Float, z: Float = 0.0f) {

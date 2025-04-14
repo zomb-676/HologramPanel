@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.element
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import net.minecraft.network.chat.Component
 
 open class ComponentRenderElement(val component: Component) : RenderElement() {

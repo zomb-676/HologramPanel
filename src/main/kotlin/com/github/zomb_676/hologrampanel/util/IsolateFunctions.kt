@@ -11,6 +11,7 @@ import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
 import net.neoforged.neoforge.client.GlStateBackup
 import net.neoforged.neoforge.common.ModConfigSpec
+import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL46
 
 @Suppress("UNCHECKED_CAST")
@@ -97,9 +98,11 @@ inline val Double.normalizedInto2PI: Double
     }
 
 inline fun glDebugStack(debugLabelName: String, id: Int = 0, crossinline code: () -> Unit) {
-    GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, id, debugLabelName)
-    code.invoke()
-    GL46.glPopDebugGroup()
+    if (GL.getCapabilities().GL_KHR_debug) {
+        GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, id, debugLabelName)
+        code.invoke()
+        GL46.glPopDebugGroup()
+    }
 }
 
 inline fun ModConfigSpec.Builder.stack(name: String, crossinline f: () -> Unit) {

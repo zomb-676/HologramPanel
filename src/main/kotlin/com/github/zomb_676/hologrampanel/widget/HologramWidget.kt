@@ -3,7 +3,7 @@ package com.github.zomb_676.hologrampanel.widget
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 
 /**
  * the basic hologram widget interface, just indicates a sized widget render in level or on screen

@@ -1,8 +1,8 @@
 package com.github.zomb_676.hologrampanel.widget.element
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.ScreenPosition
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
 
 data object EmptyElement : IRenderElement {
     override fun measureContentSize(style: HologramStyle): Size = Size.Companion.ZERO
@@ -14,7 +14,7 @@ data object EmptyElement : IRenderElement {
 
     override fun setPositionOffset(x: Int, y: Int): EmptyElement = this
 
-    override fun getPositionOffset(): ScreenPosition = ScreenPosition.Companion.ZERO
+    override fun getPositionOffset(): AlignedScreenPosition = AlignedScreenPosition.Companion.ZERO
     override fun noCalculateSize() = this
 
     override fun hasCalculateSize(): Boolean = false

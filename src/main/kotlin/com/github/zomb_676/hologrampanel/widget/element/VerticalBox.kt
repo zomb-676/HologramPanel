@@ -7,6 +7,8 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.google.common.collect.ImmutableBiMap
 import kotlin.math.max
@@ -23,7 +25,7 @@ class VerticalBox(val elements: ImmutableBiMap<IRenderElement, String>, val cont
             val offset = it.getPositionOffset()
             if (it.hasCalculateSize()) {
                 calculatedSizeElement++
-                if (offset == ScreenPosition.Companion.ZERO) {
+                if (offset == AlignedScreenPosition.Companion.ZERO) {
                     width = max(it.contentSize.width, width)
                     height += it.contentSize.height
                 } else {
@@ -53,7 +55,7 @@ class VerticalBox(val elements: ImmutableBiMap<IRenderElement, String>, val cont
         this.elements.keys.forEach { element ->
             val offset = element.getPositionOffset()
             val size = element.contentSize
-            style.stackIf(offset != ScreenPosition.Companion.ZERO, { style.move(offset) }) {
+            style.stackIf(offset != AlignedScreenPosition.Companion.ZERO, { style.move(offset) }) {
                 style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
                     if (inMouse && style.checkMouseInSize(size)) {
                         DebugHelper.Client.recordHoverElement(element)

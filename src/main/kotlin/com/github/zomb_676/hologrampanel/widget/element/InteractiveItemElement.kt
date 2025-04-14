@@ -9,7 +9,7 @@ import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.trans.TransOperation
 import com.github.zomb_676.hologrampanel.trans.TransPath
 import com.github.zomb_676.hologrampanel.trans.TransSource
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.Minecraft
 import net.minecraft.client.player.LocalPlayer

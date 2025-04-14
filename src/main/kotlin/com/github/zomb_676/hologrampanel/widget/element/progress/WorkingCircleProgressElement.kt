@@ -2,7 +2,7 @@ package com.github.zomb_676.hologrampanel.widget.element.progress
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.ProgressData
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement.Companion.resetNan
 import com.github.zomb_676.hologrampanel.widget.element.RenderElement

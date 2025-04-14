@@ -5,9 +5,15 @@ import com.github.zomb_676.hologrampanel.api.HologramTicket
 import com.github.zomb_676.hologrampanel.api.TicketAdder
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.JomlMath
+import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
+import com.github.zomb_676.hologrampanel.util.mainCamera
+import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
+import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
@@ -27,6 +33,8 @@ class HologramRenderState(
      */
     var displayed: Boolean = false
 
+    var locate: LocateType = LocateType.World.FacingPlayer
+
     /**
      * the size of the [widget], not influenced by [com.mojang.blaze3d.vertex.PoseStack.scale]
      */
@@ -42,13 +50,15 @@ class HologramRenderState(
     /**
      * screen space position the widget should be rendered, anchored by widget's center
      */
-    var centerScreenPos: ScreenCoordinate = ScreenCoordinate.ZERO
+    var centerScreenPos: ScreenPosition = ScreenPosition.ZERO
 
     /**
      * current display scale, influenced by distance, [com.github.zomb_676.hologrampanel.Config.Client.globalHologramScale]
      */
     var displayScale: Double = 1.0
         private set
+
+    var inViewDegree: Boolean = false
 
     /**
      * like [net.minecraft.world.entity.Entity.isRemoved]
@@ -114,11 +124,16 @@ class HologramRenderState(
     }
 
     /**
-     * via [MVPMatrixRecorder.transform], transforming world vec3 to [ScreenCoordinate]
+     * via [MVPMatrixRecorder.transform], transforming world vec3 to [com.github.zomb_676.hologrampanel.util.packed.ScreenCoordinate]
      */
-    fun updateScreenPosition(partialTick: Float): ScreenCoordinate {
-        this.centerScreenPos = MVPMatrixRecorder.transform(this.sourcePosition(partialTick))
+    fun updateRenderScreenPosition(partialTick: Float): ScreenPosition {
+        this.centerScreenPos = this.locate.getScreenSpacePosition(context, partialTick)
         return this.centerScreenPos
+    }
+
+    fun getSourceScreenPosition(partialTick: Float): ScreenPosition {
+        if (this.locate is LocateType.World) return this.centerScreenPos
+        return this.locate.getSourceScreenSpacePosition(context, partialTick)
     }
 
     /**
@@ -145,9 +160,8 @@ class HologramRenderState(
         val dot = viewVector.dot(sourceVector)
         val angleInRadius = JomlMath.acos(dot)
         val angel = JomlMath.toDegrees(angleInRadius)
-        val pass = angel < 80f
-        this.displayed = pass
-        return pass
+        this.inViewDegree = angel < 80f
+        return if (this.locate is LocateType.World) this.inViewDegree else true
     }
 
     /**

@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.element
 
-import com.github.zomb_676.hologrampanel.util.ScreenPosition
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import kotlin.math.floor
 
@@ -17,7 +17,7 @@ abstract class RenderElement : IRenderElement {
 
     private var additionLayer = 0
 
-    private var positionOffset: ScreenPosition = ScreenPosition.Companion.ZERO
+    private var positionOffset: AlignedScreenPosition = AlignedScreenPosition.Companion.ZERO
 
     @JvmField
     protected var current: RenderElement? = this
@@ -32,10 +32,10 @@ abstract class RenderElement : IRenderElement {
         }
     }
 
-    final override fun getPositionOffset(): ScreenPosition = this.positionOffset
+    final override fun getPositionOffset(): AlignedScreenPosition = this.positionOffset
 
     final override fun setPositionOffset(x: Int, y: Int): RenderElement {
-        this.positionOffset = ScreenPosition.Companion.of(x, y)
+        this.positionOffset = AlignedScreenPosition.Companion.of(x, y)
         return this
     }
 

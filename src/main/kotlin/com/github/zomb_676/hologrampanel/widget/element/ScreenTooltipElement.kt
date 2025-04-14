@@ -2,7 +2,7 @@ package com.github.zomb_676.hologrampanel.widget.element
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.util.stack
 import net.minecraft.client.Minecraft

@@ -2,8 +2,8 @@ package com.github.zomb_676.hologrampanel.widget.element
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.RebuildValue
-import com.github.zomb_676.hologrampanel.util.ScreenPosition
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
 
 interface IRenderElement : RebuildValue<IRenderElement?> {
 
@@ -14,7 +14,7 @@ interface IRenderElement : RebuildValue<IRenderElement?> {
     fun getScale(): Double
 
     fun setPositionOffset(x: Int, y: Int): IRenderElement
-    fun getPositionOffset(): ScreenPosition
+    fun getPositionOffset(): AlignedScreenPosition
 
     fun noCalculateSize(): IRenderElement
     fun hasCalculateSize(): Boolean

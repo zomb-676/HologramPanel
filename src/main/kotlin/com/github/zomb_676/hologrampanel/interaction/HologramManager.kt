@@ -12,16 +12,31 @@ import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramConte
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
+import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.platform.Window
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.renderer.CoreShaders
 import org.joml.Matrix4f
+import org.joml.Vector2f
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.math.tan
 
 object HologramManager {
     /**
@@ -48,6 +63,8 @@ object HologramManager {
      * the entry that should response collapse operation
      */
     private var collapseTarget: HologramWidgetComponent.Group<*>? = null
+
+    private var screenPingHolograms: MutableList<HologramRenderState> = mutableListOf()
 
     fun clearAllHologram() {
         while (states.isNotEmpty()) {
@@ -136,21 +153,16 @@ object HologramManager {
             }
             style.stack {
                 //calculate screen position by world position
-                val screenPos = state.updateScreenPosition(partialTicks).equivalentSmooth(style)
+                val screenPos = state.updateRenderScreenPosition(partialTicks).equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
                 //change scale according to distance
-                val distance = state.distanceToCamera(partialTicks)
-
-                fun calculateScale(distance: Double, start: Double, end: Double): Double = when {
-                    distance <= start -> 1.0
-                    distance >= end -> 0.0
-                    else -> JomlMath.clamp(0.0, 1.0, 1.0 - (distance - start) / (end - start))
-                }
-
-                val scale = calculateScale(
-                    distance, Config.Client.renderMinDistance.get(),
-                    Config.Client.renderMaxDistance.get()
-                ) * scaleValue
+                val scale: Double = scaleValue * if (state.locate is LocateType.World) {
+                    val distance = state.distanceToCamera(partialTicks)
+                    calculateScale(
+                        distance, Config.Client.renderMinDistance.get(),
+                        Config.Client.renderMaxDistance.get()
+                    )
+                } else 1.0
 
                 //skip tp small widget
                 if (scale * widgetSize.width < 5 || scale * widgetSize.height < 3) {
@@ -161,7 +173,9 @@ object HologramManager {
                 style.scale(scale, scale)
 
                 //anchored by hologram's left-up
-                style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
+                if (state.locate is LocateType.World) {
+                    style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
+                }
 
                 //check if any part in screen
                 state.displayed = state.displayAreaInScreen(style.poseMatrix())
@@ -183,6 +197,7 @@ object HologramManager {
             }
         }
         this.updateLookingAt()
+        this.arrangeScreenPingWidget()
 
         if (Config.Style.renderLookIndicator.get()) {
             val distance = Config.Style.lookIndicatorDistance.get()
@@ -191,8 +206,15 @@ object HologramManager {
         }
 
         HologramInteractionManager.renderTick()
+        this.renderPingScreenPrompt(style, partialTicks)
 
         profiler.pop()
+    }
+
+    private fun calculateScale(distance: Double, start: Double, end: Double): Double = when {
+        distance <= start -> 1.0
+        distance >= end -> 0.0
+        else -> JomlMath.clamp(0.0, 1.0, 1.0 - (distance - start) / (end - start))
     }
 
     /**
@@ -211,7 +233,7 @@ object HologramManager {
         val target = target ?: return
         if (!target.displayed) return
         style.stack {
-            val screenPos = target.centerScreenPos.equivalentSmooth(style)
+            val screenPos = target.centerScreenPos
 
             val displayWidth = target.displaySize.width
             val displayHeight = target.displaySize.height
@@ -270,13 +292,13 @@ object HologramManager {
             .firstOrNull { state ->
                 val size = state.displaySize
                 val position = state.centerScreenPos
-                val left = position.screenX - size.width / 2
+                val left = position.x - size.width / 2
                 if (left > checkX) return@firstOrNull false
-                val right = position.screenX + size.width / 2
+                val right = position.x + size.width / 2
                 if (right < checkX) return@firstOrNull false
-                val up = position.screenY - size.height / 2
+                val up = position.y - size.height / 2
                 if (up > checkY) return@firstOrNull false
-                val down = position.screenY + size.height / 2
+                val down = position.y + size.height / 2
                 return@firstOrNull down > checkY
             }
     }
@@ -294,6 +316,7 @@ object HologramManager {
             state.removed = true
             val context = state.context
             this.widgets.remove(context.getIdentityObject())
+            this.screenPingHolograms.remove(state)
             if (this.lookingWidget?.widget == widget) {
                 this.lookingWidget = null
             }
@@ -366,4 +389,71 @@ object HologramManager {
     fun trySwitchWidgetCollapse() {
         this.collapseTarget?.switchCollapse()
     }
+
+    fun tryPingLookingScreen() {
+        val looking = getLookingHologram() ?: return
+        looking.locate = LocateType.Screen(Vector2f(30f, 30f))
+        this.screenPingHolograms.add(looking)
+    }
+
+    fun arrangeScreenPingWidget() {
+        val initial = AlignedScreenPosition.of(10, 10)
+        var pos = initial.toNotAligned()
+        var size = Size.ZERO
+        screenPingHolograms.forEach { state ->
+            if (!state.displayed) return@forEach
+            val locate = state.locate as LocateType.Screen? ?: return@forEach
+            locate.setPosition(pos.x, pos.y + size.height + 5)
+            pos = state.centerScreenPos
+            size = state.displaySize
+        }
+    }
+
+    fun renderPingScreenPrompt(style: HologramStyle, partialTicks: Float) {
+
+        val pose = style.poseMatrix()
+
+        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+        val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
+        RenderSystem.disableCull()
+
+        fun fillLineVertex(
+            builder: BufferBuilder,
+            pose: Matrix4f,
+            worldX: Float,
+            worldY: Float,
+            widgetX: Float,
+            widgetY: Float
+        ) {
+            val offset = Vector2f(worldY - widgetY, widgetX - worldY).normalize().mul(2.0f)
+            builder.addVertex(pose, worldX - offset.x, worldY - offset.y, 0.0f).setColor(-1)
+            builder.addVertex(pose, worldX + offset.x, worldY + offset.y, 0.0f).setColor(-1)
+            builder.addVertex(pose, widgetX + offset.x, widgetY + offset.y, 0.0f).setColor(-1)
+            builder.addVertex(pose, widgetX - offset.x, widgetY - offset.y, 0.0f).setColor(-1)
+        }
+
+        this.screenPingHolograms.forEach { state ->
+            if (!state.displayed) return@forEach
+            if (state.inViewDegree) {
+                val locate = state.locate as LocateType.Screen? ?: return@forEach
+
+                val widgetX = locate.position.x + state.displaySize.width
+                val widgetY = locate.position.y + state.displaySize.height / 2
+                val (worldX, worldY) = state.getSourceScreenPosition(partialTicks)
+
+                return
+                //todo
+                val points : List<ScreenPosition> = listOf()
+                for (i in 0..<(points.size - 1)) {
+                    val x = points[i]
+                    val y = points[i + 1]
+                    fillLineVertex(builder, pose, x.x, x.y, y.x, y.y)
+                }
+            }
+        }
+        val meshData = builder.build() ?: return
+        BufferUploader.drawWithShader(meshData)
+    }
+
+
 }

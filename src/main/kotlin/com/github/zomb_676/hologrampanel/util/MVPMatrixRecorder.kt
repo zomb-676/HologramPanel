@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.util
 
+import com.github.zomb_676.hologrampanel.util.packed.ScreenCoordinate
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.core.Vec3i

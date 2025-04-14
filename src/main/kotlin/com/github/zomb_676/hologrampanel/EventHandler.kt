@@ -10,13 +10,11 @@ import com.github.zomb_676.hologrampanel.util.setAndSave
 import com.github.zomb_676.hologrampanel.util.switchAndSave
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.client.DeltaTracker
-import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
@@ -31,7 +29,6 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent
 import net.neoforged.neoforge.client.event.*
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers
-import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent
@@ -87,42 +84,12 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onRenderLevelStage)
         }
 
-        const val KEY_CATEGORY = "key.categories.${HologramPanel.MOD_ID}"
-
-        val panelKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.selector_panel_key",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_Y,
-            KEY_CATEGORY
-        )
-
-
-        val scaleKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.scale_key",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_LEFT_ALT,
-            KEY_CATEGORY
-        )
-
-        val collapseKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.collapse_key",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_TAB,
-            KEY_CATEGORY
-        )
-
-
         private fun registerKey(event: RegisterKeyMappingsEvent) {
-            event.register(panelKey)
-            event.register(scaleKey)
-            event.register(collapseKey)
+            AllRegisters.KeyMapping.register(event)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
-            if (panelKey.isDown) {
+            if (AllRegisters.KeyMapping.panelKey.isDown) {
                 CycleSelector.tryBegin()
             } else {
                 CycleSelector.tryEnd()
@@ -148,8 +115,13 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (event.action == GLFW.GLFW_PRESS && event.key == collapseKey.key.value) {
-                HologramManager.trySwitchWidgetCollapse()
+            if (event.action == GLFW.GLFW_PRESS) {
+                if (event.key == AllRegisters.KeyMapping.collapseKey.key.value) {
+                    HologramManager.trySwitchWidgetCollapse()
+                }
+                if (event.key == AllRegisters.KeyMapping.pingScreenKey.key.value) {
+                    HologramManager.tryPingLookingScreen()
+                }
             }
 
             HologramInteractionManager.onKey(event)
@@ -159,7 +131,7 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (scaleKey.isDown) {
+            if (AllRegisters.KeyMapping.scaleKey.isDown) {
                 val scale = Config.Client.globalHologramScale
                 val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
                 val modifier = if (shiftDown) 0.05 else 0.2
@@ -314,6 +286,11 @@ object EventHandler {
                         execute {
                             val newState = Config.Client.renderNetworkDebugInfo.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_network_usage state to $newState"))
+                        }
+                    }
+                    "invalidate_cache" {
+                        execute {
+                            PluginManager.ProviderManager.invalidateCache()
                         }
                     }
                 }

@@ -1,13 +1,11 @@
 package com.github.zomb_676.hologrampanel.widget.element
 
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
-import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.util.stack
-import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 
 open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement(), HologramInteractive {

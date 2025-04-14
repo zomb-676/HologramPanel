@@ -1,60 +1,52 @@
 package com.github.zomb_676.hologrampanel.widget
 
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
-import com.github.zomb_676.hologrampanel.util.ScreenCoordinate
-import net.minecraft.core.Vec3i
-import net.minecraft.world.phys.Vec3
+import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
+import com.mojang.blaze3d.vertex.PoseStack
 import org.joml.Vector2f
 import org.joml.Vector3f
-import org.joml.Vector3fc
-import org.joml.Vector4f
 
 sealed interface LocateType {
 
-    fun getScreenSpacePosition(): ScreenCoordinate
+    fun getScreenSpacePosition(hologramContext: HologramContext, partialTick: Float): ScreenPosition
 
-    sealed class WorldToScreen : LocateType {
-        private val internalPosition: Vector4f = Vector4f()
-        private val resStore: Vector4f = Vector4f()
+    /**
+     * transform [HologramContext.hologramCenterPosition] into minecraft screen space
+     */
+    fun getSourceScreenSpacePosition(hologramContext: HologramContext, partialTick: Float): ScreenPosition =
+        MVPMatrixRecorder.transform(hologramContext.hologramCenterPosition(partialTick)).screenPosition
 
-        fun setPosition(position: Vector3fc) {
-            this.internalPosition.x = position.x()
-            this.internalPosition.y = position.y()
-            this.internalPosition.z = position.z()
+    fun adjustPoseStack(poseStack: PoseStack)
+
+    sealed interface World : LocateType {
+        override fun getScreenSpacePosition(hologramContext: HologramContext, partialTick: Float) =
+            getSourceScreenSpacePosition(hologramContext, partialTick)
+
+        data object FacingPlayer : World {
+            override fun adjustPoseStack(poseStack: PoseStack) {}
         }
 
-        fun setPosition(vec3: Vec3i) {
-            this.internalPosition.x = vec3.x.toFloat()
-            this.internalPosition.y = vec3.y.toFloat()
-            this.internalPosition.z = vec3.z.toFloat()
-        }
+        class FacingVector(val direction: Vector3f) : World {
+            override fun adjustPoseStack(poseStack: PoseStack) {
 
-        fun setPosition(vec3: Vec3) {
-            this.internalPosition.x = vec3.x.toFloat()
-            this.internalPosition.y = vec3.y.toFloat()
-            this.internalPosition.z = vec3.z.toFloat()
+            }
         }
-
-        override fun getScreenSpacePosition(): ScreenCoordinate =
-            MVPMatrixRecorder.transform(internalPosition)
     }
 
-    sealed interface PositionType : LocateType
+    class Screen(val position: Vector2f) : LocateType {
+        operator fun component1() = position.x
+        operator fun component2() = position.y
 
-    sealed class World : PositionType, WorldToScreen() {
-        class FacingPlayer() : World()
-        class FacingVector(val direction: Vector3f) : World()
-    }
-
-    sealed interface Screen : PositionType {
-        data class ByScreenSpace(val position: Vector2f) : Screen {
-            override fun getScreenSpacePosition(): ScreenCoordinate = ScreenCoordinate.of(position)
+        fun setPosition(x: Float, y: Float) {
+            position.set(x, y)
         }
 
-        class ByWorldSpace : Screen, WorldToScreen()
+        override fun getScreenSpacePosition(hologramContext: HologramContext, partialTick: Float): ScreenPosition =
+            ScreenPosition.of(position.x, position.y)
 
-        object Free : Screen {
-            override fun getScreenSpacePosition() = throw RuntimeException()
+        override fun adjustPoseStack(poseStack: PoseStack) {
+
         }
     }
 }
