@@ -11,6 +11,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager.lookingWidg
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.render.LinkLineRender
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
@@ -23,14 +24,16 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.platform.Window
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import com.mojang.blaze3d.vertex.BufferUploader
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.CoreShaders
 import org.joml.Matrix4f
 import org.joml.Vector2d
 import org.joml.Vector2f
-import kotlin.math.*
 
 object HologramManager {
     /**
@@ -191,7 +194,7 @@ object HologramManager {
             }
         }
         this.updateLookingAt()
-        this.arrangeScreenPingWidget()
+        this.arrangeScreenPingWidget(partialTicks)
 
         if (Config.Style.renderLookIndicator.get()) {
             val distance = Config.Style.lookIndicatorDistance.get()
@@ -390,10 +393,13 @@ object HologramManager {
         this.screenPingHolograms.add(looking)
     }
 
-    fun arrangeScreenPingWidget() {
+    fun arrangeScreenPingWidget(partialTicks: Float) {
         val initial = AlignedScreenPosition.of(10, 10)
         var pos = initial.toNotAligned()
         var size = Size.ZERO
+        screenPingHolograms.sortBy {
+            it.getSourceScreenPosition(partialTicks).y
+        }
         screenPingHolograms.forEach { state ->
             if (!state.displayed) return@forEach
             val locate = state.locate as LocateType.Screen? ?: return@forEach
@@ -404,8 +410,6 @@ object HologramManager {
     }
 
     fun renderPingScreenPrompt(style: HologramStyle, partialTicks: Float) {
-
-        val pose = style.poseMatrix()
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR)
         RenderSystem.disableCull()
@@ -421,111 +425,19 @@ object HologramManager {
                 val widgetY = (locate.position.y + state.displaySize.height / 2).toDouble()
                 val (worldX, worldY) = state.getSourceScreenPosition(partialTicks)
 
-                fillThreeSegmentConnectionLine(
+                LinkLineRender.fillThreeSegmentConnectionLine(
                     Vector2d(widgetX, widgetY),
                     Vector2d(worldX.toDouble(), worldY.toDouble()),
-                    20.0,
+                    10.0,
                     20.0,
                     builder,
                     style.poseMatrix()
                 )
             }
             val meshData = builder.build() ?: return
-            glDebugStack("linkLine") {
-                BufferUploader.drawWithShader(meshData)
-            }
+            BufferUploader.drawWithShader(meshData)
         }
     }
 
-    fun fillThreeSegmentConnectionLine(
-        begin: Vector2d, end: Vector2d, radius: Double, lineLength: Double, builder: BufferBuilder, matrix: Matrix4f,
-        halfLineWidth: Double = 0.8,
-        segment: Int = 50
-    ) {
-        val beginPoint = Vector2d(begin.x + lineLength, begin.y)
-        val endPoint = Vector2d(end.x - lineLength, end.y)
 
-        val theta = calculateTheta(beginPoint, endPoint, radius) ?: return
-
-        val beginCircle: Vector2d
-        val endCircle: Vector2d
-        if (beginPoint.y < endPoint.y) {
-            beginCircle = Vector2d(beginPoint.x, beginPoint.y + radius)
-            endCircle = Vector2d(endPoint.x, endPoint.y - radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(-1)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(-1)
-        } else {
-            beginCircle = Vector2d(beginPoint.x, beginPoint.y - radius)
-            endCircle = Vector2d(endPoint.x, endPoint.y + radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(-1)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(-1)
-        }
-
-        val sign = if (beginPoint.y < endPoint.y) 1 else -1
-        repeat(segment) {
-            val the = theta * 2 / segment * it
-            val sin = sin(the)
-            val cos = cos(the)
-            builder.addVertex(
-                matrix, (beginCircle.x + sin * (radius + halfLineWidth)).toFloat(),
-                (beginCircle.y - cos * sign * (radius + halfLineWidth)).toFloat(),
-                1f
-            ).setColor(-1)
-            builder.addVertex(
-                matrix, (beginCircle.x + sin * (radius - halfLineWidth)).toFloat(),
-                (beginCircle.y - cos * sign * (radius - halfLineWidth)).toFloat(),
-                1f
-            ).setColor(-1)
-        }
-        for(it in segment downTo 0) {
-            val the = theta * 2 / segment * it
-            val sin = sin(the)
-            val cos = cos(the)
-            builder.addVertex(
-                matrix, (endCircle.x - sin * (radius - halfLineWidth)).toFloat(),
-                (endCircle.y + cos * sign * (radius - halfLineWidth)).toFloat(),
-                1f
-            ).setColor(-1)
-            builder.addVertex(
-                matrix, (endCircle.x - sin * (radius + halfLineWidth)).toFloat(),
-                (endCircle.y + cos * sign * (radius + halfLineWidth)).toFloat(),
-                1f
-            ).setColor(-1)
-        }
-
-        if (beginPoint.y < endPoint.y) {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(-1)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(-1)
-        } else {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(-1)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(-1)
-        }
-    }
-
-    fun calculateTheta(begin: Vector2d, end: Vector2d, radius: Double): Double? {
-        val a = abs(begin.x - end.x)
-        val b = abs(begin.y - end.y)
-        val denominator = 4 * radius - b
-
-        // 校验分母和半径有效性
-        if (denominator == 0.0 || radius <= 0f) return null
-
-        val delta = a * a - (4 * radius * b - b * b)
-        if (delta < 0) return null
-
-        val sqrtDelta = sqrt(delta)
-        val t1 = (a + sqrtDelta) / denominator
-        val t2 = (a - sqrtDelta) / denominator
-
-        // 优先选择满足分母正且tanθ非负的根
-        val res = when {
-            t1 >= 0 && (a - 2 * radius * t1) > 0 -> atan(t1)
-            t2 >= 0 && (a - 2 * radius * t2) > 0 -> atan(t2)
-            else -> return null
-        }
-
-        require(tan(atan(res)) - res < 1e-3)
-
-        return res
-    }
 }
