@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.payload.*
+import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.CommandDSL
 import com.github.zomb_676.hologrampanel.util.SearchBackend
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
@@ -108,7 +109,7 @@ object EventHandler {
         }
 
         fun onWindowResize(width: Int, height: Int) {
-
+            TransitRenderTargetManager.onResize(width, height)
         }
 
         private fun onKey(event: InputEvent.Key) {
@@ -121,6 +122,9 @@ object EventHandler {
                 }
                 if (event.key == AllRegisters.KeyMapping.pingScreenKey.key.value) {
                     HologramManager.tryPingLookingScreen()
+                }
+                if (event.key == AllRegisters.KeyMapping.pingVectorKey.key.value) {
+                    HologramManager.tryPingLookingVector()
                 }
             }
 

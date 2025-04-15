@@ -34,6 +34,7 @@ import net.minecraft.client.renderer.CoreShaders
 import org.joml.Matrix4f
 import org.joml.Vector2d
 import org.joml.Vector2f
+import org.joml.Vector3f
 
 object HologramManager {
     /**
@@ -437,6 +438,12 @@ object HologramManager {
             val meshData = builder.build() ?: return
             BufferUploader.drawWithShader(meshData)
         }
+    }
+
+    fun tryPingLookingVector() {
+        val looking = getLookingHologram() ?: return
+        val vector = Minecraft.getInstance().gameRenderer.mainCamera.lookVector
+        looking.locate = LocateType.World.FacingVector(vector.negate(Vector3f()))
     }
 
 

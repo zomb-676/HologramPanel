@@ -10,11 +10,13 @@ import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.mainCamera
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
+import com.github.zomb_676.hologrampanel.util.rect.PackedRect
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
+import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import org.joml.Vector3f
