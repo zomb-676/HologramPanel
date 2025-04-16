@@ -12,6 +12,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramConte
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.render.LinkLineRender
+import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
@@ -149,12 +150,24 @@ object HologramManager {
                 state.displayed = false
                 return@forEach
             }
+            val locate = state.locate
+
+            if (locate is LocateType.World.FacingVector) {
+                state.setDisplayScale(scaleValue)
+                style.stack {
+                    style.scale(scaleValue)
+                    state.updateDisplaySize(style.poseMatrix())
+                    TransitRenderTargetManager.allocate(state.displaySize, locate, state)
+                }
+                return@forEach
+            }
+
             style.stack {
                 //calculate screen position by world position
                 val screenPos = state.updateRenderScreenPosition(partialTicks).equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
                 //change scale according to distance
-                val scale: Double = scaleValue * if (state.locate is LocateType.World) {
+                val scale: Double = scaleValue * if (locate is LocateType.World.FacingPlayer) {
                     val distance = state.distanceToCamera(partialTicks)
                     calculateScale(
                         distance, Config.Client.renderMinDistance.get(),
@@ -171,7 +184,7 @@ object HologramManager {
                 style.scale(scale, scale)
 
                 //anchored by hologram's left-up
-                if (state.locate is LocateType.World) {
+                if (locate is LocateType.World) {
                     style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
                 }
 
@@ -194,8 +207,12 @@ object HologramManager {
                 }
             }
         }
-        this.updateLookingAt()
+        style.guiGraphics.flush()
+
+        this.renderFacingVectors(style, partialTicks)
         this.arrangeScreenPingWidget(partialTicks)
+        this.updateLookingAt()
+        this.renderPingScreenPrompt(style, partialTicks)
 
         if (Config.Style.renderLookIndicator.get()) {
             val distance = Config.Style.lookIndicatorDistance.get()
@@ -204,7 +221,6 @@ object HologramManager {
         }
 
         HologramInteractionManager.renderTick()
-        this.renderPingScreenPrompt(style, partialTicks)
 
         profiler.pop()
     }
@@ -288,16 +304,23 @@ object HologramManager {
             .asSequence()
             .filter { it.displayed }
             .firstOrNull { state ->
-                val size = state.displaySize
-                val position = state.centerScreenPos
-                val left = position.x - size.width / 2
-                if (left > checkX) return@firstOrNull false
-                val right = position.x + size.width / 2
-                if (right < checkX) return@firstOrNull false
-                val up = position.y - size.height / 2
-                if (up > checkY) return@firstOrNull false
-                val down = position.y + size.height / 2
-                return@firstOrNull down > checkY
+                when (state.locate) {
+                    LocateType.World.FacingPlayer -> {
+                        val size = state.displaySize
+                        val position = state.centerScreenPos
+                        val left = position.x - size.width / 2
+                        if (left > checkX) return@firstOrNull false
+                        val right = position.x + size.width / 2
+                        if (right < checkX) return@firstOrNull false
+                        val up = position.y - size.height / 2
+                        if (up > checkY) return@firstOrNull false
+                        val down = position.y + size.height / 2
+                        return@firstOrNull down > checkY
+                    }
+
+                    is LocateType.Screen -> false
+                    is LocateType.World.FacingVector -> false
+                }
             }
     }
 
@@ -394,7 +417,7 @@ object HologramManager {
         this.screenPingHolograms.add(looking)
     }
 
-    fun arrangeScreenPingWidget(partialTicks: Float) {
+    private fun arrangeScreenPingWidget(partialTicks: Float) {
         val initial = AlignedScreenPosition.of(10, 10)
         var pos = initial.toNotAligned()
         var size = Size.ZERO
@@ -410,7 +433,7 @@ object HologramManager {
         }
     }
 
-    fun renderPingScreenPrompt(style: HologramStyle, partialTicks: Float) {
+    private fun renderPingScreenPrompt(style: HologramStyle, partialTicks: Float) {
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR)
         RenderSystem.disableCull()
@@ -446,5 +469,38 @@ object HologramManager {
         looking.locate = LocateType.World.FacingVector(vector.negate(Vector3f()))
     }
 
+    fun renderFacingVectors(style: HologramStyle, partialTicks: Float) {
+        glDebugStack("facingVectors") {
+            for ((target, states) in TransitRenderTargetManager.getEntries()) {
+                if (states.isEmpty()) continue
+                target.bindWrite(true)
+                OpenGLStateManager.preventMainBindWrite {
+                    for (state in states) {
+                        val locate = state.locate as LocateType.World.FacingVector? ?: continue
+                        val rect = locate.allocatedSpace
+                        style.stack {
+                            style.move(rect.x, rect.y)
+                            style.scale(state.displayScale)
+                            style.drawFullyBackground(state.size)
+                            state.widget.render(state, style, state.displayType, partialTicks)
+                        }
+                    }
+                    style.guiGraphics.flush()
+                }
+            }
+            Minecraft.getInstance().mainRenderTarget.bindWrite(true)
+        }
+        if (Config.Client.renderDebugTransientTarget.get()) {
+            TransitRenderTargetManager.refresh()
+            TransitRenderTargetManager.blitAllTransientTargetToMain(style)
+        }
+        //todo change place later
+        glDebugStack("clear") {
+            TransitRenderTargetManager.getEntries().forEach { (target, _) ->
+                target.clear()
+            }
+            Minecraft.getInstance().mainRenderTarget.bindWrite(true)
+        }
+    }
 
 }

@@ -5,12 +5,19 @@ import org.lwjgl.stb.STBRPNode
 import org.lwjgl.stb.STBRPRect
 import org.lwjgl.stb.STBRectPack
 
-class RectAllocator(val width: Int, val height: Int)  {
+/**
+ * warp [STBRectPack] which use the skyline arithmetic, here we will continue
+ * to allocate and [fresh] it
+ */
+class RectAllocator(private var width: Int, private var height: Int) {
     private val temporaryArray = STBRPNode.create(width)
-    val context = STBRPContext.create().also { context ->
+    private val context = STBRPContext.create().also { context ->
         STBRectPack.stbrp_init_target(context, width, height, temporaryArray)
     }
 
+    /**
+     * should manual check [PackedRect.assigned]
+     */
     fun allocate(width: Int, height: Int): PackedRect {
         val data = STBRPRect.create(1)
         data.get(0).w(width).h(height)
@@ -18,7 +25,16 @@ class RectAllocator(val width: Int, val height: Int)  {
         return PackedRect(data)
     }
 
+    fun resize(width: Int, height: Int) {
+        this.width = width
+        this.height = height
+    }
+
     fun fresh() {
         STBRectPack.stbrp_init_target(context, width, height, temporaryArray)
+    }
+
+    override fun toString(): String {
+        return "RectAllocator(width=$width, height=$height)"
     }
 }

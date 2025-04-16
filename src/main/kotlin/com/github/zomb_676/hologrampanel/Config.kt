@@ -107,14 +107,17 @@ object Config {
         val renderDebugLayer: ModConfigSpec.BooleanValue = builder
             .define("render_debug_layer", false)
 
-        val renderDebugBox: ModConfigSpec.BooleanValue = builder
-            .define("render_debug_box", false)
+        val renderDebugHologramLifeCycleBox: ModConfigSpec.BooleanValue = builder
+            .define("render_debug_hologram_life_cycle_box", false)
 
         val renderWidgetDebugInfo: ModConfigSpec.BooleanValue = builder
             .define("render_widget_debug_info", false)
 
         val renderNetworkDebugInfo: ModConfigSpec.BooleanValue = builder
             .define("render_network_debug_info", false)
+
+        val renderDebugTransientTarget: ModConfigSpec.BooleanValue = builder
+            .define("render_debug_transient_target", false)
 
         val searchBackend: ModConfigSpec.EnumValue<SearchBackend.Type> = builder
             .defineEnum("search_backend", SearchBackend.Type.AUTO)

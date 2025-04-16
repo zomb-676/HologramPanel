@@ -1,75 +1,160 @@
 package com.github.zomb_676.hologrampanel.render
 
+import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.rect.PackedRect
 import com.github.zomb_676.hologrampanel.util.rect.RectAllocator
 import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.pipeline.TextureTarget
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferUploader
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.VertexFormat
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.CoreShaders
 import org.lwjgl.opengl.GL46
-import kotlin.math.max
-import kotlin.math.min
+import java.util.*
 
+/**
+ * render all [LocateType.World.FacingVector] at [TransitRenderTarget] then, blit
+ */
 object TransitRenderTargetManager {
-    const val MIN_WIDTH = 1920
-    const val MIN_HEIGHT = 1080
 
-    val MAX_HEIGHT = GL46.glGetInteger(GL46.GL_MAX_FRAMEBUFFER_WIDTH)
-    val MAX_WIDTH = GL46.glGetInteger(GL46.GL_MAX_FRAMEBUFFER_HEIGHT)
+    private val entries: SequencedMap<TransitRenderTarget, MutableList<HologramRenderState>> = Object2ObjectLinkedOpenHashMap()
 
-    private val entries: MutableList<TransitRenderTarget> = mutableListOf()
-
+    /**
+     * if we use a FrameBuffer as a temporary target for minecraft screen space draw,
+     * its size should be recommended the same as [com.mojang.blaze3d.pipeline.MainTarget],
+     * so that we can use the same `ORTHOGRAPHIC` [RenderSystem.getProjectionMatrix]
+     *
+     * otherwise, you should set that together with [GL46.glViewport]
+     *
+     */
     private class TransitRenderTarget(width: Int, height: Int) : TextureTarget(width, height, true, false) {
-        val allocator = RectAllocator(width, height)
+        /**
+         * the allocator should not use size measured by pixel.
+         * The [com.mojang.blaze3d.platform.Window.guiScale] should be taken into consideration
+         *
+         * we can easily use the scaled size as we keep the same size as [com.mojang.blaze3d.pipeline.MainTarget].
+         * additionally, allocated size should be changed when gui scale changed
+         */
+        val allocator: RectAllocator
 
+        init {
+            val window = Minecraft.getInstance().window
+            allocator = RectAllocator(window.guiScaledWidth, window.guiScaledHeight)
+        }
+
+        /**
+         * clear all the allocated records for the next allocate cycle
+         */
         fun refreshAllocator() {
             allocator.fresh()
         }
 
         fun tryAllocate(width: Int, height: Int): PackedRect = allocator.allocate(width, height)
-    }
 
-    private fun create(): TransitRenderTarget {
-        val window = Minecraft.getInstance().window
-        val width = min(max(window.width * 2, MIN_WIDTH), MAX_WIDTH)
-        val height = min(max(window.height * 2, MIN_HEIGHT), MAX_HEIGHT)
-        return TransitRenderTarget(width, height)
-    }
-
-    fun onResize(width: Int, height: Int) {
-        val width = min(max(width * 2, MIN_WIDTH), MAX_WIDTH)
-        val height = min(max(height * 2, MIN_HEIGHT), MAX_HEIGHT)
-        entries.forEach { target ->
-            target.resize(width, height)
+        companion object {
+            fun create(): TransitRenderTarget {
+                val mainTarget = Minecraft.getInstance().mainRenderTarget
+                val target = TransitRenderTarget(mainTarget.width, mainTarget.height)
+                target.setClearColor(1f, 1f, 1f, 0f)
+                return target
+            }
         }
     }
 
-    fun allocate(width: Int, height: Int, locate: LocateType.World.FacingVector): RenderTarget {
-        for (target in entries) {
+    fun onResize(width: Int, height: Int) {
+        entries.keys.forEach { target ->
+            target.resize(width, height)
+        }
+        onGuiScaleChange()
+    }
+
+    /**
+     * allocate [width] by [height] and record its result into [locate]
+     */
+    fun allocate(width: Int, height: Int, locate: LocateType.World.FacingVector, state: HologramRenderState): RenderTarget {
+        for ((target, records) in entries) {
             val res = target.tryAllocate(width, height)
             if (res.assigned) {
                 locate.allocatedSpace = res
                 locate.target = target
+                records.add(state)
                 return target
             }
         }
-        val new = create()
+        val new = TransitRenderTarget.create()
+        Minecraft.getInstance().mainRenderTarget.bindWrite(true)
         val res = new.tryAllocate(width, height)
         if (!res.assigned) throw RuntimeException("too big requested width:$width, height:$height")
+        entries.put(new, mutableListOf(state))
         locate.allocatedSpace = res
         locate.target = new
         return new
     }
 
-    fun allocate(size: Size, locate: LocateType.World.FacingVector): RenderTarget =
-        allocate(size.width, size.height, locate)
+    fun allocate(size: Size, locate: LocateType.World.FacingVector, state: HologramRenderState): RenderTarget =
+        allocate(size.width, size.height, locate, state)
 
     fun refresh() {
-        this.entries.forEach(TransitRenderTarget::refreshAllocator)
+        this.entries.forEach { (target, records) ->
+            target.refreshAllocator()
+            records.clear()
+        }
     }
 
-    fun blitToMain() {
+    /**
+     * blit all the internal [TransitRenderTarget] to [com.mojang.blaze3d.pipeline.MainTarget] for debug usage
+     */
+    fun blitAllTransientTargetToMain(style: HologramStyle) {
+        val mainTarget = Minecraft.getInstance().mainRenderTarget
+        mainTarget.bindWrite(true)
+        RenderSystem.colorMask(true, true, true, false)
+        RenderSystem.disableDepthTest()
+        RenderSystem.enableBlend()
+        RenderSystem.depthMask(false)
+        RenderSystem.setShader(CoreShaders.POSITION_TEX)
+        val allocator = run {
+            val window = Minecraft.getInstance().window
+            RectAllocator(window.guiScaledWidth, window.guiScaledHeight)
+        }
+        for (target in this.entries.keys) {
+            val rect = allocator.allocate(target.width / 8, target.height / 8)
+            if (!rect.assigned) break
+            RenderSystem.setShaderTexture(0, target.getColorTextureId())
+            val builder = RenderSystem.renderThreadTesselator().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+            val x = rect.x.toFloat()
+            val y = rect.y.toFloat()
+            val w = rect.width.toFloat()
+            val h = rect.height.toFloat()
+            builder.addVertex(x, y, 0f).setUv(0f, 1f)
+            builder.addVertex(x, y + h, 0f).setUv(0f, 0f)
+            builder.addVertex(x + w, y + h, 0f).setUv(1f, 0f)
+            builder.addVertex(x + w, y, 0f).setUv(1f, 1f)
+            BufferUploader.drawWithShader(builder.buildOrThrow())
 
+            style.guiGraphics.renderOutline(rect.x, rect.y, rect.width, rect.height, -1)
+        }
+
+        RenderSystem.depthMask(true)
+        RenderSystem.colorMask(true, true, true, true)
+        GL46.glBindFramebuffer(GL46.GL_FRAMEBUFFER, mainTarget.frameBufferId)
+    }
+
+    /**
+     * used to iterator all the allocated contents
+     */
+    fun getEntries(): Iterator<Map.Entry<RenderTarget, MutableList<HologramRenderState>>> = entries.iterator()
+
+    fun onGuiScaleChange() {
+        val window = Minecraft.getInstance().window
+        val width = window.guiScaledWidth
+        val height = window.guiScaledHeight
+        this.entries.forEach { (entry, _) ->
+            entry.allocator.resize(width, height)
+        }
     }
 }

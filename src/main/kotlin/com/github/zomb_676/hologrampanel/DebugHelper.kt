@@ -134,7 +134,7 @@ object DebugHelper {
             val camPos = event.camera.position
             pose.translate(-camPos.x, -camPos.y, -camPos.z)
 
-            if (Config.Client.renderDebugBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
+            if (Config.Client.renderDebugHologramLifeCycleBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
                 RenderSystem.setShader(CoreShaders.POSITION_COLOR)
                 RenderSystem.disableDepthTest()
@@ -247,19 +247,19 @@ object DebugHelper {
         }
 
         fun onDataReceived(widget: DynamicBuildWidget<*>, sizeInBytes: Int) {
-            if (Config.Client.renderDebugBox.get() || Config.Client.renderNetworkDebugInfo.get()) {
+            if (Config.Client.renderDebugHologramLifeCycleBox.get() || Config.Client.renderNetworkDebugInfo.get()) {
                 val state = HologramManager.queryHologramState(widget) ?: return
                 queryUpdateData.put(UpdateEntry(state, sizeInBytes), UPDATE_TINE)
             }
         }
 
         fun recordPopup(state: HologramRenderState) {
-            if (!Config.Client.renderDebugBox.get()) return
+            if (!Config.Client.renderDebugHologramLifeCycleBox.get()) return
             popUpData.put(state, POPUP_TIME)
         }
 
         fun recordRemove(state: HologramRenderState) {
-            if (!Config.Client.renderDebugBox.get()) return
+            if (!Config.Client.renderDebugHologramLifeCycleBox.get()) return
             removeData.put(state, REMOVE_TIME)
         }
 

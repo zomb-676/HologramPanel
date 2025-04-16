@@ -16,7 +16,6 @@ import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
-import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import org.joml.Vector3f
@@ -44,6 +43,8 @@ class HologramRenderState(
 
     /**
      * the size influenced by [displayScale] and [com.mojang.blaze3d.vertex.PoseStack], used for cursor detection
+     *
+     * coordinate is at minecraft screen space, can't indicate actual pixel size
      *
      * this can't be directly used during rendering HologramWidget, and the scale will be considered multi-times
      */
@@ -189,6 +190,20 @@ class HologramRenderState(
         this.displaySize = Size.of(ceil(x2 - x1).toInt(), ceil(y2 - y1).toInt())
 
         return !(x1 > width || x2 < 0 || y1 > height || y2 < 0)
+    }
+
+    fun updateDisplaySize(matrix4f: Matrix4f) {
+        val checkVector = Vector4f(0f, 0f, 0f, 1f)
+        matrix4f.transform(checkVector)
+        val x1 = checkVector.x
+        val y1 = checkVector.y
+
+        checkVector.set(size.width.toFloat(), size.height.toFloat(), 0f, 1f)
+        matrix4f.transform(checkVector)
+        val x2 = checkVector.x
+        val y2 = checkVector.y
+
+        this.displaySize = Size.of(ceil(x2 - x1).toInt(), ceil(y2 - y1).toInt())
     }
 
     /**

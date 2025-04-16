@@ -2,6 +2,9 @@ package com.github.zomb_676.hologrampanel.util.rect
 
 import org.lwjgl.stb.STBRPRect
 
+/**
+ * a wrapper class for [STBRPRect]
+ */
 @JvmInline
 value class PackedRect(@PublishedApi internal val data: STBRPRect.Buffer) {
     inline val x get() = data.x()
@@ -13,6 +16,10 @@ value class PackedRect(@PublishedApi internal val data: STBRPRect.Buffer) {
 
     companion object {
         val EMPTY = PackedRect(STBRPRect.create(1))
+    }
+
+    override fun toString(): String {
+        return "Rect(x=$x, y=$y, w=$width, h=$height, s=$assigned)"
     }
 }
 

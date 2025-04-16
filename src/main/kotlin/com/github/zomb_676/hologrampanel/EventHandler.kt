@@ -276,7 +276,7 @@ object EventHandler {
                     }
                     "debug_box" {
                         execute {
-                            val newState = Config.Client.renderDebugBox.switchAndSave()
+                            val newState = Config.Client.renderDebugHologramLifeCycleBox.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_box state to $newState"))
                         }
                     }
@@ -290,6 +290,12 @@ object EventHandler {
                         execute {
                             val newState = Config.Client.renderNetworkDebugInfo.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_network_usage state to $newState"))
+                        }
+                    }
+                    "debug_transient_target" {
+                        execute {
+                            val newState = Config.Client.renderDebugTransientTarget.switchAndSave()
+                            source.sendSystemMessage(Component.literal("switch debug_transient state to $newState"))
                         }
                     }
                     "invalidate_cache" {
