@@ -514,15 +514,11 @@ object HologramManager {
 
                     val window = Minecraft.getInstance().window
                     val rect = locate.allocatedSpace
+                    //one minus is because allocator's up-down is differ from uv
                     val u0 = (rect.x / window.guiScaledWidth.toFloat())
                     val v1 = 1 - (rect.y / window.guiScaledHeight.toFloat())
                     val u1 = ((rect.x + rect.width) / window.guiScaledWidth.toFloat())
                     val v0 = 1 - ((rect.y + rect.height) / window.guiScaledHeight.toFloat())
-
-//                    val u0 = 0f
-//                    val v0 = 0f
-//                    val u1 = 1f;
-//                    val v1 = 1f
 
                     Vector3f(center).add(left).add(up).add().setUv(u0, v1).setColor(-1)
                     Vector3f(center).add(left).sub(up).add().setUv(u0, v0).setColor(-1)
