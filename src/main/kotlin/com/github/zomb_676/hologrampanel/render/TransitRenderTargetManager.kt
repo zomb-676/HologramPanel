@@ -32,7 +32,7 @@ object TransitRenderTargetManager {
      * otherwise, you should set that together with [GL46.glViewport]
      *
      */
-    private class TransitRenderTarget(width: Int, height: Int) : TextureTarget(width, height, true, false) {
+    private class TransitRenderTarget private constructor(width: Int, height: Int) : TextureTarget(width, height, true, false) {
         /**
          * the allocator should not use size measured by pixel.
          * The [com.mojang.blaze3d.platform.Window.guiScale] should be taken into consideration

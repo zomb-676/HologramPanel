@@ -16,6 +16,9 @@ import net.neoforged.neoforge.items.IItemHandler
 import org.lwjgl.glfw.GLFW
 import kotlin.math.min
 
+/**
+ * support interactive
+ */
 open class InteractiveItemsElement protected constructor(
     items: List<ItemStack>,
     val source: TransSource<*>,

@@ -88,7 +88,6 @@ inline fun <T> profilerStack(name: String, crossinline code: () -> T): T {
     return res
 }
 
-@Suppress("KotlinConstantConditions")
 inline val Double.normalizedInto2PI: Double
     get() {
         if (this == (Math.PI * 2)) return this

@@ -277,10 +277,10 @@ object EventHandler {
                             source.sendSystemMessage(Component.literal("switch debug_layer state to $newState"))
                         }
                     }
-                    "debug_box" {
+                    "debug_lifecycle" {
                         execute {
                             val newState = Config.Client.renderDebugHologramLifeCycleBox.switchAndSave()
-                            source.sendSystemMessage(Component.literal("switch debug_box state to $newState"))
+                            source.sendSystemMessage(Component.literal("switch debug_lifecycle state to $newState"))
                         }
                     }
                     "debug_widget" {

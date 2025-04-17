@@ -5,6 +5,11 @@ import com.github.zomb_676.hologrampanel.util.RebuildValue
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 
+/**
+ * the basic interface for elements in [com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildComponentWidget.Single]
+ *
+ * in most case you can extend [RenderElement]
+ */
 interface IRenderElement : RebuildValue<IRenderElement?> {
 
     fun measureContentSize(style: HologramStyle): Size

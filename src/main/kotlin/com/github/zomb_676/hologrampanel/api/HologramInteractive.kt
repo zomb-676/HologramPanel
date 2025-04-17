@@ -10,6 +10,9 @@ import com.github.zomb_676.hologrampanel.util.packed.Size
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.world.entity.player.Player
 
+/**
+ * define all the supported interaction for hologram
+ */
 interface HologramInteractive {
     /**
      * only be called when [org.lwjgl.glfw.GLFW.GLFW_RELEASE] happened

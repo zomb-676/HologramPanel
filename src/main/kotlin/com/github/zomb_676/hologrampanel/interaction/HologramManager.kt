@@ -504,7 +504,7 @@ object HologramManager {
                     val locate = state.locate as? LocateType.World.FacingVector? ?: continue
                     val center = state.sourcePosition(partialTick)
                     val (width, height) = state.displaySize
-
+                    //TODO the 80 here should be replaced by value calculated by the projection matrix
                     val left = locate.getLeft().mul(width / 2f / 80f, Vector3f())
                     val up = locate.getUp().mul(height / 2f / 80f, Vector3f())
 

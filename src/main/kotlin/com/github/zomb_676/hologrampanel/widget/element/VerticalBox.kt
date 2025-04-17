@@ -13,6 +13,9 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.google.common.collect.ImmutableBiMap
 import kotlin.math.max
 
+/**
+ * layout element in a vertical way
+ */
 class VerticalBox(val elements: ImmutableBiMap<IRenderElement, String>, val context: HologramContext) : RenderElement() {
     private var baseX = 0
     private val padding = 1

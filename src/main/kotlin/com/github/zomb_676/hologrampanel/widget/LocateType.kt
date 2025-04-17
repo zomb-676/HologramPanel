@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.widget
 
+import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
@@ -12,17 +13,21 @@ import org.joml.Vector3fc
 
 sealed interface LocateType {
 
-    fun getScreenSpacePosition(hologramContext: HologramContext, partialTick: Float): ScreenPosition
+    fun getScreenSpacePosition(context: HologramContext, partialTick: Float): ScreenPosition
 
     /**
      * transform [HologramContext.hologramCenterPosition] into minecraft screen space
      */
-    fun getSourceScreenSpacePosition(hologramContext: HologramContext, partialTick: Float): ScreenPosition =
-        MVPMatrixRecorder.transform(hologramContext.hologramCenterPosition(partialTick)).screenPosition
+    fun getSourceScreenSpacePosition(context: HologramContext, partialTick: Float): ScreenPosition =
+        MVPMatrixRecorder.transform(getSourceWorldPosition(context, partialTick)).screenPosition
+
+    fun getSourceWorldPosition(context: HologramContext, partialTick: Float): Vector3fc =
+        context.hologramCenterPosition(partialTick)
 
     sealed interface World : LocateType {
-        override fun getScreenSpacePosition(hologramContext: HologramContext, partialTick: Float) =
-            getSourceScreenSpacePosition(hologramContext, partialTick)
+
+        override fun getScreenSpacePosition(context: HologramContext, partialTick: Float) =
+            getSourceScreenSpacePosition(context, partialTick)
 
         data object FacingPlayer : World
 
@@ -30,8 +35,8 @@ sealed interface LocateType {
             private val view = Vector3f()
             private val left = Vector3f()
             private val up = Vector3f()
-            fun getLeft() : Vector3fc = left
-            fun getUp() : Vector3fc = up
+            fun getLeft(): Vector3fc = left
+            fun getUp(): Vector3fc = up
 
             fun byCamera(camera: Camera): FacingVector {
                 camera.lookVector.mul(-1f, view)

@@ -10,6 +10,9 @@ import net.minecraft.world.entity.Entity
 import org.joml.Quaternionf
 import kotlin.math.floor
 
+/**
+ * render an [entity] not use [LivingEntityRenderElement]
+ */
 open class EntityRenderElement(val entity: Entity, val entityScale: Double) : RenderElement() {
     companion object {
         val QUATERNION: Quaternionf = Quaternionf().rotateXYZ(Math.toRadians(15.0).toFloat(), 0f, Math.PI.toFloat())

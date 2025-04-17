@@ -19,6 +19,9 @@ import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.items.IItemHandler
 import org.lwjgl.glfw.GLFW
 
+/**
+ * support interactive
+ */
 open class InteractiveItemElement private constructor(
     item: ItemStack,
     val interactiveSlot: Int,

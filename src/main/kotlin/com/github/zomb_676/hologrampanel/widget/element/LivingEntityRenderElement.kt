@@ -8,6 +8,11 @@ import org.joml.Quaternionf
 import org.joml.Vector3f
 import kotlin.math.floor
 
+/**
+ * use [InventoryScreen.renderEntityInInventory] which limits [LivingEntity]
+ *
+ * use [EntityRenderElement] which resolves that
+ */
 @Deprecated("use the entity variant", replaceWith = ReplaceWith("EntityRenderElement"), DeprecationLevel.HIDDEN)
 open class LivingEntityRenderElement(val entity: LivingEntity, val entityScale: Double) : RenderElement() {
     companion object {

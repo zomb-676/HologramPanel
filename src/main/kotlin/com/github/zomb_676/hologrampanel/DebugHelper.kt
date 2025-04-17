@@ -57,6 +57,13 @@ object DebugHelper {
         private const val POPUP_TIME = 30
         private const val REMOVE_TIME = 30
 
+        private const val UPDATE_BEGIN_COLOR : Int = 0xffffffff.toInt()
+        private const val UPDATE_END_COLOR : Int = 0x00ffffff
+        private const val POP_UP_BEGIN_COLOR : Int = 0xff0000ff.toInt()
+        private const val POP_UP_END_COLOR : Int = 0x000000ff
+        private const val REMOVE_BEGIN_COLOR : Int = 0xffff0000.toInt()
+        private const val REMOVE_END_COLOR : Int = 0x00ff0000
+
         private const val OFFSET = 0.2
 
         private var lastDebugState: Boolean = false
@@ -142,7 +149,7 @@ object DebugHelper {
                     val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
                     while (iterator.hasNext()) {
                         val next = iterator.next()
-                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, 0x00ffffff.toInt(), -1)
+                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, UPDATE_END_COLOR, UPDATE_BEGIN_COLOR)
                         val position = next.key.state.sourcePosition(partialTick)
                         fill(position, color, pose, builder)
                     }
@@ -152,7 +159,7 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, 0x000000ff.toInt(), 0xff0000ff.toInt())
+                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, POP_UP_END_COLOR, POP_UP_BEGIN_COLOR)
                         fill(next.key.sourcePosition(partialTick), color, pose, builder)
                     }
                 }
@@ -161,7 +168,7 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, 0x00ff0000.toInt(), 0xffff0000.toInt())
+                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, REMOVE_END_COLOR, REMOVE_BEGIN_COLOR)
                         fill(next.key.sourcePosition(partialTick), color, pose, builder)
                     }
                 }

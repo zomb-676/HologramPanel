@@ -13,6 +13,11 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 
+/**
+ * render list of [ItemStack]
+ *
+ * @param addition true will try to keep en empty space for interaction
+ */
 open class ItemsElement protected constructor(val items: List<ItemStack>, itemEachLine: Int, val addition: Boolean) :
     RenderElement(), HologramInteractive {
     constructor(items: List<ItemStack>, itemEachLine: Int = 7) : this(items, itemEachLine, false)

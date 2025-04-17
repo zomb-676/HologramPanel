@@ -4,6 +4,9 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import net.minecraft.network.chat.Component
 
+/**
+ * render [Component]
+ */
 open class ComponentRenderElement(val component: Component) : RenderElement() {
     constructor(string: String) : this(Component.literal(string))
 

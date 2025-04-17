@@ -6,6 +6,9 @@ import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 
+/**
+ * define the whole transformation chain, including query and store
+ */
 data class TransOperation<in S1 : Any, in S2 : Any, H1 : Any, H2 : Any, R : Any>(
     val query: TransHandle<S1, H1>,
     val queryPath: TransPath<H1, R>,

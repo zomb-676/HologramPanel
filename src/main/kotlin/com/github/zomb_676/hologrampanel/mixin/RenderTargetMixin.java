@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * implementation {@link OpenGLStateManager#preventMainBindWrite}
+ */
 @Mixin(RenderTarget.class)
 public class RenderTargetMixin {
     @Inject(method = "bindWrite", at = @At("HEAD"), cancellable = true)

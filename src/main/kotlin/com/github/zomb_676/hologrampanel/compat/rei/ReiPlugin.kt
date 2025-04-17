@@ -8,6 +8,9 @@ import me.shedaniel.rei.forge.REIPluginClient
 import me.shedaniel.rei.impl.client.gui.widget.entrylist.EntryListSearchManager
 import net.minecraft.world.item.ItemStack
 
+/**
+ * tne rei plugin which supports search by its search engine
+ */
 @REIPluginClient
 class ReiPlugin : REIClientPlugin {
     init {

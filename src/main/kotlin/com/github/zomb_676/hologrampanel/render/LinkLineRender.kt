@@ -6,6 +6,9 @@ import org.joml.Vector2d
 import org.joml.Vector2f
 import kotlin.math.*
 
+/**
+ * code calculate different required degree by different edge-case, no interesting
+ */
 object LinkLineRender {
     fun fillThreeSegmentConnectionLine(
         begin: Vector2d, end: Vector2d, radius: Double, lineLength: Double, builder: BufferBuilder, matrix: Matrix4f,
@@ -98,7 +101,6 @@ object LinkLineRender {
         val b = abs(begin.y - end.y)
         val denominator = 4 * radius - b
 
-        // 校验分母和半径有效性
         if (denominator == 0.0 || radius <= 0f) return null
 
         val delta = a * a - (4 * radius * b - b * b)
@@ -108,7 +110,6 @@ object LinkLineRender {
         val t1 = (a + sqrtDelta) / denominator
         val t2 = (a - sqrtDelta) / denominator
 
-        // 优先选择满足分母正且tanθ非负的根
         val res = when {
             t1 >= 0 && (a - 2 * radius * t1) > 0 -> atan(t1)
             t2 >= 0 && (a - 2 * radius * t2) > 0 -> atan(t2)

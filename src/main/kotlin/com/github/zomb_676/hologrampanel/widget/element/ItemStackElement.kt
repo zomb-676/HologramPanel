@@ -8,6 +8,9 @@ import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.util.stack
 import net.minecraft.world.item.ItemStack
 
+/**
+ * render an [ItemStack] and support render item tooltip at side
+ */
 open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack: ItemStack) : RenderElement(), HologramInteractive {
 
     override fun measureContentSize(style: HologramStyle): Size = style.itemStackSize().scale()

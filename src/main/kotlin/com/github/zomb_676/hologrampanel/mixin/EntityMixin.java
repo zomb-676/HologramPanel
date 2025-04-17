@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.Unique;
 
 import javax.annotation.Nullable;
 
+/**
+ * implementation {@link HologramHolder} for {@link Entity}
+ */
 @Mixin(Entity.class)
 public class EntityMixin implements HologramHolder {
     @Unique

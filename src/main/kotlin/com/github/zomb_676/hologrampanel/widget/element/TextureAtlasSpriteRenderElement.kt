@@ -8,6 +8,11 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 
+/**
+ * render a [TextureAtlasSprite], original use its size as element size
+ *
+ * overwrite it by use [setRenderSize]
+ */
 class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderElement() {
     companion object {
         @Suppress("DEPRECATION")

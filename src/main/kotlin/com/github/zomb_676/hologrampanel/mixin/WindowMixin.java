@@ -7,6 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * notify {@link com.github.zomb_676.hologrampanel.util.rect.RectAllocator} when gui scale change
+ */
 @Mixin(Window.class)
 public class WindowMixin {
     @Inject(method = "setGuiScale", at = @At("TAIL"))
