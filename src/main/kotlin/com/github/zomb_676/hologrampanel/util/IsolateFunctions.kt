@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.util
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexConsumer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -11,6 +12,8 @@ import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
 import net.neoforged.neoforge.client.GlStateBackup
 import net.neoforged.neoforge.common.ModConfigSpec
+import org.joml.Matrix4f
+import org.joml.Vector3f
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL46
 
@@ -134,4 +137,13 @@ fun ModConfigSpec.BooleanValue.switchAndSave(): Boolean {
 fun <T : Any> ModConfigSpec.ConfigValue<T>.setAndSave(value: T) {
     this.set(value)
     this.save()
+}
+
+/**
+ * use the [container] to reduce object allocation during the context scope
+ */
+context(container: Vector3f)
+fun VertexConsumer.vertex(matrix4f: Matrix4f, x: Float, y: Float, z: Float): VertexConsumer {
+    matrix4f.transformPosition(x, y, z, container)
+    return this.addVertex(container.x, container.y, container.z)
 }

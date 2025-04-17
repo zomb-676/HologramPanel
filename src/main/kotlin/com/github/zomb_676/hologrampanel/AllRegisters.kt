@@ -20,7 +20,6 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries
 import net.neoforged.neoforge.registries.NewRegistryEvent
 import net.neoforged.neoforge.registries.RegistryBuilder
 import org.lwjgl.glfw.GLFW
-import javax.swing.text.Keymap
 
 object AllRegisters {
     fun initEvents(dist: Dist, modBus: IEventBus) {

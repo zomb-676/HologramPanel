@@ -25,13 +25,11 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.platform.Window
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.BufferUploader
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.Tesselator
-import com.mojang.blaze3d.vertex.VertexFormat
+import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.CoreShaders
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import org.joml.Matrix4f
 import org.joml.Vector2d
 import org.joml.Vector2f
@@ -71,8 +69,6 @@ object HologramManager {
         }
     }
 
-    private var needArrange = false
-
     /**
      * check via [HologramContext.getIdentityObject]
      */
@@ -96,7 +92,6 @@ object HologramManager {
             widgets[context.getIdentityObject()] = widget
             val state = HologramRenderState(widget, context, displayType, ticket)
             states[widget] = state
-            this.needArrange = true
 
             widget.onAdd()
 
@@ -110,18 +105,13 @@ object HologramManager {
      *
      * update [HologramRenderState], [lookingWidget], [interactiveTarget], [collapseTarget] and do render
      */
-    internal fun render(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
+    internal fun renderOverlayPart(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
         val context = RayTraceHelper.findTarget(32.0, partialTicks)
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context, DisplayType.NORMAL)
             if (widget != null) {
                 this.tryAddWidget(widget, context, DisplayType.NORMAL, listOf(HologramTicket.ByTickAfterNotSee(80)))
             }
-        }
-
-        if (needArrange) {
-            needArrange = false
-            //todo do arrange here
         }
 
         profiler.push("render_hologram")
@@ -465,8 +455,8 @@ object HologramManager {
 
     fun tryPingLookingVector() {
         val looking = getLookingHologram() ?: return
-        val vector = Minecraft.getInstance().gameRenderer.mainCamera.lookVector
-        looking.locate = LocateType.World.FacingVector(vector.negate(Vector3f()))
+        val camera = Minecraft.getInstance().gameRenderer.mainCamera
+        looking.locate = LocateType.World.FacingVector().byCamera(camera)
     }
 
     fun renderFacingVectors(style: HologramStyle, partialTicks: Float) {
@@ -476,7 +466,7 @@ object HologramManager {
                 target.bindWrite(true)
                 OpenGLStateManager.preventMainBindWrite {
                     for (state in states) {
-                        val locate = state.locate as LocateType.World.FacingVector? ?: continue
+                        val locate = state.locate as? LocateType.World.FacingVector? ?: continue
                         val rect = locate.allocatedSpace
                         style.stack {
                             style.move(rect.x, rect.y)
@@ -491,10 +481,58 @@ object HologramManager {
             Minecraft.getInstance().mainRenderTarget.bindWrite(true)
         }
         if (Config.Client.renderDebugTransientTarget.get()) {
-            TransitRenderTargetManager.refresh()
             TransitRenderTargetManager.blitAllTransientTargetToMain(style)
         }
-        //todo change place later
+    }
+
+    fun renderWorldPart(event: RenderLevelStageEvent) {
+        if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
+        val pose = event.poseStack
+        val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
+        val camPos = event.camera.position
+        pose.translate(-camPos.x, -camPos.y, -camPos.z)
+
+        RenderSystem.enableBlend()
+        RenderSystem.disableCull()
+        RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR)
+        glDebugStack("world") {
+            for ((target, states) in TransitRenderTargetManager.getEntries()) {
+                if (states.isEmpty()) continue
+                RenderSystem.setShaderTexture(0, target.colorTextureId)
+                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
+                for (state in states) {
+                    val locate = state.locate as? LocateType.World.FacingVector? ?: continue
+                    val center = state.sourcePosition(partialTick)
+                    val (width, height) = state.displaySize
+
+                    val left = locate.getLeft().mul(width / 2f / 80f, Vector3f())
+                    val up = locate.getUp().mul(height / 2f / 80f, Vector3f())
+
+                    fun Vector3f.add(): VertexConsumer {
+                        return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
+                    }
+
+                    val window = Minecraft.getInstance().window
+                    val rect = locate.allocatedSpace
+                    val u0 = (rect.x / window.guiScaledWidth.toFloat())
+                    val v1 = 1 - (rect.y / window.guiScaledHeight.toFloat())
+                    val u1 = ((rect.x + rect.width) / window.guiScaledWidth.toFloat())
+                    val v0 = 1 - ((rect.y + rect.height) / window.guiScaledHeight.toFloat())
+
+//                    val u0 = 0f
+//                    val v0 = 0f
+//                    val u1 = 1f;
+//                    val v1 = 1f
+
+                    Vector3f(center).add(left).add(up).add().setUv(u0, v1).setColor(-1)
+                    Vector3f(center).add(left).sub(up).add().setUv(u0, v0).setColor(-1)
+                    Vector3f(center).sub(left).sub(up).add().setUv(u1, v0).setColor(-1)
+                    Vector3f(center).sub(left).add(up).add().setUv(u1, v1).setColor(-1)
+                }
+                BufferUploader.drawWithShader(builder.buildOrThrow())
+            }
+            TransitRenderTargetManager.refresh()
+        }
         glDebugStack("clear") {
             TransitRenderTargetManager.getEntries().forEach { (target, _) ->
                 target.clear()
@@ -502,5 +540,4 @@ object HologramManager {
             Minecraft.getInstance().mainRenderTarget.bindWrite(true)
         }
     }
-
 }

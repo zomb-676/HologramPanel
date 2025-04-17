@@ -10,7 +10,7 @@ object InteractionLayer {
     fun getLayer(): LayeredDraw.Layer = object : LayeredDraw.Layer {
         override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
             glDebugStack("render") {
-                HologramManager.render(guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false))
+                HologramManager.renderOverlayPart(guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false))
             }
         }
     }

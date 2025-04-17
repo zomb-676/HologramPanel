@@ -4,11 +4,8 @@ import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.payload.*
 import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
-import com.github.zomb_676.hologrampanel.util.CommandDSL
-import com.github.zomb_676.hologrampanel.util.SearchBackend
+import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
-import com.github.zomb_676.hologrampanel.util.setAndSave
-import com.github.zomb_676.hologrampanel.util.switchAndSave
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.brigadier.arguments.BoolArgumentType
@@ -192,7 +189,13 @@ object EventHandler {
         }
 
         fun onRenderLevelStage(event: RenderLevelStageEvent) {
-            DebugHelper.Client.renderLevelLast(event)
+            val pose = event.poseStack
+            pose.stack {
+                DebugHelper.Client.renderLevelLast(event)
+            }
+            pose.stack {
+                HologramManager.renderWorldPart(event)
+            }
         }
     }
 

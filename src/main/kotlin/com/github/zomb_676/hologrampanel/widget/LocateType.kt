@@ -5,8 +5,10 @@ import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.rect.PackedRect
 import com.mojang.blaze3d.pipeline.RenderTarget
+import net.minecraft.client.Camera
 import org.joml.Vector2f
 import org.joml.Vector3f
+import org.joml.Vector3fc
 
 sealed interface LocateType {
 
@@ -24,13 +26,28 @@ sealed interface LocateType {
 
         data object FacingPlayer : World
 
-        class FacingVector(val direction: Vector3f) : World {
+        class FacingVector() : World {
+            private val view = Vector3f()
+            private val left = Vector3f()
+            private val up = Vector3f()
+            fun getLeft() : Vector3fc = left
+            fun getUp() : Vector3fc = up
+
+            fun byCamera(camera: Camera): FacingVector {
+                camera.lookVector.mul(-1f, view)
+                view.normalize()
+                left.set(camera.leftVector).normalize()
+                up.set(camera.upVector).normalize()
+                //calculate scale here
+                return this
+            }
+
             /**
              * used for operating remapping
              */
             var allocatedSpace: PackedRect = PackedRect.EMPTY
 
-            var target : RenderTarget? = null
+            var target: RenderTarget? = null
         }
     }
 
