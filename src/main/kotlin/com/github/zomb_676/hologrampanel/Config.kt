@@ -96,7 +96,7 @@ object Config {
             .defineInRange("render_min_distance", 1.0, 0.1, 16.0)
 
         val globalHologramScale: ModConfigSpec.DoubleValue = builder
-            .defineInRange("global_hologram_range", 1.0, 0.01, 20.0)
+            .defineInRange("global_hologram_range", 1.0, 0.1, 2.5)
 
         val skipHologramIfEmpty: ModConfigSpec.BooleanValue = builder
             .define("skip_hologram_if_empty", true)

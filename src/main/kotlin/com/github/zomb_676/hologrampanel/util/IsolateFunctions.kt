@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.util
 
+import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
@@ -8,6 +9,7 @@ import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.network.chat.Component
 import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
 import net.neoforged.neoforge.client.GlStateBackup
@@ -16,6 +18,9 @@ import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL46
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.StampedLock
 
 @Suppress("UNCHECKED_CAST")
 fun <T> Any.unsafeCast(): T = this as T
@@ -133,16 +138,59 @@ fun ModConfigSpec.BooleanValue.switchAndSave(): Boolean {
     return state
 }
 
+private object ConfigSaveHelper {
+    val hasSetTask = AtomicBoolean(false)
+    val lock = StampedLock()
+    val saveTasks: MutableSet<ModConfigSpec.ConfigValue<*>> = ConcurrentHashMap.newKeySet()
+
+    fun scheduleTask() {
+        val stamp = lock.tryWriteLock()
+        if (stamp == 0L) {
+            hasSetTask.set(false)
+            return
+        }
+
+        try {
+            synchronized(saveTasks) {
+                val copy = saveTasks.toSet()
+                saveTasks.clear()
+                copy
+            }.forEach { value ->
+                try {
+                    value.save()
+                } catch (e: Throwable) {
+                    HologramPanel.LOGGER.debug("config: path({}), value:{} failed to save", value.path.joinToString(), value.get())
+                    HologramPanel.LOGGER.debug("Error while saving config", e)
+                    Minecraft.getInstance().gui.chat.addMessage(Component.literal("failed to save config, see log for detailed information"))
+                }
+            }
+        } finally {
+            lock.unlockWrite(stamp)
+            hasSetTask.set(false)
+            if (saveTasks.isNotEmpty()) {
+                scheduleTask()
+            }
+        }
+    }
+
+    fun save(value: ModConfigSpec.ConfigValue<*>) {
+        saveTasks.add(value)
+
+        if (hasSetTask.compareAndSet(false, true)) {
+            Minecraft.getInstance().schedule(::scheduleTask)
+        }
+    }
+}
+
 fun <T : Any> ModConfigSpec.ConfigValue<T>.setAndSave(value: T) {
     this.set(value)
-    this.save()
+    ConfigSaveHelper.save(this)
 }
 
 /**
  * use the [container] to reduce object allocation during the context scope
  */
-context(container: Vector3f)
-fun VertexConsumer.vertex(matrix4f: Matrix4f, x: Float, y: Float, z: Float): VertexConsumer {
+context(container: Vector3f) fun VertexConsumer.vertex(matrix4f: Matrix4f, x: Float, y: Float, z: Float): VertexConsumer {
     matrix4f.transformPosition(x, y, z, container)
     return this.addVertex(container.x, container.y, container.z)
 }
