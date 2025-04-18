@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
+import org.joml.Vector2f
 
 /**
  * pack two 32-bit float into a 64-bit long
@@ -62,6 +63,11 @@ value class ScreenPosition private constructor(@PublishedApi internal val data: 
             if (y + size.height / 2 < 0) return false
         }
         return true
+    }
+
+    fun set(vector2f: Vector2f) {
+        vector2f.x = this.x
+        vector2f.y = this.y
     }
 
     companion object {

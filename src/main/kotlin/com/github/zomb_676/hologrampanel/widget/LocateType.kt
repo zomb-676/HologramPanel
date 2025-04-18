@@ -1,6 +1,5 @@
 package com.github.zomb_676.hologrampanel.widget
 
-import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
@@ -37,6 +36,43 @@ sealed interface LocateType {
             private val up = Vector3f()
             fun getLeft(): Vector3fc = left
             fun getUp(): Vector3fc = up
+
+            private val leftUp: Vector2f = Vector2f()
+            private val leftDown: Vector2f = Vector2f()
+            private val rightUp: Vector2f = Vector2f()
+            private val rightDown: Vector2f = Vector2f()
+
+            fun updateLeftUp(vector3fc: Vector3fc) {
+                MVPMatrixRecorder.transform(vector3fc).screenPosition.set(leftUp)
+            }
+
+            fun updateLeftDown(vector3fc: Vector3fc) {
+                MVPMatrixRecorder.transform(vector3fc).screenPosition.set(leftDown)
+            }
+
+            fun updateRightUp(vector3fc: Vector3fc) {
+                MVPMatrixRecorder.transform(vector3fc).screenPosition.set(rightUp)
+            }
+
+            fun updateRightDown(vector3fc: Vector3fc) {
+                MVPMatrixRecorder.transform(vector3fc).screenPosition.set(rightDown)
+            }
+
+            fun isMouseIn(mouseX: Float, mouseY: Float): Boolean {
+                fun crossProductZ(p1: Vector2f, p2: Vector2f, checkX: Float, checkY: Float): Float {
+                    return (p2.x - p1.x) * (checkY - p1.y) - (p2.y - p1.y) * (checkX - p1.x)
+                }
+
+                val cp1 = crossProductZ(leftUp, leftDown, mouseX, mouseY)
+                val cp2 = crossProductZ(leftDown, rightDown, mouseX, mouseY)
+                val cp3 = crossProductZ(rightDown, rightUp, mouseX, mouseY)
+                val cp4 = crossProductZ(rightUp, leftUp, mouseX, mouseY)
+
+                val epsilon = 1e-6
+                val allPositive = cp1 > epsilon && cp2 > epsilon && cp3 > epsilon && cp4 > epsilon
+                val allNegative = cp1 < -epsilon && cp2 < -epsilon && cp3 < -epsilon && cp4 < -epsilon
+                return allPositive || allNegative
+            }
 
             fun byCamera(camera: Camera): FacingVector {
                 camera.lookVector.mul(-1f, view)

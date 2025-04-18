@@ -41,6 +41,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks
 import net.neoforged.neoforge.server.command.EnumArgument
 import org.lwjgl.glfw.GLFW
 import kotlin.math.max
+import kotlin.math.min
 
 object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
@@ -136,7 +137,7 @@ object EventHandler {
                 val scale = Config.Client.globalHologramScale
                 val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
                 val modifier = if (shiftDown) 0.05 else 0.2
-                scale.setAndSave(max(scale.get() + event.scrollDeltaY * modifier, 0.01))
+                scale.setAndSave(min(max(scale.get() + event.scrollDeltaY * modifier, 0.01), 2.5))
                 Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
                 event.isCanceled = true
                 return

@@ -122,7 +122,7 @@ object TransitRenderTargetManager {
             RectAllocator(window.guiScaledWidth, window.guiScaledHeight)
         }
         for (target in this.entries.keys) {
-            val rect = allocator.allocate(target.width / 8, target.height / 8)
+            val rect = allocator.allocate(target.width / 16, target.height / 16)
             if (!rect.assigned) break
             RenderSystem.setShaderTexture(0, target.getColorTextureId())
             val builder = RenderSystem.renderThreadTesselator().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)

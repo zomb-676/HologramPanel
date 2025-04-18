@@ -10,7 +10,6 @@ import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.mainCamera
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
-import com.github.zomb_676.hologrampanel.util.rect.PackedRect
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
@@ -53,7 +52,7 @@ class HologramRenderState(
     /**
      * screen space position the widget should be rendered, anchored by widget's center
      */
-    var centerScreenPos: ScreenPosition = ScreenPosition.ZERO
+    var screenPos: ScreenPosition = ScreenPosition.ZERO
 
     /**
      * current display scale, influenced by distance, [com.github.zomb_676.hologrampanel.Config.Client.globalHologramScale]
@@ -130,12 +129,12 @@ class HologramRenderState(
      * via [MVPMatrixRecorder.transform], transforming world vec3 to [com.github.zomb_676.hologrampanel.util.packed.ScreenCoordinate]
      */
     fun updateRenderScreenPosition(partialTick: Float): ScreenPosition {
-        this.centerScreenPos = this.locate.getScreenSpacePosition(context, partialTick)
-        return this.centerScreenPos
+        this.screenPos = this.locate.getScreenSpacePosition(context, partialTick)
+        return this.screenPos
     }
 
     fun getSourceScreenPosition(partialTick: Float): ScreenPosition {
-        if (this.locate is LocateType.World) return this.centerScreenPos
+        if (this.locate is LocateType.World) return this.screenPos
         return this.locate.getSourceScreenSpacePosition(context, partialTick)
     }
 
