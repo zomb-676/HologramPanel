@@ -31,7 +31,10 @@ import net.minecraft.client.MouseHandler
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.CoreShaders
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
-import org.joml.*
+import org.joml.Matrix4f
+import org.joml.Vector2d
+import org.joml.Vector2f
+import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
 
 object HologramManager {
@@ -148,6 +151,7 @@ object HologramManager {
                     state.updateDisplaySize(style.poseMatrix())
                     TransitRenderTargetManager.allocate(state.displaySize, locate, state)
                 }
+                state.displayed = true
                 return@forEach
             }
 
@@ -201,12 +205,19 @@ object HologramManager {
         this.renderFacingVectors(style, partialTicks)
         this.arrangeScreenPingWidget(partialTicks)
         this.updateLookingAt()
+        this.renderFacingVectorForLooking(style, partialTicks)
+        if (Config.Client.renderDebugTransientTarget.get()) {
+            TransitRenderTargetManager.blitAllTransientTargetToMain(style)
+        }
         this.renderPingScreenPrompt(style, partialTicks)
 
         if (Config.Style.renderLookIndicator.get()) {
             val distance = Config.Style.lookIndicatorDistance.get()
             val percent = Config.Style.lookIndicatorPercent.get()
-            this.renderOverlayHologramStateTip(style, getLookingHologram(), 0xff_00a2e8.toInt(), distance, percent)
+            val target = getLookingHologram()
+            if (target?.locate !is LocateType.World.FacingVector) {
+                this.renderOverlayHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
+            }
         }
 
         HologramInteractionManager.renderTick()
@@ -235,7 +246,6 @@ object HologramManager {
     ) {
         val target = target ?: return
         if (!target.displayed) return
-        if (target.locate is LocateType.World.FacingVector) return
         style.stack {
             val screenPos = target.screenPos
 
@@ -263,7 +273,13 @@ object HologramManager {
                 }
 
                 is LocateType.World.FacingVector -> {
-                    return@stack
+                    val window = Minecraft.getInstance().window
+                    val centerX = window.guiScaledWidth / 2
+                    val centerY = window.guiScaledHeight / 2
+                    left = centerX - displayWidth / 2.0 - scaledOffset
+                    right = centerX + displayWidth / 2.0 + scaledOffset
+                    up = centerY - displayHeight / 2.0 - scaledOffset
+                    down = centerY + displayHeight / 2.0 + scaledOffset
                 }
             }
 
@@ -302,54 +318,6 @@ object HologramManager {
         }
     }
 
-    private fun renderWorldHologramStateTip(
-        target: HologramRenderState?,
-        color: Int,
-        baseOffset: Int,
-        percent: Float,
-        partialTick: Float,
-        poseStack: PoseStack
-    ) {
-        val target = target ?: return
-        val locate = target.locate as? LocateType.World.FacingVector? ?: return
-        val center = target.sourcePosition(partialTick)
-        val size = target.displaySize
-        val left = locate.getLeft().mul((size.width + baseOffset) / 2f / 80f, Vector3f())
-        val up = locate.getUp().mul((size.height + baseOffset) / 2f / 80f, Vector3f())
-        val lineHalfWidthRate = 200f
-
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-        val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
-
-        fun addVertex(vector: Vector3f) {
-            builder.addVertex(poseStack.last().pose(), vector.x, vector.y, vector.z).setColor(color)
-        }
-
-        val addContainer = Vector3f()
-        fun addLine(p1: Vector3f, p2: Vector3f, offset: Vector3fc) {
-            addVertex(addContainer.set(p1).add(offset))
-            addVertex(addContainer.set(p1).sub(offset))
-            addVertex(addContainer.set(p2).sub(offset))
-            addVertex(addContainer.set(p2).add(offset))
-        }
-
-        val upOff = locate.getUp().div(lineHalfWidthRate, Vector3f())
-        val leftOff = locate.getLeft().div(lineHalfWidthRate, Vector3f())
-
-        val addTemporaryTarget = Vector3f()
-        fun Vector3f.add(factorLeft: Float, factorUp: Float) {
-            addLine(this, addTemporaryTarget.set(left).mul(factorLeft  / 40f * size.width * percent).add(this), upOff)
-            addLine(this, addTemporaryTarget.set(up).mul(factorUp / 40f * size.height * percent).add(this), leftOff)
-        }
-
-        val container = Vector3f()
-        container.set(center).add(left).add(up).add(-1f, -1f)
-        container.set(center).add(left).sub(up).add(-1f, 1f)
-        container.set(center).sub(left).sub(up).add(1f, 1f)
-        container.set(center).sub(left).add(up).add(1f, -1f)
-        BufferUploader.drawWithShader(builder.buildOrThrow())
-    }
-
     /**
      * find the widget that is looking
      */
@@ -359,7 +327,6 @@ object HologramManager {
 
         val checkX: Float
         val checkY: Float
-
         when (GLFW.glfwGetInputMode(window.window, GLFW.GLFW_CURSOR)) {
             GLFW.GLFW_CURSOR_NORMAL -> {
                 checkX = (mouseHandle.xpos() * window.guiScaledWidth / window.screenWidth).toFloat()
@@ -572,9 +539,40 @@ object HologramManager {
             }
             Minecraft.getInstance().mainRenderTarget.bindWrite(true)
         }
-        if (Config.Client.renderDebugTransientTarget.get()) {
-            TransitRenderTargetManager.blitAllTransientTargetToMain(style)
+    }
+
+    fun renderFacingVectorForLooking(style: HologramStyle, partialTick: Float) = glDebugStack("facingVectorForLooking") {
+        val target = this.getLookingHologram() ?: return@glDebugStack
+        if (!target.displayed) return@glDebugStack
+        val locate = target.locate as? LocateType.World.FacingVector? ?: return@glDebugStack
+        val renderTarget = TransitRenderTargetManager.getLookingTarget()
+
+        val window = Minecraft.getInstance().window
+        OpenGLStateManager.preventMainBindWrite {
+            style.stack {
+                renderTarget.bindWrite(true)
+                style.move(window.guiScaledWidth / 2, window.guiScaledHeight / 2)
+                style.scale(target.displayScale)
+                run {
+                    val size = target.size
+                    style.move(-size.width / 2, -size.height / 2)
+                    style.drawFullyBackground(target.size)
+                    target.widget.render(target, style, target.displayType, partialTick)
+                }
+                style.guiGraphics.flush()
+            }
+            glDebugStack("indicator") {
+                if (Config.Style.renderLookIndicator.get()) {
+                    val distance = Config.Style.lookIndicatorDistance.get()
+                    val percent = Config.Style.lookIndicatorPercent.get()
+                    this.renderOverlayHologramStateTip(
+                        style, target, 0xff_00a2e8.toInt(), distance, percent
+                    )
+                    style.guiGraphics.flush()
+                }
+            }
         }
+        Minecraft.getInstance().mainRenderTarget.bindWrite(true)
     }
 
     fun renderWorldPart(event: RenderLevelStageEvent) {
@@ -615,25 +613,60 @@ object HologramManager {
                     val containerVector = Vector3f()
                     //left-up
                     containerVector.set(center).add(left).add(up).apply {
-                        add().setUv(u0, v1)
                         locate.updateLeftUp(this)
+                        if (!state.isLookingAt()) add().setUv(u0, v1)
                     }
                     //left-down
                     containerVector.set(center).add(left).sub(up).apply {
-                        add().setUv(u0, v0)
                         locate.updateLeftDown(this)
+                        if (!state.isLookingAt()) add().setUv(u0, v0)
                     }
                     //right-down
                     containerVector.set(center).sub(left).sub(up).apply {
-                        add().setUv(u1, v0)
                         locate.updateRightDown(this)
+                        if (!state.isLookingAt()) add().setUv(u1, v0)
                     }
                     //right-up
                     containerVector.set(center).sub(left).add(up).apply {
-                        add().setUv(u1, v1)
                         locate.updateRightUp(this)
+                        if (!state.isLookingAt()) add().setUv(u1, v1)
                     }
                 }
+                builder.build()?.apply(BufferUploader::drawWithShader)
+            }
+            getLookingHologram()?.also { state ->
+                val locate = state.locate as? LocateType.World.FacingVector? ?: return@also
+                val center = state.sourcePosition(partialTick)
+                val window = Minecraft.getInstance().window
+                val width = window.guiScaledWidth
+                val height = window.guiScaledHeight
+
+                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+                RenderSystem.setShaderTexture(0, TransitRenderTargetManager.getLookingTarget().colorTextureId)
+
+                //TODO the 80 here should be replaced by value calculated by the projection matrix
+                val left = locate.getLeft().mul(width / 2f / 80f, Vector3f())
+                val up = locate.getUp().mul(height / 2f / 80f, Vector3f())
+
+                fun Vector3f.add(): VertexConsumer {
+                    return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
+                }
+
+                val u0 = 0.0f
+                val v1 = 1.0f
+                val u1 = 1.0f
+                val v0 = 0.0f
+
+                val containerVector = Vector3f()
+                //left-up
+                containerVector.set(center).add(left).add(up).add().setUv(u0, v1)
+                //left-down
+                containerVector.set(center).add(left).sub(up).add().setUv(u0, v0)
+                //right-down
+                containerVector.set(center).sub(left).sub(up).add().setUv(u1, v0)
+                //right-up
+                containerVector.set(center).sub(left).add(up).add().setUv(u1, v1)
+
                 BufferUploader.drawWithShader(builder.buildOrThrow())
             }
             TransitRenderTargetManager.refresh()
@@ -642,15 +675,8 @@ object HologramManager {
             TransitRenderTargetManager.getEntries().forEach { (target, _) ->
                 target.clear()
             }
-            Minecraft.getInstance().mainRenderTarget.bindWrite(true)
+            TransitRenderTargetManager.getLookingTarget().clear()
         }
-        if (Config.Style.renderLookIndicator.get()) {
-            val distance = Config.Style.lookIndicatorDistance.get()
-            val percent = Config.Style.lookIndicatorPercent.get().toFloat()
-            this.renderWorldHologramStateTip(
-                getLookingHologram(), 0xff_00a2e8.toInt(),
-                distance, percent, partialTick, event.poseStack
-            )
-        }
+        Minecraft.getInstance().mainRenderTarget.bindWrite(true)
     }
 }

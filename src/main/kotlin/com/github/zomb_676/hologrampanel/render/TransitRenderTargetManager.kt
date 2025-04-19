@@ -23,6 +23,7 @@ import java.util.*
 object TransitRenderTargetManager {
 
     private val entries: SequencedMap<TransitRenderTarget, MutableList<HologramRenderState>> = Object2ObjectLinkedOpenHashMap()
+    private val lookingTarget: TransitRenderTarget = TransitRenderTarget.create()
 
     /**
      * if we use a FrameBuffer as a temporary target for minecraft screen space draw,
@@ -70,6 +71,7 @@ object TransitRenderTargetManager {
         entries.keys.forEach { target ->
             target.resize(width, height)
         }
+        lookingTarget.resize(width, height)
         onGuiScaleChange()
     }
 
@@ -121,7 +123,11 @@ object TransitRenderTargetManager {
             val window = Minecraft.getInstance().window
             RectAllocator(window.guiScaledWidth, window.guiScaledHeight)
         }
-        for (target in this.entries.keys) {
+        val sequence = sequence {
+            yield(lookingTarget)
+            yieldAll(entries.keys)
+        }
+        for (target in sequence) {
             val rect = allocator.allocate(target.width / 16, target.height / 16)
             if (!rect.assigned) break
             RenderSystem.setShaderTexture(0, target.getColorTextureId())
@@ -138,6 +144,7 @@ object TransitRenderTargetManager {
 
             style.guiGraphics.renderOutline(rect.x, rect.y, rect.width, rect.height, -1)
         }
+        style.guiGraphics.flush()
 
         RenderSystem.depthMask(true)
         RenderSystem.colorMask(true, true, true, true)
@@ -149,6 +156,8 @@ object TransitRenderTargetManager {
      */
     fun getEntries(): Iterator<Map.Entry<RenderTarget, MutableList<HologramRenderState>>> = entries.iterator()
 
+    fun getLookingTarget(): RenderTarget = lookingTarget
+
     fun onGuiScaleChange() {
         val window = Minecraft.getInstance().window
         val width = window.guiScaledWidth
@@ -156,5 +165,6 @@ object TransitRenderTargetManager {
         this.entries.forEach { (entry, _) ->
             entry.allocator.resize(width, height)
         }
+        lookingTarget.allocator.resize(width, height)
     }
 }

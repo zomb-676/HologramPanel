@@ -201,27 +201,27 @@ object EventHandler {
     }
 
     private fun registerPayload(event: RegisterPayloadHandlersEvent) {
-        event.registrar("1.0").playToClient<ServerHandShakePayload>(
+        event.registrar("1.0").playToClient(
             ServerHandShakePayload.TYPE, ServerHandShakePayload.STREAM_CODEC, ServerHandShakePayload.HANDLE
-        ).playToServer<ComponentRequestDataPayload<*>>(
+        ).playToServer(
             ComponentRequestDataPayload.TYPE,
             ComponentRequestDataPayload.STREAM_CODEC,
             ComponentRequestDataPayload.HANDLE
-        ).playToClient<ComponentResponseDataPayload>(
+        ).playToClient(
             ComponentResponseDataPayload.TYPE,
             ComponentResponseDataPayload.STREAM_CODEC,
             ComponentResponseDataPayload.HANDLE
-        ).playBidirectional<SyncClosePayload>(
+        ).playBidirectional(
             SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE
-        ).playToClient<EntityConversationPayload>(
+        ).playToClient(
             EntityConversationPayload.TYPE, EntityConversationPayload.STREAM_CODEC, EntityConversationPayload.HANDLE
-        ).playToServer<QueryDebugStatisticsPayload>(
+        ).playToServer(
             QueryDebugStatisticsPayload.TYPE,
             QueryDebugStatisticsPayload.STREAM_CODEC,
             QueryDebugStatisticsPayload.HANDLE
-        ).playToClient<DebugStatisticsPayload>(
+        ).playToClient(
             DebugStatisticsPayload.TYPE, DebugStatisticsPayload.STREAM_CODEC, DebugStatisticsPayload.HANDLE
-        ).playToServer<ItemInteractivePayload>(
+        ).playToServer(
             ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
         ).playBidirectional(
             MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE

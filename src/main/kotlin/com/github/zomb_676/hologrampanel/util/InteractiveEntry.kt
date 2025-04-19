@@ -71,7 +71,7 @@ class InteractiveEntry internal constructor(
     }
 
     fun onDragTransform(dragDataContext: HologramInteractionManager.DragDataContext<*>) {
-        interactive.onDragTransform(dragDataContext,context, interactiveSize, mouseX, mouseY)
+        interactive.onDragTransform(dragDataContext, context, interactiveSize, mouseX, mouseY)
     }
 
     fun renderInteractive(style: HologramStyle, widgetSize: Size, partialTicks: Float) {

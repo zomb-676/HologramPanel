@@ -42,6 +42,11 @@ sealed interface LocateType {
             private val rightUp: Vector2f = Vector2f()
             private val rightDown: Vector2f = Vector2f()
 
+            fun getLeftUp() = leftUp
+            fun getLeftDown() = leftDown
+            fun getRightUp() = rightUp
+            fun getRightDown() = rightDown
+
             fun updateLeftUp(vector3fc: Vector3fc) {
                 MVPMatrixRecorder.transform(vector3fc).screenPosition.set(leftUp)
             }
