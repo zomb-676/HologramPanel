@@ -61,6 +61,7 @@ class HologramRenderState(
         private set
 
     var inViewDegree: Boolean = false
+        private set
 
     /**
      * like [net.minecraft.world.entity.Entity.isRemoved]
@@ -162,7 +163,7 @@ class HologramRenderState(
         val dot = viewVector.dot(sourceVector)
         val angleInRadius = JomlMath.acos(dot)
         val angel = JomlMath.toDegrees(angleInRadius)
-        this.inViewDegree = angel < 80f
+        this.inViewDegree = angel < Minecraft.getInstance().options.fov().get()
         return if (this.locate is LocateType.World) this.inViewDegree else true
     }
 

@@ -5,9 +5,6 @@ import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
-import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
-import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactHologram
-import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -207,7 +204,7 @@ object HologramManager {
         this.renderFacingVectors(style, partialTicks)
         this.arrangeScreenPingWidget(partialTicks)
         this.updateInteractHologram()
-        this.renderFacingVectorForLooking(style, partialTicks)
+        this.renderFacingVectorForInteract(style, partialTicks)
         if (Config.Client.renderDebugTransientTarget.get()) {
             TransitRenderTargetManager.blitAllTransientTargetToMain(style)
         }
@@ -364,8 +361,10 @@ object HologramManager {
 
     /**
      * this will do all the staffs if a widget should be removed from the client side
+     *
+     * if you want to remove a hologram, call [HologramWidget.closeWidget]
      */
-    fun remove(widget: HologramWidget) {
+    internal fun remove(widget: HologramWidget) {
         val state = this.states.remove(widget)
         if (state != null) {
             state.removed = true
@@ -503,7 +502,7 @@ object HologramManager {
         }
     }
 
-    fun tryPingLookingVector() {
+    fun tryPingInteractVector() {
         val interact = getInteractHologram() ?: return
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
         interact.locate = LocateType.World.FacingVector().byCamera(camera)
@@ -537,15 +536,15 @@ object HologramManager {
      *
      * the interacted world hologram will be rendered into an exclusive target
      */
-    fun renderFacingVectorForLooking(style: HologramStyle, partialTick: Float) = glDebugStack("facingVectorForLooking") {
+    fun renderFacingVectorForInteract(style: HologramStyle, partialTick: Float) = glDebugStack("facingVectorForInteract") {
         val target = this.getInteractHologram() ?: return@glDebugStack
         if (!target.displayed) return@glDebugStack
         val locate = target.locate as? LocateType.World.FacingVector? ?: return@glDebugStack
-        val renderTarget = TransitRenderTargetManager.getLookingTarget()
+        val renderTarget = TransitRenderTargetManager.getInteractTarget()
 
         val window = Minecraft.getInstance().window
         OpenGLStateManager.preventMainBindWrite {
-            MousePositionManager.remappingMouseForLooking(target) {
+            MousePositionManager.remappingMouseForInteract(target) {
                 val (u, v) = MousePositionManager
                 style.stack {
                     renderTarget.bindWrite(true)
@@ -657,7 +656,7 @@ object HologramManager {
                 val height = window.guiScaledHeight
 
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
-                RenderSystem.setShaderTexture(0, TransitRenderTargetManager.getLookingTarget().colorTextureId)
+                RenderSystem.setShaderTexture(0, TransitRenderTargetManager.getInteractTarget().colorTextureId)
 
                 //TODO the 80 here should be replaced by value calculated by the projection matrix
                 val left = locate.getLeft().mul(width / 2f / 80f, Vector3f())
@@ -690,7 +689,7 @@ object HologramManager {
             TransitRenderTargetManager.getEntries().forEach { (target, _) ->
                 target.clear()
             }
-            TransitRenderTargetManager.getLookingTarget().clear()
+            TransitRenderTargetManager.getInteractTarget().clear()
         }
         Minecraft.getInstance().mainRenderTarget.bindWrite(true)
     }

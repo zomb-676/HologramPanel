@@ -131,7 +131,7 @@ object EventHandler {
                 else if isDownAction -> when (event.key) {
                     AllRegisters.KeyMapping.collapseKey.key.value -> HologramManager.trySwitchWidgetCollapse()
                     AllRegisters.KeyMapping.pingScreenKey.key.value -> HologramManager.tryPingInteractScreen()
-                    AllRegisters.KeyMapping.pingVectorKey.key.value -> HologramManager.tryPingLookingVector()
+                    AllRegisters.KeyMapping.pingVectorKey.key.value -> HologramManager.tryPingInteractVector()
                 }
             }
 

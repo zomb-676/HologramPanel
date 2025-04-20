@@ -69,6 +69,7 @@ sealed interface LocateType {
                     return (p2.x - p1.x) * (checkY - p1.y) - (p2.y - p1.y) * (checkX - p1.x)
                 }
 
+
                 val cp1 = crossProductZ(leftUp, leftDown, mouseX, mouseY)
                 val cp2 = crossProductZ(leftDown, rightDown, mouseX, mouseY)
                 val cp3 = crossProductZ(rightDown, rightUp, mouseX, mouseY)

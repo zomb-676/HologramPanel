@@ -238,7 +238,7 @@ object MousePositionManager {
     /**
      * current coordinate should be based on the left-up corner as its orign point
      */
-    fun remappingMouseForLooking(state: HologramRenderState, code: () -> Unit) {
+    fun remappingMouseForInteract(state: HologramRenderState, code: () -> Unit) {
         val locate = state.locate as? LocateType.World.FacingVector ?: return
         val (mouseX, mouseY) = HomographyMatrixResolver.solvePosition(mouseX, mouseY, state.displaySize, locate)
         remappingMousePositionScope(mouseX, mouseY, code)
@@ -252,6 +252,9 @@ object MousePositionManager {
         remappingMousePositionScope(this.mouseX + anchor.x, this.mouseY + anchor.y, code)
     }
 
+    /**
+     * set [Float.NEGATIVE_INFINITY] to [mouseX] and [mouseY] to make mouse check hover is false
+     */
     fun mouseInvalidAreaScope(code: () -> Unit) {
         remappingMousePositionScope(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, code)
     }

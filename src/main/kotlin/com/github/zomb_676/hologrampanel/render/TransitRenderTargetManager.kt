@@ -23,7 +23,7 @@ import java.util.*
 object TransitRenderTargetManager {
 
     private val entries: SequencedMap<TransitRenderTarget, MutableList<HologramRenderState>> = Object2ObjectLinkedOpenHashMap()
-    private val InteractRenderTarget: TransitRenderTarget = TransitRenderTarget.create()
+    private val interactRenderTarget: TransitRenderTarget = TransitRenderTarget.create()
 
     /**
      * if we use a FrameBuffer as a temporary target for minecraft screen space draw,
@@ -71,7 +71,7 @@ object TransitRenderTargetManager {
         entries.keys.forEach { target ->
             target.resize(width, height)
         }
-        InteractRenderTarget.resize(width, height)
+        interactRenderTarget.resize(width, height)
         onGuiScaleChange()
     }
 
@@ -124,7 +124,7 @@ object TransitRenderTargetManager {
             RectAllocator(window.guiScaledWidth, window.guiScaledHeight)
         }
         val sequence = sequence {
-            yield(InteractRenderTarget)
+            yield(interactRenderTarget)
             yieldAll(entries.keys)
         }
         for (target in sequence) {
@@ -156,7 +156,7 @@ object TransitRenderTargetManager {
      */
     fun getEntries(): Iterator<Map.Entry<RenderTarget, MutableList<HologramRenderState>>> = entries.iterator()
 
-    fun getLookingTarget(): RenderTarget = InteractRenderTarget
+    fun getInteractTarget(): RenderTarget = interactRenderTarget
 
     fun onGuiScaleChange() {
         val window = Minecraft.getInstance().window
@@ -165,6 +165,6 @@ object TransitRenderTargetManager {
         this.entries.forEach { (entry, _) ->
             entry.allocator.resize(width, height)
         }
-        InteractRenderTarget.allocator.resize(width, height)
+        interactRenderTarget.allocator.resize(width, height)
     }
 }
