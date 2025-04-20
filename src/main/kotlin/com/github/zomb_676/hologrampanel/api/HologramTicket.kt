@@ -55,6 +55,9 @@ interface HologramTicket<in T : HologramContext> {
     }
 
     class ByTickAfterNotSee(val aliveTick: Int) : HologramTicket<HologramContext> {
+
+        constructor() : this(Config.Client.displayAfterNotSeen.get())
+
         init {
             require(aliveTick > 0)
         }
