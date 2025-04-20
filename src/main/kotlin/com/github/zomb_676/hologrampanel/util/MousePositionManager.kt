@@ -7,11 +7,7 @@ import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.MouseHandler
-import org.joml.Matrix3f
-import org.joml.Matrix4f
-import org.joml.Vector2f
-import org.joml.Vector2fc
-import org.joml.Vector3f
+import org.joml.*
 import org.lwjgl.glfw.GLFW
 import kotlin.math.abs
 
@@ -254,5 +250,9 @@ object MousePositionManager {
     fun relocateOriginPoint(matrix4f: Matrix4f, code: () -> Unit) {
         val anchor = matrix4f.transformPosition(0f, 0f, 0f, Vector3f())
         remappingMousePositionScope(this.mouseX + anchor.x, this.mouseY + anchor.y, code)
+    }
+
+    fun mouseInvalidAreaScope(code: () -> Unit) {
+        remappingMousePositionScope(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, code)
     }
 }

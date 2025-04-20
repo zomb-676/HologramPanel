@@ -5,6 +5,9 @@ import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactHologram
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -506,7 +509,7 @@ object HologramManager {
         interact.locate = LocateType.World.FacingVector().byCamera(camera)
     }
 
-    fun renderFacingVectors(style: HologramStyle, partialTicks: Float) {
+    fun renderFacingVectors(style: HologramStyle, partialTicks: Float) = MousePositionManager.mouseInvalidAreaScope {
         glDebugStack("facingVectors") {
             for ((target, states) in TransitRenderTargetManager.getEntries()) {
                 if (states.isEmpty()) continue
