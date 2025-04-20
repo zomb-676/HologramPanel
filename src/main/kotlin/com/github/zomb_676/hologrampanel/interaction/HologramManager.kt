@@ -111,7 +111,7 @@ object HologramManager {
         if (context != null && !widgets.containsKey(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context, DisplayType.NORMAL)
             if (widget != null) {
-                this.tryAddWidget(widget, context, DisplayType.NORMAL, listOf(HologramTicket.ByTickAfterNotSee(80)))
+                this.tryAddWidget(widget, context, DisplayType.NORMAL, listOf(HologramTicket.ByTickAfterNotSee()))
             }
         }
 

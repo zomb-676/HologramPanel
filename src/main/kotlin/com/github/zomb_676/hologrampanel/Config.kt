@@ -95,6 +95,10 @@ object Config {
         val renderMinDistance: ModConfigSpec.DoubleValue = builder
             .defineInRange("render_min_distance", 1.0, 0.1, 16.0)
 
+        val displayAfterNotSeen: ModConfigSpec.IntValue = builder
+            .comment("measured in tick")
+            .defineInRange("display_after_not_seen", 80, 1, 1200)
+
         val globalHologramScale: ModConfigSpec.DoubleValue = builder
             .defineInRange("global_hologram_range", 1.0, 0.1, 2.5)
 
