@@ -45,4 +45,6 @@ object MouseInputModeUtil {
             setCursorMode(MOVE_CURSOR_MODE)
         }
     }
+
+    fun overlayMouseMove() = Minecraft.getInstance().screen == null && getCursorMode() == MOVE_CURSOR_MODE
 }
