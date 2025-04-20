@@ -230,9 +230,7 @@ interface HologramStyle {
     fun checkMouseInSize(size: Size): Boolean {
         if (size == Size.ZERO) return false
 
-        val window = Minecraft.getInstance().window
-        val mouseX = window.guiScaledWidth / 2
-        val mouseY = window.guiScaledHeight / 2
+        val (mouseX, mouseY) = MousePositionManager
 
         val pose = guiGraphics.pose().last().pose()
         val checkVector = Vector4f(0f, 0f, 0f, 1f)

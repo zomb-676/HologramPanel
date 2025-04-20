@@ -14,6 +14,8 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.render.LinkLineRender
 import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component2
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -23,11 +25,9 @@ import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
-import com.mojang.blaze3d.platform.Window
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
-import net.minecraft.client.MouseHandler
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.CoreShaders
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
@@ -35,7 +35,6 @@ import org.joml.Matrix4f
 import org.joml.Vector2d
 import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.glfw.GLFW
 
 object HologramManager {
     /**
@@ -322,24 +321,7 @@ object HologramManager {
      * find the widget that is looking
      */
     private fun updateLookingAt() {
-        val mouseHandle: MouseHandler = Minecraft.getInstance().mouseHandler
-        val window: Window = Minecraft.getInstance().window
-
-        val checkX: Float
-        val checkY: Float
-        when (GLFW.glfwGetInputMode(window.window, GLFW.GLFW_CURSOR)) {
-            GLFW.GLFW_CURSOR_NORMAL -> {
-                checkX = (mouseHandle.xpos() * window.guiScaledWidth / window.screenWidth).toFloat()
-                checkY = (mouseHandle.ypos() * window.guiScaledHeight / window.screenHeight).toFloat()
-            }
-
-            GLFW.GLFW_CURSOR_DISABLED -> {
-                checkX = window.guiScaledWidth / 2.0f
-                checkY = window.guiScaledHeight / 2.0f
-            }
-
-            else -> return
-        }
+        val (checkX, checkY) = MousePositionManager
         this.lookingWidget = this.states.values
             .asSequence()
             .filter { it.displayed }
@@ -549,15 +531,31 @@ object HologramManager {
 
         val window = Minecraft.getInstance().window
         OpenGLStateManager.preventMainBindWrite {
-            style.stack {
-                renderTarget.bindWrite(true)
-                style.move(window.guiScaledWidth / 2, window.guiScaledHeight / 2)
-                style.scale(target.displayScale)
-                run {
-                    val size = target.size
-                    style.move(-size.width / 2, -size.height / 2)
-                    style.drawFullyBackground(target.size)
-                    target.widget.render(target, style, target.displayType, partialTick)
+            MousePositionManager.remappingMouseForLooking(target) {
+                val (u, v) = MousePositionManager
+                style.stack {
+                    renderTarget.bindWrite(true)
+                    style.move(window.guiScaledWidth / 2, window.guiScaledHeight / 2)
+                    style.scale(target.displayScale)
+                    run {
+                        val size = target.size
+                        style.move(-size.width / 2, -size.height / 2)
+                        style.drawFullyBackground(target.size)
+                        MousePositionManager.relocateOriginPoint(style.poseMatrix()) {
+                            style.stack {
+                                target.widget.render(target, style, target.displayType, partialTick)
+                            }
+                            this.getInteractiveTarget()?.renderInteractive(style, target.size, partialTick)
+                        }
+                    }
+                    if (Config.Client.renderLookingTransientReMappingIndicator.get()) {
+                        style.stack {
+                            style.scale(1 / target.displayScale)
+                            style.drawVerticalLine(-10000, +10000, u.toInt(), -1)
+                            style.drawHorizontalLine(-10000, +10000, v.toInt(), -1)
+                        }
+                        style.drawString("u:%.2f,v:%.2f".format(u, v), 0, -30)
+                    }
                 }
                 style.guiGraphics.flush()
             }

@@ -103,7 +103,8 @@ object EventHandler {
             DebugHelper.Client.tick(event)
         }
 
-        private fun onRenderGUI(event: RenderGuiEvent.Post) {
+        private fun onRenderGUI(event: RenderGuiEvent.Pre) {
+            MousePositionManager.updateMousePosition()
         }
 
         fun onWindowResize(width: Int, height: Int) {
@@ -300,6 +301,12 @@ object EventHandler {
                         execute {
                             val newState = Config.Client.renderDebugTransientTarget.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_transient state to $newState"))
+                        }
+                    }
+                    "render_looking_transient_re_mapping_indicator" {
+                        execute {
+                            val newState = Config.Client.renderLookingTransientReMappingIndicator.switchAndSave()
+                            source.sendSystemMessage(Component.literal("switch render_looking_transient_re_mapping_indicator state to $newState"))
                         }
                     }
                     "invalidate_cache" {

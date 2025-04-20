@@ -5,6 +5,8 @@ import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component2
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import net.minecraft.client.Minecraft
@@ -41,10 +43,8 @@ class InteractiveEntry internal constructor(
 
     init {
         require(interactive is RebuildValue<*>)
-        val window = Minecraft.getInstance().window
-        val mouseX = window.guiScaledWidth / 2
-        val mouseY = window.guiScaledHeight / 2
-        val vector = Vector4f(mouseX.toFloat(), mouseY.toFloat(), 0f, 1f)
+        val (mouseX, mouseY) = MousePositionManager
+        val vector = Vector4f(mouseX, mouseY, 0f, 1f)
         inverseMatrix.transform(vector)
         this.mouseX = vector.x.toInt()
         this.mouseY = vector.y.toInt()

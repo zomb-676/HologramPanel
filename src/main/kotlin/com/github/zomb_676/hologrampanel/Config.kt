@@ -119,6 +119,9 @@ object Config {
         val renderDebugTransientTarget: ModConfigSpec.BooleanValue = builder
             .define("render_debug_transient_target", false)
 
+        val renderLookingTransientReMappingIndicator: ModConfigSpec.BooleanValue = builder
+            .define("render_looking_transient_re_mapping_indicator", false)
+
         val searchBackend: ModConfigSpec.EnumValue<SearchBackend.Type> = builder
             .defineEnum("search_backend", SearchBackend.Type.AUTO)
 
