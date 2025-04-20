@@ -535,11 +535,11 @@ object HologramManager {
                 val (u, v) = MousePositionManager
                 style.stack {
                     renderTarget.bindWrite(true)
-                    style.move(window.guiScaledWidth / 2, window.guiScaledHeight / 2)
+                    style.translate(window.guiScaledWidth / 2f, window.guiScaledHeight / 2f)
                     style.scale(target.displayScale)
                     run {
                         val size = target.size
-                        style.move(-size.width / 2, -size.height / 2)
+                        style.translate(-size.width / 2f, -size.height / 2f)
                         style.drawFullyBackground(target.size)
                         MousePositionManager.relocateOriginPoint(style.poseMatrix()) {
                             style.stack {
