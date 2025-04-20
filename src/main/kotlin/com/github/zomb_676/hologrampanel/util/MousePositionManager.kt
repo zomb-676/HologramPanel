@@ -14,6 +14,17 @@ import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
 import kotlin.math.abs
 
+/**
+ * get the correct mouse position in gui and the world
+ *
+ * support re-anchor mouse position
+ *
+ * use destructuring to get current mouse position
+ *
+ * ```kotlin
+ * val (mouseX, mouseY) = MousePositionManager
+ * ```
+ */
 object MousePositionManager {
     /**
      * resolve the `Homography Matrix` that used to remapping mouse position in for [LocateType.World.FacingVector]
@@ -180,6 +191,7 @@ object MousePositionManager {
 
     private var mouseX: Float = 0f
     private var mouseY: Float = 0f
+
     operator fun component1() = mouseX
     operator fun component2() = mouseY
 
@@ -211,7 +223,10 @@ object MousePositionManager {
         return this
     }
 
-    private fun remappingMousePositionScope(mouseX: Float, mouseY: Float, code: () -> Unit) {
+    /**
+     * remapping the mouse position
+     */
+    fun remappingMousePositionScope(mouseX: Float, mouseY: Float, code: () -> Unit) {
         val storeX = this.mouseX
         val storeY = this.mouseY
         this.mouseX = mouseX

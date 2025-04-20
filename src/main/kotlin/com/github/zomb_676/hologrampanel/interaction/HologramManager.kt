@@ -64,6 +64,9 @@ object HologramManager {
 
     private var screenPingHolograms: MutableList<HologramRenderState> = mutableListOf()
 
+    /**
+     * remove all hologram
+     */
     fun clearAllHologram() {
         while (states.isNotEmpty()) {
             states.entries.first().key.closeWidget()
@@ -215,7 +218,7 @@ object HologramManager {
             val percent = Config.Style.lookIndicatorPercent.get()
             val target = getLookingHologram()
             if (target?.locate !is LocateType.World.FacingVector) {
-                this.renderOverlayHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
+                this.renderHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
             }
         }
 
@@ -236,7 +239,7 @@ object HologramManager {
      * @param color the highlight line color
      * @param baseOffset distance between Hologram and the highlight line
      */
-    private fun renderOverlayHologramStateTip(
+    private fun renderHologramStateTip(
         style: HologramStyle,
         target: HologramRenderState?,
         color: Int,
@@ -448,6 +451,9 @@ object HologramManager {
         this.screenPingHolograms.add(looking)
     }
 
+    /**
+     * sort screen ping hologram by their y of screen position
+     */
     private fun arrangeScreenPingWidget(partialTicks: Float) {
         val initial = AlignedScreenPosition.of(10, 10)
         var pos = initial.toNotAligned()
@@ -464,6 +470,9 @@ object HologramManager {
         }
     }
 
+    /**
+     * render the link line between world source position and the screen ping hologram
+     */
     private fun renderPingScreenPrompt(style: HologramStyle, partialTicks: Float) {
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR)
@@ -523,6 +532,11 @@ object HologramManager {
         }
     }
 
+    /**
+     * render all the world hologram to [com.mojang.blaze3d.pipeline.RenderTarget] with position arranged
+     *
+     * the looking world hologram will be rendered into an exclusive target
+     */
     fun renderFacingVectorForLooking(style: HologramStyle, partialTick: Float) = glDebugStack("facingVectorForLooking") {
         val target = this.getLookingHologram() ?: return@glDebugStack
         if (!target.displayed) return@glDebugStack
@@ -563,7 +577,7 @@ object HologramManager {
                 if (Config.Style.renderLookIndicator.get()) {
                     val distance = Config.Style.lookIndicatorDistance.get()
                     val percent = Config.Style.lookIndicatorPercent.get()
-                    this.renderOverlayHologramStateTip(
+                    this.renderHologramStateTip(
                         style, target, 0xff_00a2e8.toInt(), distance, percent
                     )
                     style.guiGraphics.flush()
@@ -573,6 +587,9 @@ object HologramManager {
         Minecraft.getInstance().mainRenderTarget.bindWrite(true)
     }
 
+    /**
+     * blit all the world hologram from [com.mojang.blaze3d.pipeline.RenderTarget] to the world
+     */
     fun renderWorldPart(event: RenderLevelStageEvent) {
         if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
         val pose = event.poseStack
