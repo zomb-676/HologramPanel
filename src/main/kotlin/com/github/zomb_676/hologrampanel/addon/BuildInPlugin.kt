@@ -8,6 +8,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
+import net.minecraft.network.chat.ComponentUtils
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.block.Block
@@ -74,13 +75,20 @@ class BuildInPlugin : IHologramPlugin {
                     val entity = context.getEntity()
                     entity("entity", entity)
                     vertical("name_container") {
+                        var added = false
                         val typeName = entity.type.description
-                        component("type_name", typeName)
+                        if (ComponentUtils.isTranslationResolvable(typeName)) {
+                            component("type_name", typeName)
+                            added = true
+                        }
                         if (entity.hasCustomName()) {
-                            component("custom_name", entity.customName!!).setScale(0.8)
+                            val customName = requireNotNull(entity.customName) {
+                                "has custom name entity return a null custom name"
+                            }
+                            component("custom_name", customName).setScale(0.8)
                         } else {
                             val name = entity.name
-                            if (name !== typeName && name.string != typeName.string) {
+                            if ((name !== typeName && name.string != typeName.string) || !added) {
                                 component("name", name)
                             }
                         }
