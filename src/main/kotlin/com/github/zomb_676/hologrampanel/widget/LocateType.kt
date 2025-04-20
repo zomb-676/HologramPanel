@@ -7,6 +7,7 @@ import com.github.zomb_676.hologrampanel.util.rect.PackedRect
 import com.mojang.blaze3d.pipeline.RenderTarget
 import net.minecraft.client.Camera
 import org.joml.Vector2f
+import org.joml.Vector2fc
 import org.joml.Vector3f
 import org.joml.Vector3fc
 
@@ -42,10 +43,10 @@ sealed interface LocateType {
             private val rightUp: Vector2f = Vector2f()
             private val rightDown: Vector2f = Vector2f()
 
-            fun getLeftUp() = leftUp
-            fun getLeftDown() = leftDown
-            fun getRightUp() = rightUp
-            fun getRightDown() = rightDown
+            fun getLeftUp(): Vector2fc = leftUp
+            fun getLeftDown(): Vector2fc = leftDown
+            fun getRightUp(): Vector2fc = rightUp
+            fun getRightDown(): Vector2fc = rightDown
 
             fun updateLeftUp(vector3fc: Vector3fc) {
                 MVPMatrixRecorder.transform(vector3fc).screenPosition.set(leftUp)
@@ -105,7 +106,7 @@ sealed interface LocateType {
             position.set(x, y)
         }
 
-        override fun getScreenSpacePosition(hologramContext: HologramContext, partialTick: Float): ScreenPosition =
+        override fun getScreenSpacePosition(context: HologramContext, partialTick: Float): ScreenPosition =
             ScreenPosition.of(position.x, position.y)
 
     }

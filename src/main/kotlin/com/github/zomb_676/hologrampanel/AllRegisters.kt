@@ -61,6 +61,7 @@ object AllRegisters {
             event.register(collapseKey)
             event.register(pingScreenKey)
             event.register(pingVectorKey)
+            event.register(freeMouseMoveKey)
         }
 
         val panelKey = KeyMapping(
@@ -103,5 +104,12 @@ object AllRegisters {
             KEY_CATEGORY
         )
 
+        val freeMouseMoveKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.free_mouse_move_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            KEY_CATEGORY
+        )
     }
 }

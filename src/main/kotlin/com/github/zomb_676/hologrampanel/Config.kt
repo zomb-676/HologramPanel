@@ -119,8 +119,8 @@ object Config {
         val renderDebugTransientTarget: ModConfigSpec.BooleanValue = builder
             .define("render_debug_transient_target", false)
 
-        val renderLookingTransientReMappingIndicator: ModConfigSpec.BooleanValue = builder
-            .define("render_looking_transient_re_mapping_indicator", false)
+        val renderInteractTransientReMappingIndicator: ModConfigSpec.BooleanValue = builder
+            .define("render_interact_transient_re_mapping_indicator", false)
 
         val searchBackend: ModConfigSpec.EnumValue<SearchBackend.Type> = builder
             .defineEnum("search_backend", SearchBackend.Type.AUTO)
@@ -141,14 +141,14 @@ object Config {
         val itemTooltipType: ModConfigSpec.EnumValue<TooltipType> = builder
             .defineEnum("item_tooltip_type", TooltipType.SCREEN_SMART_BACKGROUND)
 
-        val renderLookIndicator: ModConfigSpec.BooleanValue = builder
-            .define("render_look_indicator", true)
+        val renderInteractIndicator: ModConfigSpec.BooleanValue = builder
+            .define("render_interact_indicator", true)
 
-        val lookIndicatorDistance: ModConfigSpec.IntValue = builder
-            .defineInRange("look_indicator_distance", 8, 1, 20)
+        val interactIndicatorDistance: ModConfigSpec.IntValue = builder
+            .defineInRange("interact_indicator_distance", 8, 1, 20)
 
-        val lookIndicatorPercent: ModConfigSpec.DoubleValue = builder
-            .defineInRange("look_indicator_percent", 0.2, 0.001, 0.999)
+        val interactIndicatorPercent: ModConfigSpec.DoubleValue = builder
+            .defineInRange("interact_indicator_percent", 0.2, 0.001, 0.999)
 
         val widgetBackgroundAlpha: ModConfigSpec.IntValue = builder
             .defineInRange("widget_background_alpha", 0x7f, 0x00, 0xff)

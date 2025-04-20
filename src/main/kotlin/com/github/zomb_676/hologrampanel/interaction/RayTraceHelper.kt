@@ -85,7 +85,7 @@ object RayTraceHelper {
                 applyProvider(providers, builder, displayType)
                 val widget =
                     builder.build(BuildInPlugin.Companion.DefaultEntityDescriptionProvider, displayType, providers)
-                (context.getEntity() as HologramHolder).setWidget(widget)
+                (context.getEntity() as HologramHolder).`hologramPanel$setWidget`(widget)
                 widget
             }
 

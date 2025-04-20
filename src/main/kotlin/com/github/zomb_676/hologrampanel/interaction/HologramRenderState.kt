@@ -206,9 +206,9 @@ class HologramRenderState(
     }
 
     /**
-     * convenient function for check is looked
+     * convenient function for check is interacted
      */
-    fun isLookingAt() = HologramManager.getLookingHologram() == this
+    fun isInteractAt() = HologramManager.getInteractHologram() == this
 
     /**
      * the distance between [mainCamera] and [sourcePosition]

@@ -88,11 +88,7 @@ object EventHandler {
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
-            if (AllRegisters.KeyMapping.panelKey.isDown) {
-                CycleSelector.tryBegin()
-            } else {
-                CycleSelector.tryEnd()
-            }
+
         }
 
         private fun onPlayerLogin(event: ClientPlayerNetworkEvent.LoggingIn) {
@@ -115,15 +111,27 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (event.action == GLFW.GLFW_PRESS) {
-                if (event.key == AllRegisters.KeyMapping.collapseKey.key.value) {
-                    HologramManager.trySwitchWidgetCollapse()
+            val isDownAction = event.action == GLFW.GLFW_PRESS
+            val isRelease = event.action == GLFW.GLFW_RELEASE
+            when (event.key) {
+                AllRegisters.KeyMapping.panelKey.key.value -> if (isDownAction) {
+                    CycleSelector.tryBegin()
+                } else if (isRelease) {
+                    CycleSelector.tryEnd()
                 }
-                if (event.key == AllRegisters.KeyMapping.pingScreenKey.key.value) {
-                    HologramManager.tryPingLookingScreen()
+
+                AllRegisters.KeyMapping.freeMouseMoveKey.key.value -> {
+                    if (isDownAction) {
+                        MouseInputModeUtil.tryEnter()
+                    } else if (isRelease) {
+                        MouseInputModeUtil.exit()
+                    }
                 }
-                if (event.key == AllRegisters.KeyMapping.pingVectorKey.key.value) {
-                    HologramManager.tryPingLookingVector()
+
+                else if isDownAction -> when (event.key) {
+                    AllRegisters.KeyMapping.collapseKey.key.value -> HologramManager.trySwitchWidgetCollapse()
+                    AllRegisters.KeyMapping.pingScreenKey.key.value -> HologramManager.tryPingInteractScreen()
+                    AllRegisters.KeyMapping.pingVectorKey.key.value -> HologramManager.tryPingLookingVector()
                 }
             }
 
@@ -150,12 +158,18 @@ object EventHandler {
         }
 
         private fun onMouseButton(event: InputEvent.MouseButton.Pre) {
-            if (CycleSelector.preventPlayerTurn()) {
+            if (MouseInputModeUtil.preventPlayerTurn()) {
                 event.isCanceled = true
                 if (event.action == GLFW.GLFW_PRESS) {
                     CycleSelector.onClick()
                 }
-                return
+            }
+
+            if (AllRegisters.KeyMapping.freeMouseMoveKey.isDown) {
+                if (event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && event.action == GLFW.GLFW_PRESS) {
+                    HologramManager.getInteractHologram()?.widget?.closeWidget()
+                    event.isCanceled = true
+                }
             }
 
             if (Minecraft.getInstance().level == null) return
@@ -205,21 +219,15 @@ object EventHandler {
         event.registrar("1.0").playToClient(
             ServerHandShakePayload.TYPE, ServerHandShakePayload.STREAM_CODEC, ServerHandShakePayload.HANDLE
         ).playToServer(
-            ComponentRequestDataPayload.TYPE,
-            ComponentRequestDataPayload.STREAM_CODEC,
-            ComponentRequestDataPayload.HANDLE
+            ComponentRequestDataPayload.TYPE, ComponentRequestDataPayload.STREAM_CODEC, ComponentRequestDataPayload.HANDLE
         ).playToClient(
-            ComponentResponseDataPayload.TYPE,
-            ComponentResponseDataPayload.STREAM_CODEC,
-            ComponentResponseDataPayload.HANDLE
+            ComponentResponseDataPayload.TYPE, ComponentResponseDataPayload.STREAM_CODEC, ComponentResponseDataPayload.HANDLE
         ).playBidirectional(
             SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE
         ).playToClient(
             EntityConversationPayload.TYPE, EntityConversationPayload.STREAM_CODEC, EntityConversationPayload.HANDLE
         ).playToServer(
-            QueryDebugStatisticsPayload.TYPE,
-            QueryDebugStatisticsPayload.STREAM_CODEC,
-            QueryDebugStatisticsPayload.HANDLE
+            QueryDebugStatisticsPayload.TYPE, QueryDebugStatisticsPayload.STREAM_CODEC, QueryDebugStatisticsPayload.HANDLE
         ).playToClient(
             DebugStatisticsPayload.TYPE, DebugStatisticsPayload.STREAM_CODEC, DebugStatisticsPayload.HANDLE
         ).playToServer(
@@ -303,10 +311,10 @@ object EventHandler {
                             source.sendSystemMessage(Component.literal("switch debug_transient state to $newState"))
                         }
                     }
-                    "render_looking_transient_re_mapping_indicator" {
+                    "render_interact_transient_re_mapping_indicator" {
                         execute {
-                            val newState = Config.Client.renderLookingTransientReMappingIndicator.switchAndSave()
-                            source.sendSystemMessage(Component.literal("switch render_looking_transient_re_mapping_indicator state to $newState"))
+                            val newState = Config.Client.renderInteractTransientReMappingIndicator.switchAndSave()
+                            source.sendSystemMessage(Component.literal("switch render_interact_transient_re_mapping_indicator state to $newState"))
                         }
                     }
                     "invalidate_cache" {

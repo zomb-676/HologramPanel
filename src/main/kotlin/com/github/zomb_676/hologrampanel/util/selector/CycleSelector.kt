@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.util.selector
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryBegin
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryEnd
 import com.github.zomb_676.hologrampanel.util.stack
@@ -13,7 +14,6 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
-import org.lwjgl.glfw.GLFW
 import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
@@ -51,8 +51,6 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
     private var canBackToParent = false
 
     private fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
-        trySetModeAndRestCursorPos()
-
         this.current = null
         run {
             val nextChildren = this.nextGroup
@@ -146,29 +144,16 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
     }
 
     companion object {
-        private fun trySetModeAndRestCursorPos() {
-            val window = Minecraft.getInstance().window
-            if (GLFW.glfwGetInputMode(window.window, GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_NORMAL) {
-                setCursorMode(GLFW.GLFW_CURSOR_NORMAL)
-                Minecraft.getInstance().mouseHandler.xpos = window.screenWidth / 2.0
-                Minecraft.getInstance().mouseHandler.ypos = window.screenHeight / 2.0
-                GLFW.glfwSetCursorPos(window.window, (window.screenWidth / 2).toDouble(), (window.screenHeight / 2).toDouble())
-            }
-        }
-
-        private fun setCursorMode(cursorMode: Int) {
-            GLFW.glfwSetInputMode(Minecraft.getInstance().window.window, GLFW.GLFW_CURSOR, cursorMode)
-        }
 
         fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
             val instance = instance ?: return
             instance.render(guiGraphics, deltaTracker)
         }
 
-        @JvmStatic
-        fun preventPlayerTurn() = this.instance != null
+
         fun tryBegin() {
             if (this.instance == null) {
+                MouseInputModeUtil.tryEnter()
                 val builder = CycleSelectorBuilder()
                 this.instance = builder.buildScope {
                     repeat(5) { index ->
@@ -190,13 +175,8 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         fun tryEnd() {
             if (this.instance != null) {
                 instance?.current?.onClose()
-
                 this.instance = null
-                if (Minecraft.getInstance().screen == null) {
-                    setCursorMode(GLFW.GLFW_CURSOR_DISABLED)
-                } else {
-                    setCursorMode(GLFW.GLFW_CURSOR_NORMAL)
-                }
+                MouseInputModeUtil.exit()
             }
         }
 
@@ -211,5 +191,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         private var instance: CycleSelector? = null
+
+        fun instanceExist() = instance != null
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.client.MouseHandler
 import org.joml.Matrix3f
 import org.joml.Matrix4f
 import org.joml.Vector2f
+import org.joml.Vector2fc
 import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
 import kotlin.math.abs
@@ -41,10 +42,10 @@ object MousePositionManager {
          * @param height height of [com.github.zomb_676.hologrampanel.interaction.HologramRenderState.size]
          */
         private fun computeHomography(
-            srcLeftUp: Vector2f,
-            srcLeftDown: Vector2f,
-            srcRightDown: Vector2f,
-            srcRightUp: Vector2f,
+            srcLeftUp: Vector2fc,
+            srcLeftDown: Vector2fc,
+            srcRightDown: Vector2fc,
+            srcRightUp: Vector2fc,
             width: Float,
             height: Float
         ): Matrix3f {
@@ -88,9 +89,11 @@ object MousePositionManager {
          * @param src position from original space
          * @param dst position of target space, the mapped result of [src]
          */
-        private fun fillEquationRow(a: Array<FloatArray>, b: FloatArray, row: Int, src: Vector2f, dst: Vector2f) {
-            val (x, y) = src.x to src.y
-            val (u, v) = dst.x to dst.y
+        private fun fillEquationRow(a: Array<FloatArray>, b: FloatArray, row: Int, src: Vector2fc, dst: Vector2f) {
+            val x = src.x()
+            val y = src.y()
+            val u = dst.x
+            val v = dst.y
 
             a[row][0] = x
             a[row][1] = y

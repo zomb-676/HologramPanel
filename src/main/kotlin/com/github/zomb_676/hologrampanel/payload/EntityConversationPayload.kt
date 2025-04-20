@@ -49,7 +49,7 @@ class EntityConversationPayload(val oldEntityID: Int, val newEntityID: Int, val 
                 if (level.dimension() != payload.level) return
                 //old may have been removed and new may have not been created
                 val oldEntity = level.getEntity(payload.oldEntityID)
-                val state = HologramManager.queryHologramState((oldEntity as HologramHolder).getWidget())
+                val state = HologramManager.queryHologramState((oldEntity as HologramHolder).`hologramPanel$getWidget`())
                 paddingEntities.put(payload.newEntityID, state)
             }
         }

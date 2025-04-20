@@ -5,9 +5,6 @@ import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
-import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
-import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
-import com.github.zomb_676.hologrampanel.interaction.HologramManager.lookingWidget
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -48,9 +45,9 @@ object HologramManager {
     internal val states = mutableMapOf<HologramWidget, HologramRenderState>()
 
     /**
-     * the widget that is looking
+     * the widget that is over mose
      */
-    private var lookingWidget: HologramRenderState? = null
+    private var interactHologram: HologramRenderState? = null
 
     /**
      * the entry that is interacted
@@ -107,7 +104,7 @@ object HologramManager {
     /**
      * trig Hologram by [HologramTicket.ByTickAfterNotSee]
      *
-     * update [HologramRenderState], [lookingWidget], [interactiveTarget], [collapseTarget] and do render
+     * update [HologramRenderState], [interactHologram], [interactiveTarget], [collapseTarget] and do render
      */
     internal fun renderOverlayPart(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
         val context = RayTraceHelper.findTarget(32.0, partialTicks)
@@ -206,17 +203,17 @@ object HologramManager {
 
         this.renderFacingVectors(style, partialTicks)
         this.arrangeScreenPingWidget(partialTicks)
-        this.updateLookingAt()
+        this.updateInteractHologram()
         this.renderFacingVectorForLooking(style, partialTicks)
         if (Config.Client.renderDebugTransientTarget.get()) {
             TransitRenderTargetManager.blitAllTransientTargetToMain(style)
         }
         this.renderPingScreenPrompt(style, partialTicks)
 
-        if (Config.Style.renderLookIndicator.get()) {
-            val distance = Config.Style.lookIndicatorDistance.get()
-            val percent = Config.Style.lookIndicatorPercent.get()
-            val target = getLookingHologram()
+        if (Config.Style.renderInteractIndicator.get()) {
+            val distance = Config.Style.interactIndicatorDistance.get()
+            val percent = Config.Style.interactIndicatorPercent.get()
+            val target = getInteractHologram()
             if (target?.locate !is LocateType.World.FacingVector) {
                 this.renderHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
             }
@@ -321,11 +318,11 @@ object HologramManager {
     }
 
     /**
-     * find the widget that is looking
+     * find the widget that is interacted
      */
-    private fun updateLookingAt() {
+    private fun updateInteractHologram() {
         val (checkX, checkY) = MousePositionManager
-        this.lookingWidget = this.states.values
+        this.interactHologram = this.states.values
             .asSequence()
             .filter { it.displayed }
             .firstOrNull { state ->
@@ -358,8 +355,8 @@ object HologramManager {
             }
     }
 
-    fun getLookingHologram(): HologramRenderState? {
-        return this.lookingWidget
+    fun getInteractHologram(): HologramRenderState? {
+        return this.interactHologram
     }
 
     /**
@@ -372,11 +369,11 @@ object HologramManager {
             val context = state.context
             this.widgets.remove(context.getIdentityObject())
             this.screenPingHolograms.remove(state)
-            if (this.lookingWidget?.widget == widget) {
-                this.lookingWidget = null
+            if (this.interactHologram?.widget == widget) {
+                this.interactHologram = null
             }
             if (context is EntityHologramContext) {
-                (context.getEntity() as HologramHolder).setWidget(null)
+                (context.getEntity() as HologramHolder).`hologramPanel$setWidget`(null)
             }
 
             if (widget is DynamicBuildWidget<*>) {
@@ -445,10 +442,10 @@ object HologramManager {
         this.collapseTarget?.switchCollapse()
     }
 
-    fun tryPingLookingScreen() {
-        val looking = getLookingHologram() ?: return
-        looking.locate = LocateType.Screen(Vector2f(30f, 30f))
-        this.screenPingHolograms.add(looking)
+    fun tryPingInteractScreen() {
+        val interact = getInteractHologram() ?: return
+        interact.locate = LocateType.Screen(Vector2f(30f, 30f))
+        this.screenPingHolograms.add(interact)
     }
 
     /**
@@ -504,9 +501,9 @@ object HologramManager {
     }
 
     fun tryPingLookingVector() {
-        val looking = getLookingHologram() ?: return
+        val interact = getInteractHologram() ?: return
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
-        looking.locate = LocateType.World.FacingVector().byCamera(camera)
+        interact.locate = LocateType.World.FacingVector().byCamera(camera)
     }
 
     fun renderFacingVectors(style: HologramStyle, partialTicks: Float) {
@@ -535,10 +532,10 @@ object HologramManager {
     /**
      * render all the world hologram to [com.mojang.blaze3d.pipeline.RenderTarget] with position arranged
      *
-     * the looking world hologram will be rendered into an exclusive target
+     * the interacted world hologram will be rendered into an exclusive target
      */
     fun renderFacingVectorForLooking(style: HologramStyle, partialTick: Float) = glDebugStack("facingVectorForLooking") {
-        val target = this.getLookingHologram() ?: return@glDebugStack
+        val target = this.getInteractHologram() ?: return@glDebugStack
         if (!target.displayed) return@glDebugStack
         val locate = target.locate as? LocateType.World.FacingVector? ?: return@glDebugStack
         val renderTarget = TransitRenderTargetManager.getLookingTarget()
@@ -562,7 +559,7 @@ object HologramManager {
                             this.getInteractiveTarget()?.renderInteractive(style, target.size, partialTick)
                         }
                     }
-                    if (Config.Client.renderLookingTransientReMappingIndicator.get()) {
+                    if (Config.Client.renderInteractTransientReMappingIndicator.get()) {
                         style.stack {
                             style.scale(1 / target.displayScale)
                             style.drawVerticalLine(-10000, +10000, u.toInt(), -1)
@@ -574,9 +571,9 @@ object HologramManager {
                 style.guiGraphics.flush()
             }
             glDebugStack("indicator") {
-                if (Config.Style.renderLookIndicator.get()) {
-                    val distance = Config.Style.lookIndicatorDistance.get()
-                    val percent = Config.Style.lookIndicatorPercent.get()
+                if (Config.Style.renderInteractIndicator.get()) {
+                    val distance = Config.Style.interactIndicatorDistance.get()
+                    val percent = Config.Style.interactIndicatorPercent.get()
                     this.renderHologramStateTip(
                         style, target, 0xff_00a2e8.toInt(), distance, percent
                     )
@@ -629,27 +626,27 @@ object HologramManager {
                     //left-up
                     containerVector.set(center).add(left).add(up).apply {
                         locate.updateLeftUp(this)
-                        if (!state.isLookingAt()) add().setUv(u0, v1)
+                        if (!state.isInteractAt()) add().setUv(u0, v1)
                     }
                     //left-down
                     containerVector.set(center).add(left).sub(up).apply {
                         locate.updateLeftDown(this)
-                        if (!state.isLookingAt()) add().setUv(u0, v0)
+                        if (!state.isInteractAt()) add().setUv(u0, v0)
                     }
                     //right-down
                     containerVector.set(center).sub(left).sub(up).apply {
                         locate.updateRightDown(this)
-                        if (!state.isLookingAt()) add().setUv(u1, v0)
+                        if (!state.isInteractAt()) add().setUv(u1, v0)
                     }
                     //right-up
                     containerVector.set(center).sub(left).add(up).apply {
                         locate.updateRightUp(this)
-                        if (!state.isLookingAt()) add().setUv(u1, v1)
+                        if (!state.isInteractAt()) add().setUv(u1, v1)
                     }
                 }
                 builder.build()?.apply(BufferUploader::drawWithShader)
             }
-            getLookingHologram()?.also { state ->
+            getInteractHologram()?.also { state ->
                 val locate = state.locate as? LocateType.World.FacingVector? ?: return@also
                 val center = state.sourcePosition(partialTick)
                 val window = Minecraft.getInstance().window

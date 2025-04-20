@@ -75,7 +75,7 @@ object DebugHelper {
         private val popUpData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
         private val removeData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
 
-        private var lookingRenderElement: IRenderElement? = null
+        private var interactRenderElement: IRenderElement? = null
 
 
         private fun tick(target: Object2IntOpenHashMap<*>) {
@@ -212,14 +212,14 @@ object DebugHelper {
                 drawHelper.drawString(querySyncString()).nextLine()
                 drawHelper.drawString("displayed:${HologramManager.states.values.count { it.displayed }}").nextLine()
                 drawHelper.drawString("collapseTarget:${HologramManager.getCollapseTarget()}").nextLine()
-                drawHelper.drawString("lookingRenderElement:${lookingRenderElement}").nextLine()
+                drawHelper.drawString("interactRenderElement:${interactRenderElement}").nextLine()
                 val enable = Config.Server.allowHologramInteractive.get()
                 drawHelper.drawString("interactiveTarget:${HologramManager.getInteractiveTarget()}, enable:$enable").nextLine()
-                when (val lookingHologram = HologramManager.getLookingHologram()) {
+                when (val interactHologram = HologramManager.getInteractHologram()) {
                     is HologramRenderState -> {
-                        drawHelper.drawString("lookingHologramContext:${lookingHologram.context}").nextLine()
-                        val tickets = lookingHologram.hologramTicks.joinToString()
-                        drawHelper.drawString("lookTicket:$tickets").nextLine()
+                        drawHelper.drawString("InteractHologramContext:${interactHologram.context}").nextLine()
+                        val tickets = interactHologram.hologramTicks.joinToString()
+                        drawHelper.drawString("Ticket:$tickets").nextLine()
                     }
                 }
                 when (val draggingSource = HologramInteractionManager.draggingSource) {
@@ -271,11 +271,11 @@ object DebugHelper {
         }
 
         fun recordHoverElement(element: IRenderElement) {
-            this.lookingRenderElement = element
+            this.interactRenderElement = element
         }
 
         fun clearRenderRelatedInfo() {
-            this.lookingRenderElement = null
+            this.interactRenderElement = null
         }
     }
 
