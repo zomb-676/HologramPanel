@@ -4,7 +4,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please do not use GitHub issues to post ideas. Please use the issue template
+        Thanks for taking the time to fill out this bug report!
         If you want to request a feature, please use the corresponding issue template
   - type: checkboxes
     id: mod_loader
