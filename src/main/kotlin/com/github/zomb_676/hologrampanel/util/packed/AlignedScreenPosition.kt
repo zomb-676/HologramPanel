@@ -1,9 +1,12 @@
-package com.github.zomb_676.hologrampanel.util
+package com.github.zomb_676.hologrampanel.util.packed
 
 import net.minecraft.client.Minecraft
 
+/**
+ * pack two 32-bit float into a 64-bit long via bit operation
+ */
 @JvmInline
-value class ScreenPosition private constructor(@PublishedApi internal val position: Long) {
+value class AlignedScreenPosition private constructor(@PublishedApi internal val position: Long) {
     inline val x: Int get() = (position ushr Int.SIZE_BITS).toInt()
     inline val y: Int get() = position.toInt()
 
@@ -36,11 +39,14 @@ value class ScreenPosition private constructor(@PublishedApi internal val positi
 
     operator fun unaryMinus() = of(-x, -y)
 
+    fun toNotAligned(): ScreenPosition = ScreenPosition.of(x.toFloat(), y.toFloat())
+
     companion object {
         /**
          * must & 0xFFFFFFFFL to clear high 32 bit, if value is negative, they will be filled with 1, which will influence |
          */
-        fun of(x: Int, y: Int) = ScreenPosition((x.toLong() shl Int.SIZE_BITS) or (y.toLong() and 0xFFFFFFFFL))
+        fun of(x: Int, y: Int): AlignedScreenPosition = AlignedScreenPosition((x.toLong() shl Int.SIZE_BITS) or (y.toLong() and 0xFFFFFFFFL))
+
         val ZERO = of(0, 0)
     }
 }

@@ -1,21 +1,27 @@
 package com.github.zomb_676.hologrampanel.util.selector
 
+import com.github.zomb_676.hologrampanel.PanelOperatorManager
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryBegin
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryEnd
 import com.github.zomb_676.hologrampanel.util.stack
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.network.chat.Component
-import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Items
-import org.lwjgl.glfw.GLFW
 import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/**
+ * cycle selector for some convenience operations in game
+ *
+ * call [tryBegin] to trig a CycleSelector and [tryEnd] to close
+ *
+ * use [CycleSelectorBuilder] to builder the actual instance
+ */
 class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     /**
@@ -41,8 +47,6 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
     private var canBackToParent = false
 
     private fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
-        trySetModeAndRestCursorPos()
-
         this.current = null
         run {
             val nextChildren = this.nextGroup
@@ -104,9 +108,11 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             val size = entry.size(style)
             style.stack {
                 style.translate(
-                    (sin(centerDegree) * distance) - (size.width / 2),
-                    (cos(centerDegree) * distance) - (size.height / 2)
+                    (sin(centerDegree) * distance),
+                    (cos(centerDegree) * distance)
                 )
+                style.scale(entry.scale())
+                style.translate(-size.width / 2f, -size.height / 2f)
                 entry.renderContent(style, partialTick, isHover)
             }
         }
@@ -136,55 +142,33 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
     }
 
     companion object {
-        private fun trySetModeAndRestCursorPos() {
-            val window = Minecraft.getInstance().window
-            if (GLFW.glfwGetInputMode(window.window, GLFW.GLFW_CURSOR) != GLFW.GLFW_CURSOR_NORMAL) {
-                setCursorMode(GLFW.GLFW_CURSOR_NORMAL)
-                GLFW.glfwSetCursorPos(window.window, (window.width / 2).toDouble(), (window.height / 2).toDouble())
-            }
-        }
-
-        private fun setCursorMode(cursorMode: Int) {
-            GLFW.glfwSetInputMode(Minecraft.getInstance().window.window, GLFW.GLFW_CURSOR, cursorMode)
-        }
 
         fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
             val instance = instance ?: return
             instance.render(guiGraphics, deltaTracker)
         }
 
-        @JvmStatic
-        fun preventPlayerTurn() = this.instance != null
+
         fun tryBegin() {
             if (this.instance == null) {
-                val builder = CycleSelectorBuilder()
-                this.instance = builder.buildScope {
-                    repeat(5) { index ->
-                        add(IRenderElement.StringRenderElement(index.toString())) {
-                            Minecraft.getInstance().gui.chat.addMessage(Component.literal("$index"))
-                        }
-                    }
-                    addGroup(IRenderElement.ItemStackElement(false, ItemStack(Items.DIRT))) {
-                        repeat(5) { index ->
-                            add(IRenderElement.StringRenderElement("inner$index")) {
-                                Minecraft.getInstance().gui.chat.addMessage(Component.literal("inner$index"))
-                            }
-                        }
-                    }
-                }
+                MouseInputModeUtil.tryEnter()
+//                this.instance = CycleSelectorBuilder {
+//                    repeat(5) { index ->
+//                        add(ComponentRenderElement(index.toString())) {
+//                            Minecraft.getInstance().gui.chat.addMessage(Component.literal("$index"))
+//                        }
+//                    }
+//
+//                }
+                this.instance = PanelOperatorManager.createInstance()
             }
         }
 
         fun tryEnd() {
             if (this.instance != null) {
                 instance?.current?.onClose()
-
                 this.instance = null
-                if (Minecraft.getInstance().screen == null) {
-                    setCursorMode(GLFW.GLFW_CURSOR_DISABLED)
-                } else {
-                    setCursorMode(GLFW.GLFW_CURSOR_NORMAL)
-                }
+                MouseInputModeUtil.exit()
             }
         }
 
@@ -199,5 +183,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         private var instance: CycleSelector? = null
+
+        fun instanceExist() = instance != null
     }
 }

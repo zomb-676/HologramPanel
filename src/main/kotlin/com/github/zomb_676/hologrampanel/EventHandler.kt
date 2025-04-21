@@ -1,22 +1,19 @@
 package com.github.zomb_676.hologrampanel
 
-import com.github.zomb_676.hologrampanel.api.HologramInteractive
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.payload.*
-import com.github.zomb_676.hologrampanel.util.CommandDSL
-import com.github.zomb_676.hologrampanel.util.SearchBackend
+import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
+import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
-import com.github.zomb_676.hologrampanel.util.setAndSave
-import com.github.zomb_676.hologrampanel.util.switchAndSave
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
+import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.client.DeltaTracker
-import net.minecraft.client.KeyMapping
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
@@ -31,7 +28,6 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent
 import net.neoforged.neoforge.client.event.*
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers
-import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent
@@ -46,6 +42,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks
 import net.neoforged.neoforge.server.command.EnumArgument
 import org.lwjgl.glfw.GLFW
 import kotlin.math.max
+import kotlin.math.min
 
 object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
@@ -63,7 +60,7 @@ object EventHandler {
         modBus.addListener(EventHandler::onRegistryEvent)
         modBus.addListener(EventHandler::onClientSetup)
         modBus.addListener(EventHandler::onLoadComplete)
-        forgeBus.addListener(EventHandler::onLivingConversation)
+        forgeBus.addListener(EventHandler::onMobConversion)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
             forgeBus.addListener(::onEntityJoinLevel)
@@ -87,35 +84,12 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onRenderLevelStage)
         }
 
-        val panelKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.selector_panel",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_Y,
-            KeyMapping.CATEGORY_GAMEPLAY
-        )
-
-
-        val scaleKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.scale_key",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_LEFT_ALT,
-            KeyMapping.CATEGORY_GAMEPLAY
-        )
-
-
         private fun registerKey(event: RegisterKeyMappingsEvent) {
-            event.register(panelKey)
-            event.register(scaleKey)
+            AllRegisters.KeyMapping.register(event)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
-            if (panelKey.isDown) {
-                CycleSelector.tryBegin()
-            } else {
-                CycleSelector.tryEnd()
-            }
+
         }
 
         private fun onPlayerLogin(event: ClientPlayerNetworkEvent.LoggingIn) {
@@ -126,75 +100,124 @@ object EventHandler {
             DebugHelper.Client.tick(event)
         }
 
-        private fun onRenderGUI(event: RenderGuiEvent.Post) {
+        private fun onRenderGUI(event: RenderGuiEvent.Pre) {
+            MousePositionManager.updateMousePosition()
         }
 
         fun onWindowResize(width: Int, height: Int) {
-
+            TransitRenderTargetManager.onResize(width, height)
         }
 
         private fun onKey(event: InputEvent.Key) {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (event.action == GLFW.GLFW_PRESS && event.key == GLFW.GLFW_KEY_TAB) {
-                HologramManager.trySwitchWidgetCollapse()
+            val isDownAction = event.action == GLFW.GLFW_PRESS
+            val isRelease = event.action == GLFW.GLFW_RELEASE
+            when (event.key) {
+                AllRegisters.KeyMapping.panelKey.key.value -> if (isDownAction) {
+                    CycleSelector.tryBegin()
+                } else if (isRelease) {
+                    CycleSelector.tryEnd()
+                }
+
+                AllRegisters.KeyMapping.freeMouseMoveKey.key.value -> {
+                    if (isDownAction) {
+                        MouseInputModeUtil.tryEnter()
+                    } else if (isRelease) {
+                        MouseInputModeUtil.exit()
+                    }
+                }
+
+                else if isDownAction -> when (event.key) {
+                    AllRegisters.KeyMapping.collapseKey.key.value -> HologramManager.trySwitchWidgetCollapse()
+                    AllRegisters.KeyMapping.pingScreenKey.key.value -> HologramManager.tryPingInteractScreen()
+                    AllRegisters.KeyMapping.pingVectorKey.key.value -> HologramManager.tryPingInteractVector()
+                }
             }
 
-            val interactiveTarget = HologramManager.getInteractiveTarget()
-            if (interactiveTarget != null) {
-                val res = interactiveTarget.onKey(event)
-                if (res) return
-            }
+            HologramInteractionManager.onKey(event)
         }
 
         private fun onMouseScroll(event: InputEvent.MouseScrollingEvent) {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (scaleKey.isDown) {
+            val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+            val modifier = if (shiftDown) 0.05 else 0.2
+            val changeValue = event.scrollDeltaY * modifier
+
+            run {
+                val modifyTarget = PanelOperatorManager.modifyTarget ?: return@run
+                val window = Minecraft.getInstance().window.window
+                val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
+
+                when (GLFW.GLFW_PRESS) {
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> {
+                        locate.offset.x += changeValue.toFloat()
+                    }
+
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> {
+                        locate.offset.y += changeValue.toFloat()
+                    }
+
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> {
+                        locate.offset.z += changeValue.toFloat()
+                    }
+
+                    else -> return@run
+                }
+                event.isCanceled = true
+                return
+            }
+
+            HologramManager.getInteractHologram()?.also { state ->
+                val locate = state.locate as? LocateType.World.FacingVector ?: return@also
+
+                locate.scale = max(min(max(locate.scale + changeValue.toFloat(), 0.01f), 2.5f), 0.2f)
+                Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust hologram scale to %.2f".format(locate.scale)), false)
+
+                event.isCanceled = true
+                return
+            }
+
+            if (AllRegisters.KeyMapping.scaleKey.isDown) {
                 val scale = Config.Client.globalHologramScale
-                val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                val modifier = if (shiftDown) 0.05 else 0.2
-                scale.setAndSave(max(scale.get() + event.scrollDeltaY * modifier, 0.01))
+                scale.setAndSave(min(max(scale.get() + changeValue, 0.01), 2.5))
                 Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
                 event.isCanceled = true
                 return
             }
 
-            val interactiveTarget = HologramManager.getInteractiveTarget()
-            if (interactiveTarget != null) {
-                Minecraft.getInstance().player ?: return
-                HologramInteractive.MouseScroll.create(event)
-                val res = interactiveTarget.onMouseScroll(event)
-                if (res) {
-                    event.isCanceled = true
-                    return
-                }
+            if (HologramInteractionManager.onMouseScroll(event)) {
+                event.isCanceled = true
             }
         }
 
         private fun onMouseButton(event: InputEvent.MouseButton.Pre) {
-            if (CycleSelector.preventPlayerTurn()) {
+            if (MouseInputModeUtil.preventPlayerTurn()) {
                 event.isCanceled = true
+            }
+
+            if (CycleSelector.instanceExist()) {
                 if (event.action == GLFW.GLFW_PRESS) {
                     CycleSelector.onClick()
                 }
                 return
             }
 
+            if (AllRegisters.KeyMapping.freeMouseMoveKey.isDown) {
+                if (event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && event.action == GLFW.GLFW_PRESS) {
+                    HologramManager.getInteractHologram()?.widget?.closeWidget()
+                    event.isCanceled = true
+                }
+            }
+
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            if (event.action == GLFW.GLFW_PRESS) {
-                val interactiveTarget = HologramManager.getInteractiveTarget()
-                if (interactiveTarget != null) {
-                    val res = interactiveTarget.onMouseClick(event)
-                    if (res) {
-                        event.isCanceled = true
-                        return
-                    }
-                }
+            if (HologramInteractionManager.onMouseClick(event)) {
+                event.isCanceled = true
             }
         }
 
@@ -223,35 +246,37 @@ object EventHandler {
         }
 
         fun onRenderLevelStage(event: RenderLevelStageEvent) {
-            DebugHelper.Client.renderLevelLast(event)
+            val pose = event.poseStack
+            pose.stack {
+                DebugHelper.Client.renderLevelLast(event)
+            }
+            pose.stack {
+                HologramManager.renderWorldPart(event)
+            }
         }
     }
 
     private fun registerPayload(event: RegisterPayloadHandlersEvent) {
-        event.registrar("1.0").playToClient<ServerHandShakePayload>(
+        event.registrar("1.0").playToClient(
             ServerHandShakePayload.TYPE, ServerHandShakePayload.STREAM_CODEC, ServerHandShakePayload.HANDLE
-        ).playToServer<ComponentRequestDataPayload<*>>(
-            ComponentRequestDataPayload.TYPE,
-            ComponentRequestDataPayload.STREAM_CODEC,
-            ComponentRequestDataPayload.HANDLE
-        ).playToClient<ComponentResponseDataPayload>(
-            ComponentResponseDataPayload.TYPE,
-            ComponentResponseDataPayload.STREAM_CODEC,
-            ComponentResponseDataPayload.HANDLE
-        ).playBidirectional<SyncClosePayload>(
+        ).playToServer(
+            ComponentRequestDataPayload.TYPE, ComponentRequestDataPayload.STREAM_CODEC, ComponentRequestDataPayload.HANDLE
+        ).playToClient(
+            ComponentResponseDataPayload.TYPE, ComponentResponseDataPayload.STREAM_CODEC, ComponentResponseDataPayload.HANDLE
+        ).playBidirectional(
             SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE
-        ).playToClient<EntityConversationPayload>(
+        ).playToClient(
             EntityConversationPayload.TYPE, EntityConversationPayload.STREAM_CODEC, EntityConversationPayload.HANDLE
-        ).playToServer<QueryDebugStatisticsPayload>(
-            QueryDebugStatisticsPayload.TYPE,
-            QueryDebugStatisticsPayload.STREAM_CODEC,
-            QueryDebugStatisticsPayload.HANDLE
-        ).playToClient<DebugStatisticsPayload>(
+        ).playToServer(
+            QueryDebugStatisticsPayload.TYPE, QueryDebugStatisticsPayload.STREAM_CODEC, QueryDebugStatisticsPayload.HANDLE
+        ).playToClient(
             DebugStatisticsPayload.TYPE, DebugStatisticsPayload.STREAM_CODEC, DebugStatisticsPayload.HANDLE
-        ).playToServer<ItemInteractivePayload>(
+        ).playToServer(
             ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
         ).playBidirectional(
             MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE
+        ).playToServer(
+            TransTargetPayload.TYPE, TransTargetPayload.STREAM_CODEC, TransTargetPayload.HANDLE
         )
     }
 
@@ -303,10 +328,10 @@ object EventHandler {
                             source.sendSystemMessage(Component.literal("switch debug_layer state to $newState"))
                         }
                     }
-                    "debug_box" {
+                    "debug_lifecycle" {
                         execute {
-                            val newState = Config.Client.renderDebugBox.switchAndSave()
-                            source.sendSystemMessage(Component.literal("switch debug_box state to $newState"))
+                            val newState = Config.Client.renderDebugHologramLifeCycleBox.switchAndSave()
+                            source.sendSystemMessage(Component.literal("switch debug_lifecycle state to $newState"))
                         }
                     }
                     "debug_widget" {
@@ -319,6 +344,23 @@ object EventHandler {
                         execute {
                             val newState = Config.Client.renderNetworkDebugInfo.switchAndSave()
                             source.sendSystemMessage(Component.literal("switch debug_network_usage state to $newState"))
+                        }
+                    }
+                    "debug_transient_target" {
+                        execute {
+                            val newState = Config.Client.renderDebugTransientTarget.switchAndSave()
+                            source.sendSystemMessage(Component.literal("switch debug_transient state to $newState"))
+                        }
+                    }
+                    "render_interact_transient_re_mapping_indicator" {
+                        execute {
+                            val newState = Config.Client.renderInteractTransientReMappingIndicator.switchAndSave()
+                            source.sendSystemMessage(Component.literal("switch render_interact_transient_re_mapping_indicator state to $newState"))
+                        }
+                    }
+                    "invalidate_cache" {
+                        execute {
+                            PluginManager.ProviderManager.invalidateCache()
                         }
                     }
                 }
@@ -334,6 +376,11 @@ object EventHandler {
                 "clear_all_widget" {
                     execute {
                         HologramManager.clearAllHologram()
+                    }
+                }
+                "clear_all_cache" {
+                    execute {
+                        PluginManager.ProviderManager.invalidateCache()
                     }
                 }
                 "search" {
@@ -445,6 +492,7 @@ object EventHandler {
         PluginManager.getInstance().clientRegistration.forEach { (plugin, reg) ->
             plugin.registerClient(reg)
         }
+        PluginManager.getInstance().onClientRegisterEnd()
     }
 
     private fun onLoadComplete(event: FMLLoadCompleteEvent) {
@@ -455,7 +503,7 @@ object EventHandler {
      * we use this event to know that all registries have frozen
      */
     fun onRegistryEnd() {
-        PluginManager.collectProvidersFromRegistry()
+        PluginManager.ProviderManager.collectProvidersFromRegistry()
         PluginManager.getInstance().registerPluginConfigs()
     }
 
@@ -466,10 +514,10 @@ object EventHandler {
         }
     }
 
-    private fun onLivingConversation(event: LivingConversionEvent.Post) {
-        val oldMob = event.entity
-        val newMob = event.outcome
-        val payload = EntityConversationPayload(oldMob.id, newMob.id, newMob.level().dimension())
-        PacketDistributor.sendToPlayersTrackingEntity(oldMob, payload)
+    private fun onMobConversion(event: LivingConversionEvent.Post) {
+        val old = event.entity
+        val new = event.outcome
+        val payload = EntityConversationPayload(old.id, new.id, new.level().dimension())
+        PacketDistributor.sendToPlayersTrackingEntity(old, payload)
     }
 }

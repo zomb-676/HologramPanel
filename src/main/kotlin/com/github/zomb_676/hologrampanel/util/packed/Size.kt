@@ -1,7 +1,11 @@
-package com.github.zomb_676.hologrampanel.util
+package com.github.zomb_676.hologrampanel.util.packed
 
+import com.github.zomb_676.hologrampanel.util.Padding
 import net.minecraft.client.Minecraft
 
+/**
+ * pack two 32-bit float into a 64-bit long via bit operation
+ */
 @JvmInline
 value class Size private constructor(@PublishedApi internal val size: Long) {
     inline val width: Int get() = (size ushr Int.SIZE_BITS).toInt()

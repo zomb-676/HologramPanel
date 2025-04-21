@@ -8,6 +8,9 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 
+/**
+ * handshake packet to let the client know this mod is installed at server side
+ */
 class ServerHandShakePayload(val id: Int = 0) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<ServerHandShakePayload> = TYPE
 

@@ -1,0 +1,55 @@
+name: Bug Report
+description: Report a bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        If you want to request a feature, please use the corresponding issue template
+  - type: checkboxes
+    id: mod_loader
+    attributes:
+      label: Mod Loader
+      description: "can select multiple"
+      options:
+        - label: NeoForge
+        - label: Fabric
+    validations:
+      required: true
+  - type: input
+    id: mc_version
+    attributes:
+      label: Minecraft Version
+      placeholder: eg. 1.21.1
+    validations:
+      required: true
+  - type: input
+    id: mod_loader_version
+    attributes:
+      label: ModLoader Version
+      description: |
+        List the version of the mod loader you are using.
+        If on Fabric, post the versions of both Fabric Loader and Fabric API.
+      placeholder: "eg. Forge: 36.2.9 / Fabric: Loader 0.10.6 + API 0.42.1"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "The latest.log file"
+      description: "Please use a paste site such as [gist](https://gist.github.com/) / [pastebin](https://pastebin.com/) / etc."
+    validations:
+      required: true
+  - type: textarea
+    id: issue_description
+    attributes:
+      label: Issue description
+      description: Describe your issue here
+      placeholder: |
+        1. First step
+        2. Second step
+        3. etc...
+  - type: textarea
+    id: other_information
+    attributes:
+      label: Other Information
+      description: Any other relevant information

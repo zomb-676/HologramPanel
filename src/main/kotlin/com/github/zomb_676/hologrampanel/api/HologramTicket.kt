@@ -51,10 +51,13 @@ interface HologramTicket<in T : HologramContext> {
     }
 
     data object BySee : HologramTicket<HologramContext> {
-        override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean = state.isLookingAt()
+        override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean = state.isInteractAt()
     }
 
     class ByTickAfterNotSee(val aliveTick: Int) : HologramTicket<HologramContext> {
+
+        constructor() : this(Config.Client.displayAfterNotSeen.get())
+
         init {
             require(aliveTick > 0)
         }
@@ -63,7 +66,7 @@ interface HologramTicket<in T : HologramContext> {
             private set
 
         override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean {
-            if (state.isLookingAt()) {
+            if (state.isInteractAt()) {
                 this.tick = this.aliveTick
             }
             return --tick > 0

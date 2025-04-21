@@ -3,6 +3,8 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.trans.TransHandle
+import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
@@ -88,7 +90,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         if (items.isNotEmpty()) {
             items.sortWith(Comparator.comparingInt { BuiltInRegistries.ITEM.getId(it.item) })
             builder.single("items") {
-                itemsInteractive(items)
+                itemsInteractive("container_items", items, TransSource.create(context.getBlockEntity()!!), TransHandle.BlockItemTransHandle)
             }
         }
     }

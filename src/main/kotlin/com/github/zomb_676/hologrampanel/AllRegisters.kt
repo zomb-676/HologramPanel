@@ -1,7 +1,9 @@
 package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.mojang.blaze3d.platform.InputConstants
 import io.netty.buffer.ByteBuf
+import net.minecraft.client.KeyMapping
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.RegistryFriendlyByteBuf
@@ -11,10 +13,13 @@ import net.minecraft.resources.ResourceKey
 import net.minecraft.world.level.Level
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent
+import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.fluids.FluidType
 import net.neoforged.neoforge.registries.NeoForgeRegistries
 import net.neoforged.neoforge.registries.NewRegistryEvent
 import net.neoforged.neoforge.registries.RegistryBuilder
+import org.lwjgl.glfw.GLFW
 
 object AllRegisters {
     fun initEvents(dist: Dist, modBus: IEventBus) {
@@ -45,5 +50,66 @@ object AllRegisters {
 
         val FLUID_TYPE_STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, FluidType> =
             ByteBufCodecs.registry(NeoForgeRegistries.Keys.FLUID_TYPES)
+    }
+
+    object KeyMapping {
+        const val KEY_CATEGORY = "key.categories.${HologramPanel.MOD_ID}"
+
+        fun register(event: RegisterKeyMappingsEvent) {
+            event.register(panelKey)
+            event.register(scaleKey)
+            event.register(collapseKey)
+            event.register(pingScreenKey)
+            event.register(pingVectorKey)
+            event.register(freeMouseMoveKey)
+        }
+
+        val panelKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.selector_panel_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_Y,
+            KEY_CATEGORY
+        )
+
+        val scaleKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.scale_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_LEFT_ALT,
+            KEY_CATEGORY
+        )
+
+        val collapseKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.collapse_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_TAB,
+            KEY_CATEGORY
+        )
+
+        val pingScreenKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.ping_screen_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_I,
+            KEY_CATEGORY
+        )
+
+        val pingVectorKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.ping_vector_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_O,
+            KEY_CATEGORY
+        )
+
+        val freeMouseMoveKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.free_mouse_move_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            KEY_CATEGORY
+        )
     }
 }

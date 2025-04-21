@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.util
 
+import com.github.zomb_676.hologrampanel.util.packed.ScreenCoordinate
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.core.Vec3i
@@ -7,6 +8,8 @@ import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f
 import org.joml.Vector3fc
 import org.joml.Vector4f
+import kotlin.math.abs
+import kotlin.math.max
 
 /**
  * transform world-space position into minecraft screen-space location
@@ -45,8 +48,10 @@ object MVPMatrixRecorder {
         vector.mul(transformMatrix)
         //do perspective divide
         //in NDC space now
-        vector.x /= vector.w
-        vector.y /= vector.w
+        //depth value z is not used for use, divide by abs(w) can make 2d bracketing detection
+        val w = max(abs(vector.w), 1e-5f)
+        vector.x /= abs(w)
+        vector.y /= abs(w)
 
         return ScreenCoordinate.of(vector)
     }

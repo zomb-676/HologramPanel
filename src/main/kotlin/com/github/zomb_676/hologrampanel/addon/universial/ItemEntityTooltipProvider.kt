@@ -30,14 +30,14 @@ data object ItemEntityTooltipProvider : ComponentProvider<EntityHologramContext,
                 builder.group("screenTooltip", "screenTooltip") {
                     tooltips.forEachIndexed { index, tooltip ->
                         if (Minecraft.getInstance().font.width(tooltip) > 0) {
-                            builder.single("tooltip_$index") { component(tooltip) }
+                            builder.single("tooltip_$index") { component("item_tooltip", tooltip) }
                         }
                     }
                 }
             }
 
             else -> builder.single("tool") {
-                screenTooltip(item)
+                screenTooltip("item_tooltip", item)
             }
         }
     }

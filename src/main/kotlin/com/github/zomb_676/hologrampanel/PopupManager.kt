@@ -19,7 +19,10 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.AABB
 
-object PopupManager {
+/**
+ * object class which is designed to do popup
+ */
+data object PopupManager {
     val tick = AutoTicker.by(Config.Client.popUpInterval::get)
 
     fun tickPopup() = tick.tryConsume {

@@ -8,16 +8,12 @@ import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
-import io.netty.buffer.ByteBuf
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.CampfireBlock
 import net.minecraft.world.level.block.entity.CampfireBlockEntity
-import org.apache.http.entity.ByteArrayEntity
-import java.util.Arrays
+import java.util.*
 
 data object CampfireProvider : ServerDataProvider<BlockHologramContext, CampfireBlock> {
     override fun appendServerData(
@@ -61,9 +57,9 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
                 if (itemStack.isEmpty) return@repeat
                 val cookingProgress = cookingProgresses[index]
                 val progress = progresses[index].current(cookingProgress).max(cookingTimes[index])
-                itemStack(itemStack).setPositionOffset(2, 2).noCalculateSize()
-                text("${progress.remain / 20}s").setPositionOffset(8, 11).setAdditionLayer(200).setScale(0.9).noCalculateSize()
-                workingTorusProgress(progress)
+                itemStack("item$index", itemStack).setPositionOffset(2, 2).noCalculateSize()
+                text("time$index", "${progress.remain / 20}s").setPositionOffset(8, 11).setAdditionLayer(200).setScale(0.9).noCalculateSize()
+                workingTorusProgress("progress$index", progress)
             }
         }
     }

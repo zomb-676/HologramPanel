@@ -40,9 +40,9 @@ data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBl
             val song =
                 playable.song().unwrap(context.getLevel().registryAccess()).getOrNull()?.value() ?: return
             builder.single("song_item") {
-                itemStack(songItem)
-                component(song.description().copy()).setPositionOffset(0, 3)
-                text("${(song.lengthInTicks() - songStarted)/20}s").setPositionOffset(5,3)
+                itemStack("song_item_logo", songItem)
+                component("song_item_description", song.description().copy()).setPositionOffset(0, 3)
+                text("song_length", "${(song.lengthInTicks() - songStarted) / 20}s").setPositionOffset(5, 3)
             }
         }
     }

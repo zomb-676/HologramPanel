@@ -2,12 +2,15 @@ package com.github.zomb_676.hologrampanel.widget.component
 
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 
 /**
- * tree structure type widget
+ * tree structure type widget, made up of [HologramWidgetComponent]
+ *
+ * the leaf is [HologramWidgetComponent.Single]
+ * the node is [HologramWidgetComponent.Group]
  */
 abstract class HologramComponentWidget<T : Any>(val target: T, val component: HologramWidgetComponent.Group<T>) :
     HologramWidget {
@@ -24,6 +27,4 @@ abstract class HologramComponentWidget<T : Any>(val target: T, val component: Ho
         return this.component.visualSize
     }
 
-    override fun onSelected() {}
-    override fun onDisSelected() {}
 }

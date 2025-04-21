@@ -3,16 +3,10 @@ package com.github.zomb_676.hologrampanel.addon.vanilla
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
-import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
-import net.minecraft.client.gui.screens.inventory.BookViewScreen
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.util.FormattedCharSequence
-import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.LecternBlock
 import net.minecraft.world.level.block.entity.LecternBlockEntity
 
@@ -41,8 +35,8 @@ data object LecternProvider : ServerDataProvider<BlockHologramContext, LecternBl
         val bookItem = book.get()
         if (!bookItem.isEmpty) {
             builder.single("book") {
-                itemStack(bookItem).smallItem()
-                component(bookItem.displayName)
+                itemStack("lectern_item_logo",bookItem).smallItem()
+                component("lectern_item",bookItem.itemName)
             }
         }
     }

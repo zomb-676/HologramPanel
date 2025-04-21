@@ -43,7 +43,7 @@ value class CommandDSL<S>(val dispatcher: CommandDispatcher<S>) {
                     return@executes Command.SINGLE_SUCCESS
                     //so no need to return Command.SINGLE_SUCCESS manually
                     //can just write code and just throw when error happened
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     LOGGER.catching(e)
                     return@executes 2
                 }

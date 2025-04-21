@@ -5,14 +5,16 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "hologrampanel.refmap.json",
   "mixins": [
+    "CustomPacketPayloadMixin",
     "EntityMixin",
-    "GameDataMixin",
-    "CustomPacketPayloadMixin"
+    "GameDataMixin"
   ],
   "client": [
     "GameRenderMixin",
     "LevelRenderMixin",
-    "MouseHandleMixin"
+    "MouseHandleMixin",
+    "RenderTargetMixin",
+    "WindowMixin"
   ],
   "injectors": {
     "defaultRequire": 1

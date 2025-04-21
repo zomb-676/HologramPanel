@@ -8,6 +8,12 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 
+/**
+ * debug statistics data sent server to client
+ *
+ * @param total total count for HologramWidget to sync
+ * @param forPlayer sync count request by the corresponding player
+ */
 class DebugStatisticsPayload(val total: Int, val forPlayer: Int) : CustomPacketPayload {
     override fun type(): CustomPacketPayload.Type<DebugStatisticsPayload> = TYPE
 

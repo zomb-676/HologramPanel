@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.Unique;
 
 import javax.annotation.Nullable;
 
+/**
+ * implementation {@link HologramHolder} for {@link Entity}
+ */
 @Mixin(Entity.class)
 public class EntityMixin implements HologramHolder {
     @Unique
@@ -16,7 +19,7 @@ public class EntityMixin implements HologramHolder {
 
     @Override
     @Unique
-    public @Nullable HologramWidget setWidget(@Nullable HologramWidget widget) {
+    public @Nullable HologramWidget hologramPanel$setWidget(@Nullable HologramWidget widget) {
         var old = this.hologramPanel$widget;
         this.hologramPanel$widget = widget;
         return old;
@@ -24,7 +27,7 @@ public class EntityMixin implements HologramHolder {
 
     @Override
     @Unique
-    public @Nullable HologramWidget getWidget() {
+    public @Nullable HologramWidget hologramPanel$getWidget() {
         return this.hologramPanel$widget;
     }
 }

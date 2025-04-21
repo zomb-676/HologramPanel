@@ -4,6 +4,8 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.trans.TransHandle
+import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -13,7 +15,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.AbstractFurnaceBlock
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
-import java.util.Arrays
+import java.util.*
 
 data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractFurnaceBlock> {
 
@@ -24,6 +26,9 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         val remember = builder.context.getRememberData()
         val data by remember.server(0, ByteArray(0), Arrays::equals) { tag -> tag.getByteArray("f") }
         val progressBar = remember.keep(1, ::ProgressData)
+        val source = remember.keep(2) {
+            TransSource.create(builder.context.getBlockEntity()!!)
+        }
 
         if (data.isEmpty()) return
         val buffer = builder.context.warpRegistryFriendlyByteBuf(data)
@@ -38,12 +43,12 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         progressBar.current(cookingTimer).max(cookingTotalTime)
 
         builder.single("working") {
-            itemInteractive(item0, 0)
-            itemInteractive(item1, 1)
+            itemInteractive("furnace_input_0", item0, 0, source, TransHandle.BlockItemTransHandle)
+            itemInteractive("furnace_input_1", item1, 1, source, TransHandle.BlockItemTransHandle)
             if (litTimeRemaining != 0) {
-                workingArrowProgress(progressBar).setPositionOffset(1, 2)
+                workingArrowProgress("furnace_progress", progressBar).setPositionOffset(1, 2)
             }
-            if (!item2.isEmpty) itemInteractive(item2, 2)
+            if (!item2.isEmpty) itemInteractive("furnace_output", item2, 2, source, TransHandle.BlockItemTransHandle)
         }
     }
 

@@ -8,6 +8,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
+import net.minecraft.network.chat.ComponentUtils
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.block.Block
@@ -54,8 +55,8 @@ class BuildInPlugin : IHologramPlugin {
             ) {
                 val context = builder.context
                 builder.single("default_block") {
-                    item(context.getBlockState().block.asItem()).setScale(0.75)
-                    component(context.getBlockState().block.name).setScale(1.5)
+                    item("block_logo", context.getBlockState().block.asItem()).setScale(0.75)
+                    component("block_name", context.getBlockState().block.name).setScale(1.5)
                 }
             }
 
@@ -72,16 +73,23 @@ class BuildInPlugin : IHologramPlugin {
                 val context = builder.context
                 builder.single("default_entity") {
                     val entity = context.getEntity()
-                    entity(entity)
-                    vertical {
+                    entity("entity", entity)
+                    vertical("name_container") {
+                        var added = false
                         val typeName = entity.type.description
-                        component(typeName)
+                        if (ComponentUtils.isTranslationResolvable(typeName)) {
+                            component("type_name", typeName)
+                            added = true
+                        }
                         if (entity.hasCustomName()) {
-                            component(entity.customName!!).setScale(0.8)
+                            val customName = requireNotNull(entity.customName) {
+                                "has custom name entity return a null custom name"
+                            }
+                            component("custom_name", customName).setScale(0.8)
                         } else {
                             val name = entity.name
-                            if (name !== typeName && name.string != typeName.string) {
-                                component(name)
+                            if ((name !== typeName && name.string != typeName.string) || !added) {
+                                component("name", name)
                             }
                         }
                     }

@@ -51,7 +51,7 @@ data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderC
         }
         if (items.isNotEmpty()) {
             builder.single("items") {
-                items(items)
+                items("ender_chest_items", items)
             }
         }
     }

@@ -3,6 +3,8 @@ package com.github.zomb_676.hologrampanel.render
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.EfficientConst
 import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
@@ -30,6 +32,8 @@ import kotlin.math.sin
 interface HologramStyle {
     val guiGraphics: GuiGraphics
     var contextColor: Int
+
+    fun drawFullyBackground(size : Size)
 
     /**
      * @param contentSize [HologramWidgetComponent.Single.contentSize]
@@ -59,7 +63,7 @@ interface HologramStyle {
     fun moveAfterDrawGroupOutline(descriptionSize: Size)
     fun moveAfterDrawSingleOutline()
 
-    fun outlineSelected(size: Size)
+    fun drawOutlineSelected(size: Size)
 
     @EfficientConst
     fun elementPadding(): Int
@@ -88,8 +92,8 @@ interface HologramStyle {
         this.translate(x.toFloat(), y.toFloat())
     }
 
-    fun move(screenPosition: ScreenPosition) {
-        this.move(screenPosition.x, screenPosition.y)
+    fun move(alignedScreenPosition: AlignedScreenPosition) {
+        this.move(alignedScreenPosition.x, alignedScreenPosition.y)
     }
 
     fun translate(x: Float, y: Float, z: Float = 0.0f) {
@@ -226,9 +230,7 @@ interface HologramStyle {
     fun checkMouseInSize(size: Size): Boolean {
         if (size == Size.ZERO) return false
 
-        val window = Minecraft.getInstance().window
-        val mouseX = window.guiScaledWidth / 2
-        val mouseY = window.guiScaledHeight / 2
+        val (mouseX, mouseY) = MousePositionManager
 
         val pose = guiGraphics.pose().last().pose()
         val checkVector = Vector4f(0f, 0f, 0f, 1f)
@@ -394,7 +396,12 @@ interface HologramStyle {
 
         override var contextColor: Int = (0xff000000).toInt()
 
-        override fun outlineSelected(size: Size) {
+        override fun drawFullyBackground(size: Size) {
+            val color = Config.Style.widgetBackgroundAlpha.get() shl 24 or 0x00ffffff
+            this.fill(0, 0, size.width, size.height, color)
+        }
+
+        override fun drawOutlineSelected(size: Size) {
             outline(size, SELECTED_COLOR)
         }
 
@@ -421,7 +428,7 @@ interface HologramStyle {
         override fun drawSingleOutline(size: Size, color: Int) {
             if (this.checkMouseInSize(size)) {
                 stack {
-                    outlineSelected(size)
+                    drawOutlineSelected(size)
                 }
             }
         }
@@ -461,7 +468,7 @@ interface HologramStyle {
             }
 
             //draw split line
-            if (isGroupGlobal) {
+            if (isGroupGlobal && !collapse) {
                 val left = SINGLE_INNER_PADDING.left * 2
                 val right = size.width - SINGLE_INNER_PADDING.right * 2
                 val y = max(descriptionSize.height, COLLAPSE_SIZE.height) + SINGLE_INNER_PADDING.vertical / 2 + 1

@@ -1,0 +1,26 @@
+name: Feature Request
+description: Request a feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request! 
+        If you want to report an issue/bug, please use the corresponding issue template
+  - type: textarea
+    attributes:
+      label: Related Problem
+      description: the problem or situation you want to solve via the feature
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Your Think
+      description: |
+        Description of alternative solutions or features you've considered
+        Or just leave it blank
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: |
+        Any other things or screenshots you want to say here
+        Or just leave it blank

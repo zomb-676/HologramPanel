@@ -18,6 +18,14 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
 import java.util.*
 
+/**
+ * data sync back to the client from server
+ *
+ * @param uuid the [UUID] identify used during data sync
+ * @param data the data synced back to the client
+ * @param sizeInBytes ignored under server and only get when decoding at
+ * the client, not take space of the actual transforming packets
+ */
 class ComponentResponseDataPayload private constructor(
     val uuid: UUID,
     val data: ImmutableMap<ComponentProvider<*, *>, CompoundTag>,

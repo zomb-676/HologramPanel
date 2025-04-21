@@ -3,10 +3,10 @@ package com.github.zomb_676.hologrampanel.widget
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
+import com.github.zomb_676.hologrampanel.util.packed.Size
 
 /**
- * the basic hologram widget interface
+ * the basic hologram widget interface, just indicates a sized widget render in level or on screen
  */
 interface HologramWidget {
 
@@ -20,16 +20,16 @@ interface HologramWidget {
      */
     fun render(state: HologramRenderState, style: HologramStyle, displayType: DisplayType, partialTicks: Float)
 
-    fun onSelected() {}
-    fun onDisSelected() {}
-
     fun closeWidget() {
         HologramManager.remove(this)
         this.onRemove()
     }
 
     fun onRemove() {}
-    fun onAdd() {}
+    fun onAdd(state: HologramRenderState) {}
 
+    /**
+     * if the hologram only has ordinaryContent, we can skip render it to save performance
+     */
     fun hasNoneOrdinaryContent(): Boolean = true
 }

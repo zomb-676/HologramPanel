@@ -33,7 +33,7 @@
   "hologram_panel.configuration.popup_distance": "pop up scan radius",
   "hologram_panel.configuration.popup_distance.tooltip": "measured in block distance",
 
-  "hologram_panel.configuration.popup_all_nearby_entity": "pop up all nearby distance",
+  "hologram_panel.configuration.popup_all_nearby_entity": "pop up all nearby entities",
   "hologram_panel.configuration.popup_all_nearby_entity.tooltip": "enable for entities",
 
   "hologram_panel.configuration.popup_all_nearby_block": "pop up all nearby blocks",
@@ -60,14 +60,17 @@
   "hologram_panel.configuration.render_debug_layer": "render debug layer",
   "hologram_panel.configuration.render_debug_layer.tooltip": "render debug overlay layer",
 
-  "hologram_panel.configuration.render_debug_box" : "render popup/update/remove box for hologram",
-  "hologram_panel.configuration.render_debug_box.tooltip" : "visualize hologram life cycle and packet received",
+  "hologram_panel.configuration.render_debug_hologram_life_cycle_box" : "render popup/update/remove box for hologram",
+  "hologram_panel.configuration.render_debug_hologram_life_cycle_box.tooltip" : "visualize hologram life cycle and packet received",
 
   "hologram_panel.configuration.render_widget_debug_info" : "render debug information for hologram",
   "hologram_panel.configuration.render_widget_debug_info.tooltip" : "for debug usage, for better location resolution",
 
   "hologram_panel.configuration.render_network_debug_info" : "render the synced network packet size for target hologram",
   "hologram_panel.configuration.render_network_debug_info.tooltip" : "show the packet size last received",
+
+  "hologram_panel.configuration.render_debug_transient_target" : "show transient render target",
+  "hologram_panel.configuration.render_debug_transient_target.tooltip" : "for debug usage only",
 
   "hologram_panel.configuration.search_backend" : "search backend",
   "hologram_panel.configuration.search_backend.tooltip" : "use AUTO in most case",
@@ -152,7 +155,11 @@
   "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_item_enable_entity.tooltip": "Energy for Block",
   "hologram_panel.configuration.hologram_panel:build_in_hologram_panel:universal_energy_item_enable_entity": "Energy for Block",
 
-  "key.hologram_panel.selector_panel": "selector panel",
-  "key.hologram_panel.scale_key": "scale hologram"
+  "key.categories.hologram_panel" : "Hologram Panel",
+  "key.hologram_panel.selector_panel_key": "selector panel",
+  "key.hologram_panel.scale_key": "scale hologram",
+  "key.hologram_panel.collapse_key": "collapse hologram",
+  "key.hologram_panel.ping_screen_key": "ping widget to screen",
+  "key.hologram_panel.ping_vector_key": "ping widget to world"
 
 }

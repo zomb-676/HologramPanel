@@ -1,16 +1,17 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.payload.DebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.payload.QueryDebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.FontBufferSource
-import com.github.zomb_676.hologrampanel.util.glDebugStack
+import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
+import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -19,11 +20,11 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.client.renderer.LevelRenderer
+import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.LightTexture
+import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.util.FastColor
+import net.minecraft.util.ARGB
 import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import net.neoforged.neoforge.network.handling.IPayloadContext
@@ -31,10 +32,37 @@ import org.joml.Vector3fc
 import kotlin.math.max
 
 object DebugHelper {
+    private class DrawHelper(val guiGraphics: GuiGraphics, val padding: Int = 2) {
+        private val font = Minecraft.getInstance().font
+        private var x: Int = 0
+        private var y: Int = 0
+        private var xBegin = 0
+        private var yStep = 0
+        fun drawString(str: String): DrawHelper {
+            guiGraphics.drawString(font, str, x, y, -1)
+            x += font.width(str)
+            yStep = max(yStep, font.lineHeight)
+            return this
+        }
+
+        fun nextLine() {
+            x = xBegin
+            y += yStep + padding
+            yStep = 0
+        }
+    }
+
     object Client {
         private val UPDATE_TINE: Int get() = max(Config.Server.updateInternal.get(), 20)
         private const val POPUP_TIME = 30
         private const val REMOVE_TIME = 30
+
+        private const val UPDATE_BEGIN_COLOR : Int = 0xffffffff.toInt()
+        private const val UPDATE_END_COLOR : Int = 0x00ffffff
+        private const val POP_UP_BEGIN_COLOR : Int = 0xff0000ff.toInt()
+        private const val POP_UP_END_COLOR : Int = 0x000000ff
+        private const val REMOVE_BEGIN_COLOR : Int = 0xffff0000.toInt()
+        private const val REMOVE_END_COLOR : Int = 0x00ff0000
 
         private const val OFFSET = 0.2
 
@@ -47,7 +75,7 @@ object DebugHelper {
         private val popUpData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
         private val removeData: Object2IntOpenHashMap<HologramRenderState> = Object2IntOpenHashMap()
 
-        private var lookingRenderElement: IRenderElement? = null
+        private var interactRenderElement: IRenderElement? = null
 
 
         private fun tick(target: Object2IntOpenHashMap<*>) {
@@ -75,14 +103,14 @@ object DebugHelper {
         }
 
         fun fill(pos: Vector3fc, color: Int, poseStack: PoseStack, builder: BufferBuilder) {
-            val r = FastColor.ARGB32.red(color) / 255f
-            val g = FastColor.ARGB32.green(color) / 255f
-            val b = FastColor.ARGB32.blue(color) / 255f
-            val a = FastColor.ARGB32.alpha(color) / 255f
+            val r = ARGB.redFloat(color)
+            val g = ARGB.greenFloat(color)
+            val b = ARGB.blueFloat(color)
+            val a = ARGB.alphaFloat(color)
             val x = pos.x()
             val y = pos.y()
             val z = pos.z()
-            LevelRenderer.addChainedFilledBoxVertices(
+            ShapeRenderer.addChainedFilledBoxVertices(
                 poseStack, builder, x - OFFSET, y - OFFSET, z - OFFSET, x + OFFSET, y + OFFSET, z + OFFSET, r, g, b, a
             )
         }
@@ -113,15 +141,15 @@ object DebugHelper {
             val camPos = event.camera.position
             pose.translate(-camPos.x, -camPos.y, -camPos.z)
 
-            if (Config.Client.renderDebugBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
+            if (Config.Client.renderDebugHologramLifeCycleBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-                RenderSystem.setShader(GameRenderer::getPositionColorShader)
+                RenderSystem.setShader(CoreShaders.POSITION_COLOR)
                 RenderSystem.disableDepthTest()
                 if (queryUpdateData.isNotEmpty()) {
                     val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
                     while (iterator.hasNext()) {
                         val next = iterator.next()
-                        val color = FastColor.ARGB32.lerp((next.intValue + partialTick) / UPDATE_TINE, 0x00ffffff.toInt(), -1)
+                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, UPDATE_END_COLOR, UPDATE_BEGIN_COLOR)
                         val position = next.key.state.sourcePosition(partialTick)
                         fill(position, color, pose, builder)
                     }
@@ -131,7 +159,7 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            FastColor.ARGB32.lerp((next.intValue + partialTick) / POPUP_TIME, 0x000000ff.toInt(), 0xff0000ff.toInt())
+                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, POP_UP_END_COLOR, POP_UP_BEGIN_COLOR)
                         fill(next.key.sourcePosition(partialTick), color, pose, builder)
                     }
                 }
@@ -140,7 +168,7 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            FastColor.ARGB32.lerp((next.intValue + partialTick) / REMOVE_TIME, 0x00ff0000.toInt(), 0xffff0000.toInt())
+                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, REMOVE_END_COLOR, REMOVE_BEGIN_COLOR)
                         fill(next.key.sourcePosition(partialTick), color, pose, builder)
                     }
                 }
@@ -173,24 +201,40 @@ object DebugHelper {
             override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
-                val font = Minecraft.getInstance().font
-                guiGraphics.drawString(font, "syncRate:${Config.Server.updateInternal.get()}Tick", 10, 10, -1)
+                val drawHelper = DrawHelper(guiGraphics)
+                drawHelper.drawString("syncRate:${Config.Server.updateInternal.get()}Tick").nextLine()
                 if (Config.Client.renderNetworkDebugInfo.get()) {
-                    guiGraphics.drawString(font, "synced data size:${totalTickDataSize()}, count:${queryUpdateData.size}", 10, 20, -1)
+                    drawHelper.drawString("synced data size:${totalTickDataSize()}, count:${queryUpdateData.size}").nextLine()
                 } else {
-                    guiGraphics.drawString(font, "synced data size: require enable renderNetworkDebugInfo", 10, 20, -1)
+                    drawHelper.drawString("synced data size: require enable renderNetworkDebugInfo").nextLine()
                 }
-                guiGraphics.drawString(font, "current widget count : ${HologramManager.widgetCount()}", 10, 30, -1)
-                guiGraphics.drawString(font, querySyncString(), 10, 40, -1)
-                guiGraphics.drawString(font, "displayed:${HologramManager.states.values.count { it.displayed }}", 10, 50, -1)
-                guiGraphics.drawString(font, "collapseTarget:${HologramManager.getCollapseTarget()}", 10, 60, -1)
-                guiGraphics.drawString(font, "lookingRenderElement:${lookingRenderElement}", 10, 70, -1)
+                drawHelper.drawString("current widget count : ${HologramManager.widgetCount()}").nextLine()
+                drawHelper.drawString(querySyncString()).nextLine()
+                drawHelper.drawString("displayed:${HologramManager.states.values.count { it.displayed }}").nextLine()
+                drawHelper.drawString("collapseTarget:${HologramManager.getCollapseTarget()}").nextLine()
+                drawHelper.drawString("interactRenderElement:${interactRenderElement}").nextLine()
                 val enable = Config.Server.allowHologramInteractive.get()
-                guiGraphics.drawString(font, "interactiveTarget:${HologramManager.getInteractiveTarget()}, enable:$enable", 10, 80, -1)
-                val lookingHologram = HologramManager.getLookingHologram() ?: return
-                guiGraphics.drawString(font, "lookingHologramContext:${lookingHologram.context}", 10, 90, -1)
-                val tickets = lookingHologram.hologramTicks.joinToString()
-                guiGraphics.drawString(font, "lookTicket:$tickets", 10, 100, -1)
+                drawHelper.drawString("interactiveTarget:${HologramManager.getInteractiveTarget()}, enable:$enable").nextLine()
+                when (val interactHologram = HologramManager.getInteractHologram()) {
+                    is HologramRenderState -> {
+                        drawHelper.drawString("InteractHologramContext:${interactHologram.context}").nextLine()
+                        val tickets = interactHologram.hologramTicks.joinToString()
+                        drawHelper.drawString("Ticket:$tickets").nextLine()
+                    }
+                }
+                when (val draggingSource = HologramInteractionManager.draggingSource) {
+                    is InteractiveEntry -> {
+                        drawHelper.drawString("draggingSource:$draggingSource").nextLine()
+                    }
+                }
+                when (val dragContext = HologramInteractionManager.dragData) {
+                    is HologramInteractionManager.DragDataContext<*> -> {
+                        drawHelper.drawString(
+                            "dragContext:(data:${dragContext.getDragData()},valid:${dragContext.isStillValid()}," +
+                                    "type:${dragContext.getDragDataClass()?.simpleName})"
+                        ).nextLine()
+                    }
+                }
             }
         }
 
@@ -210,28 +254,28 @@ object DebugHelper {
         }
 
         fun onDataReceived(widget: DynamicBuildWidget<*>, sizeInBytes: Int) {
-            if (Config.Client.renderDebugBox.get() || Config.Client.renderNetworkDebugInfo.get()) {
+            if (Config.Client.renderDebugHologramLifeCycleBox.get() || Config.Client.renderNetworkDebugInfo.get()) {
                 val state = HologramManager.queryHologramState(widget) ?: return
                 queryUpdateData.put(UpdateEntry(state, sizeInBytes), UPDATE_TINE)
             }
         }
 
         fun recordPopup(state: HologramRenderState) {
-            if (!Config.Client.renderDebugBox.get()) return
+            if (!Config.Client.renderDebugHologramLifeCycleBox.get()) return
             popUpData.put(state, POPUP_TIME)
         }
 
         fun recordRemove(state: HologramRenderState) {
-            if (!Config.Client.renderDebugBox.get()) return
+            if (!Config.Client.renderDebugHologramLifeCycleBox.get()) return
             removeData.put(state, REMOVE_TIME)
         }
 
         fun recordHoverElement(element: IRenderElement) {
-            this.lookingRenderElement = element
+            this.interactRenderElement = element
         }
 
         fun clearRenderRelatedInfo() {
-            this.lookingRenderElement = null
+            this.interactRenderElement = null
         }
     }
 

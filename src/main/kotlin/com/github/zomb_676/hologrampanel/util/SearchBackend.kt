@@ -5,6 +5,11 @@ import com.github.zomb_676.hologrampanel.compat.rei.ModInstalled
 import com.github.zomb_676.hologrampanel.compat.rei.ReiPlugin
 import net.minecraft.world.item.ItemStack
 
+/**
+ * a simple engine to filter objects by String
+ *
+ * should check [Type.isAvailable] and [SearchBackend.available]
+ */
 interface SearchBackend {
     enum class Type {
         DEFAULT {
@@ -17,6 +22,9 @@ interface SearchBackend {
             override fun isAvailable(): Boolean = true
         };
 
+        /**
+         * indicates the target mod is installed or not
+         */
         abstract fun isAvailable(): Boolean
     }
 
@@ -37,6 +45,9 @@ interface SearchBackend {
         }
     }
 
+    /**
+     * if this engine is available or not
+     */
     fun available(): Boolean
     fun matches(item: ItemStack): Boolean
 

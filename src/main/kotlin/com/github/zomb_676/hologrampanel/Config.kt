@@ -95,8 +95,12 @@ object Config {
         val renderMinDistance: ModConfigSpec.DoubleValue = builder
             .defineInRange("render_min_distance", 1.0, 0.1, 16.0)
 
+        val displayAfterNotSeen: ModConfigSpec.IntValue = builder
+            .comment("measured in tick")
+            .defineInRange("display_after_not_seen", 80, 1, 1200)
+
         val globalHologramScale: ModConfigSpec.DoubleValue = builder
-            .defineInRange("global_hologram_range", 1.0, 0.01, 20.0)
+            .defineInRange("global_hologram_range", 1.0, 0.1, 2.5)
 
         val skipHologramIfEmpty: ModConfigSpec.BooleanValue = builder
             .define("skip_hologram_if_empty", true)
@@ -107,14 +111,20 @@ object Config {
         val renderDebugLayer: ModConfigSpec.BooleanValue = builder
             .define("render_debug_layer", false)
 
-        val renderDebugBox: ModConfigSpec.BooleanValue = builder
-            .define("render_debug_box", false)
+        val renderDebugHologramLifeCycleBox: ModConfigSpec.BooleanValue = builder
+            .define("render_debug_hologram_life_cycle_box", false)
 
         val renderWidgetDebugInfo: ModConfigSpec.BooleanValue = builder
             .define("render_widget_debug_info", false)
 
         val renderNetworkDebugInfo: ModConfigSpec.BooleanValue = builder
             .define("render_network_debug_info", false)
+
+        val renderDebugTransientTarget: ModConfigSpec.BooleanValue = builder
+            .define("render_debug_transient_target", false)
+
+        val renderInteractTransientReMappingIndicator: ModConfigSpec.BooleanValue = builder
+            .define("render_interact_transient_re_mapping_indicator", false)
 
         val searchBackend: ModConfigSpec.EnumValue<SearchBackend.Type> = builder
             .defineEnum("search_backend", SearchBackend.Type.AUTO)
@@ -134,6 +144,18 @@ object Config {
 
         val itemTooltipType: ModConfigSpec.EnumValue<TooltipType> = builder
             .defineEnum("item_tooltip_type", TooltipType.SCREEN_NO_BACKGROUND)
+
+        val renderInteractIndicator: ModConfigSpec.BooleanValue = builder
+            .define("render_interact_indicator", true)
+
+        val interactIndicatorDistance: ModConfigSpec.IntValue = builder
+            .defineInRange("interact_indicator_distance", 8, 1, 20)
+
+        val interactIndicatorPercent: ModConfigSpec.DoubleValue = builder
+            .defineInRange("interact_indicator_percent", 0.2, 0.001, 0.999)
+
+        val widgetBackgroundAlpha: ModConfigSpec.IntValue = builder
+            .defineInRange("widget_background_alpha", 0x7f, 0x00, 0xff)
 
         val space: ModConfigSpec = builder.build()
     }

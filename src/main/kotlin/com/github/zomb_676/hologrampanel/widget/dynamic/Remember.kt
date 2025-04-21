@@ -197,9 +197,9 @@ class Remember<T : HologramContext> private constructor() {
         }.put(key, holder)
     }
 
-    fun onReceiveData(data: ImmutableMap<ComponentProvider<*, *>, CompoundTag>) {
+    fun onReceiveData(tag: ImmutableMap<ComponentProvider<*, *>, CompoundTag>) {
         this.servers.values.forEach { holder ->
-            holder.tryUpdate(data.getValue(holder.provider))
+            holder.tryUpdate(tag.getValue(holder.provider))
         }
     }
 

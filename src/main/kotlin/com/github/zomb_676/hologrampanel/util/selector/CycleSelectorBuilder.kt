@@ -1,9 +1,14 @@
 package com.github.zomb_676.hologrampanel.util.selector
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.Size
-import com.github.zomb_676.hologrampanel.widget.dynamic.IRenderElement
+import com.github.zomb_676.hologrampanel.util.packed.Size
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelectorBuilder.Companion.invoke
+import com.github.zomb_676.hologrampanel.widget.element.EmptyElement
+import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 
+/**
+ * the builder for [CycleSelector], use [invoke]
+ */
 class CycleSelectorBuilder {
     class GroupEntryBuilder {
         val children: MutableList<CycleEntry> = mutableListOf()
@@ -26,6 +31,9 @@ class CycleSelectorBuilder {
                     element.contentSize = element.measureContentSize(style)
                     return element.contentSize
                 }
+
+                override fun scale(): Double = element.getScale()
+
             }
             children.add(instance)
         }
@@ -51,13 +59,17 @@ class CycleSelectorBuilder {
                     element.contentSize = element.measureContentSize(style)
                     return element.contentSize
                 }
+
+                override fun scale(): Double = element.getScale()
             }
         }
     }
 
-    inline fun buildScope(code: GroupEntryBuilder.() -> Unit): CycleSelector {
-        val builder = GroupEntryBuilder()
-        code.invoke(builder)
-        return CycleSelector(builder.build(IRenderElement.EmptyElement))
+    companion object {
+        inline operator fun invoke(code: GroupEntryBuilder.() -> Unit): CycleSelector {
+            val builder = GroupEntryBuilder()
+            code.invoke(builder)
+            return CycleSelector(builder.build(EmptyElement))
+        }
     }
 }

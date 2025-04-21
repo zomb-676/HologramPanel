@@ -6,10 +6,9 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.util.InheritSearcher
 import com.github.zomb_676.hologrampanel.util.getClassOf
 import com.github.zomb_676.hologrampanel.util.unsafeCast
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
@@ -20,7 +19,6 @@ import net.neoforged.fml.config.ModConfig
 import net.neoforged.neoforge.common.ModConfigSpec
 import org.jetbrains.annotations.ApiStatus
 import java.lang.annotation.ElementType
-import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
 import kotlin.streams.asSequence
@@ -29,18 +27,6 @@ import kotlin.streams.asSequence
 internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
     companion object {
         private var INSTANCE: PluginManager? = null
-
-        /**
-         * use a cache mapping actual type to all available providers, already considering Inherit Tree
-         */
-        private val providerCache: Cache<Class<*>, List<ComponentProvider<*, *>>> = CacheBuilder.newBuilder()
-            .expireAfterAccess(120, TimeUnit.SECONDS)
-            .build()
-
-        /**
-         * mapping from [ComponentProvider.targetClass] to the provider
-         */
-        private val classProvider: MutableMap<Class<*>, MutableList<ComponentProvider<*, *>>> = mutableMapOf()
 
         internal fun getInstance() = INSTANCE!!
 
@@ -75,48 +61,38 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             INSTANCE = PluginManager(plugins)
         }
 
+        fun <T, V> flatten(source: Map<*, T>, f: (T) -> Collection<V>): Sequence<V> =
+            source.values.asSequence().flatMap(f)
+
+    }
+
+    object ProviderManager {
+        private val mapper = InheritSearcher<ComponentProvider<*, *>>()
+
+        private fun <V, C : HologramContext> InheritSearcher<ComponentProvider<*, *>>.collectByInstance(context: C, instance: V) =
+            this.collectByInstance(instance) { i, p ->
+                p.unsafeCast<ComponentProvider<C, V>>().appliesTo(context, i)
+            }
+
         internal fun collectProvidersFromRegistry() {
-            classProvider.clear()
+            mapper.resetMapper()
             AllRegisters.ComponentHologramProviderRegistry.REGISTRY.forEach { provider ->
-                classProvider.computeIfAbsent(provider.targetClass()) { mutableListOf() }.add(provider)
+                mapper.getMutableMapper().computeIfAbsent(provider.targetClass()) { mutableListOf() }.add(provider)
             }
         }
 
         internal fun queryProviders(context: BlockHologramContext): List<ComponentProvider<BlockHologramContext, *>> {
             val list: MutableList<ComponentProvider<BlockHologramContext, *>> = mutableListOf()
-            list.addAll(queryProvidersByType(context, context.getBlockState().block).unsafeCast())
-            list.addAll(queryProvidersByType(context, context.getFluidState().fluidType).unsafeCast())
-            list.addAll(queryProvidersByType(context, context.getBlockEntity()).unsafeCast())
+            list.addAll(mapper.collectByInstance(context, context.getBlockState().block).unsafeCast())
+            list.addAll(mapper.collectByInstance(context, context.getFluidState().fluidType).unsafeCast())
+            list.addAll(mapper.collectByInstance(context, context.getBlockEntity()).unsafeCast())
             return removeByPrevent(list)
         }
 
         internal fun queryProviders(context: EntityHologramContext): List<ComponentProvider<EntityHologramContext, *>> {
             val list: MutableList<ComponentProvider<EntityHologramContext, *>> = mutableListOf()
-            list.addAll(queryProvidersByType(context, context.getEntity()).unsafeCast())
+            list.addAll(mapper.collectByInstance(context, context.getEntity()).unsafeCast())
             return removeByPrevent(list)
-        }
-
-        private fun <T : Any?, C : HologramContext> queryProvidersByType(
-            context: C, targetInstance: T
-        ): List<ComponentProvider<*, T>> {
-            if (targetInstance == null) return listOf()
-
-            val targetClass: Class<out T> = targetInstance::class.java
-            val res = providerCache.getIfPresent(targetClass)
-            if (res != null) return res.unsafeCast()
-
-            val container = mutableListOf<ComponentProvider<C, T>>()
-            searchByInheritTree(targetClass, classProvider, container.unsafeCast())
-            container.removeIf { !it.appliesTo(context, targetInstance) }
-            val finalRes = if (container.isEmpty()) {
-                listOf()
-            } else if (container.size == 1) {
-                container
-            } else {
-                removeByPrevent(container)
-            }
-            providerCache.put(targetClass, finalRes)
-            return finalRes
         }
 
         private fun <T : ComponentProvider<*, *>> removeByPrevent(container: MutableList<T>): MutableList<T> {
@@ -134,25 +110,11 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             return container
         }
 
-        private fun <V> searchByInheritTree(
-            c: Class<*>, map: Map<Class<*>, List<V>>, list: MutableList<V>
-        ) where V : ComponentProvider<*, *> {
-            val target = map[c]
-            if (target != null) {
-                list.addAll(target)
-            }
-            c.interfaces.forEach {
-                searchByInheritTree(it, map, list)
-            }
-            val sup = c.superclass
-            if (sup != null) {
-                searchByInheritTree(sup, map, list)
-            }
+        internal fun invalidateCache() = this.mapper.resetCache()
+
+        internal fun removeProvider(provider: ComponentProvider<*, *>) {
+            this.mapper.getMutableMapper()[provider.targetClass()]?.remove(provider)
         }
-
-        fun <T, V> flatten(source: Map<*, T>, f: (T) -> Collection<V>): Sequence<V> =
-            source.values.asSequence().flatMap(f)
-
     }
 
     internal val commonRegistration: Map<IHologramPlugin, HologramCommonRegistration> =
@@ -172,9 +134,6 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     internal val globalPluginSettings: MutableMap<IHologramPlugin, PluginGlobalSetting> = mutableMapOf()
 
     internal fun registerPluginConfigs() {
-        this.block.addAll(flatten(clientRegistration, HologramClientRegistration::blockPopup))
-        this.entity.addAll(flatten(clientRegistration, HologramClientRegistration::entityPopup))
-
         plugins.forEach { plugin ->
             val configBuilder = ModConfigSpec.Builder()
             val pluginEnable = configBuilder.define("${plugin.location()}_enable_plugin", true)
@@ -210,7 +169,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     fun onPluginSettingChange(config: ModConfig) {
         globalPluginSettingsMap[config.spec] ?: return
         //clear and re-collect providers
-        collectProvidersFromRegistry()
+        ProviderManager.collectProvidersFromRegistry()
         //clear all cache
         this.block.clear()
         this.entity.clear()
@@ -222,7 +181,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             if (!setting.enable.get()) return@forEach
             setting.providerEnableData.forEach { (provider, enable) ->
                 if (!enable.get()) {
-                    classProvider[provider.targetClass()]?.remove(provider)
+                    ProviderManager.removeProvider(provider)
                 }
             }
             val registration = clientRegistration[plugin]!!
@@ -233,9 +192,17 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             hideEntityCallback.addAll(registration.hideEntityCallback)
         }
         //invalidate cache
-        providerCache.invalidateAll()
+        ProviderManager.invalidateCache()
         //remove all, some provider may have disappeared
         HologramManager.clearAllHologram()
+    }
+
+    fun onClientRegisterEnd() {
+        this.block.addAll(flatten(clientRegistration, HologramClientRegistration::blockPopup))
+        this.entity.addAll(flatten(clientRegistration, HologramClientRegistration::entityPopup))
+        this.hideBlocks.addAll(flatten(clientRegistration, HologramClientRegistration::hideBlocks))
+        this.hideEntityTypes.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityTypes))
+        this.hideEntityCallback.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityCallback))
     }
 
     fun hideBlock(block: Block) = this.hideBlocks.contains(block)
