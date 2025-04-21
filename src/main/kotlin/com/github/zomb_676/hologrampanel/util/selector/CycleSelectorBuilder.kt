@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.widget.element.EmptyElement
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 
 /**
- * the builder for [CycleSelector], use [buildScope]
+ * the builder for [CycleSelector], use [invoke]
  */
 class CycleSelectorBuilder {
     class GroupEntryBuilder {
@@ -59,9 +59,11 @@ class CycleSelectorBuilder {
         }
     }
 
-    inline fun buildScope(code: GroupEntryBuilder.() -> Unit): CycleSelector {
-        val builder = GroupEntryBuilder()
-        code.invoke(builder)
-        return CycleSelector(builder.build(EmptyElement))
+    companion object {
+        inline operator fun invoke(code: GroupEntryBuilder.() -> Unit): CycleSelector {
+            val builder = GroupEntryBuilder()
+            code.invoke(builder)
+            return CycleSelector(builder.build(EmptyElement))
+        }
     }
 }

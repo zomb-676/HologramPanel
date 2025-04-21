@@ -113,10 +113,7 @@ class HologramRenderState(
         return true
     }
 
-    /**
-     * convenient function for [HologramContext.hologramCenterPosition]
-     */
-    fun sourcePosition(partialTick: Float) = context.hologramCenterPosition(partialTick)
+    fun sourcePosition(partialTick: Float) = locate.getSourceWorldPosition(context, partialTick)
 
     /**
      * measure the size of the widget and record it

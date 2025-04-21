@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.util.selector
 
+import com.github.zomb_676.hologrampanel.PanelOperatorManager
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryBegin
@@ -154,21 +155,15 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         fun tryBegin() {
             if (this.instance == null) {
                 MouseInputModeUtil.tryEnter()
-                val builder = CycleSelectorBuilder()
-                this.instance = builder.buildScope {
-                    repeat(5) { index ->
-                        add(ComponentRenderElement(index.toString())) {
-                            Minecraft.getInstance().gui.chat.addMessage(Component.literal("$index"))
-                        }
-                    }
-                    addGroup(ItemStackElement(false, ItemStack(Items.DIRT))) {
-                        repeat(5) { index ->
-                            add(ComponentRenderElement("inner$index")) {
-                                Minecraft.getInstance().gui.chat.addMessage(Component.literal("inner$index"))
-                            }
-                        }
-                    }
-                }
+//                this.instance = CycleSelectorBuilder {
+//                    repeat(5) { index ->
+//                        add(ComponentRenderElement(index.toString())) {
+//                            Minecraft.getInstance().gui.chat.addMessage(Component.literal("$index"))
+//                        }
+//                    }
+//
+//                }
+                this.instance = PanelOperatorManager.createInstance()
             }
         }
 

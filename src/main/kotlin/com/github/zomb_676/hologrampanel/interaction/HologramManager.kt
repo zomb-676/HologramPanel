@@ -1,10 +1,12 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -32,6 +34,7 @@ import org.joml.Matrix4f
 import org.joml.Vector2d
 import org.joml.Vector2f
 import org.joml.Vector3f
+import kotlin.math.abs
 
 object HologramManager {
     /**
@@ -505,7 +508,18 @@ object HologramManager {
     fun tryPingInteractVector() {
         val interact = getInteractHologram() ?: return
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
-        interact.locate = LocateType.World.FacingVector().byCamera(camera)
+        when (val locate = interact.locate) {
+            is LocateType.World.FacingVector -> locate.byCamera(camera)
+            else -> interact.locate = LocateType.World.FacingVector().byCamera(camera)
+        }
+        val attach = when (val context = interact.context) {
+            is BlockHologramContext -> context.getBlockEntity() ?: return
+            is EntityHologramContext -> context.getEntity()
+        }
+        if (!attach.hasData(AllRegisters.AttachmentTypes.IDENTITY_UUID)) {
+            val data = attach.getData(AllRegisters.AttachmentTypes.IDENTITY_UUID)
+            attach.setData(AllRegisters.AttachmentTypes.IDENTITY_UUID, data)
+        }
     }
 
     fun renderFacingVectors(style: HologramStyle, partialTicks: Float) = MousePositionManager.mouseInvalidAreaScope {
@@ -608,9 +622,8 @@ object HologramManager {
                     val locate = state.locate as? LocateType.World.FacingVector? ?: continue
                     val center = state.sourcePosition(partialTick)
                     val (width, height) = state.displaySize
-                    //TODO the 80 here should be replaced by value calculated by the projection matrix
-                    val left = locate.getLeft().mul(width / 2f / 80f, Vector3f())
-                    val up = locate.getUp().mul(height / 2f / 80f, Vector3f())
+                    val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
+                    val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
 
                     fun Vector3f.add(): VertexConsumer {
                         return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
@@ -658,9 +671,8 @@ object HologramManager {
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
                 RenderSystem.setShaderTexture(0, TransitRenderTargetManager.getInteractTarget().colorTextureId)
 
-                //TODO the 80 here should be replaced by value calculated by the projection matrix
-                val left = locate.getLeft().mul(width / 2f / 80f, Vector3f())
-                val up = locate.getUp().mul(height / 2f / 80f, Vector3f())
+                val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
+                val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
 
                 fun Vector3f.add(): VertexConsumer {
                     return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)

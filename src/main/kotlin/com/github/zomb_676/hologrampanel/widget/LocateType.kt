@@ -37,6 +37,9 @@ sealed interface LocateType {
             private val up = Vector3f()
             fun getLeft(): Vector3fc = left
             fun getUp(): Vector3fc = up
+            var scale: Float = 1f
+            inline val renderScale get() = 80f / scale
+            val offset: Vector3f = Vector3f()
 
             private val leftUp: Vector2f = Vector2f()
             private val leftDown: Vector2f = Vector2f()
@@ -96,6 +99,9 @@ sealed interface LocateType {
             var allocatedSpace: PackedRect = PackedRect.EMPTY
 
             var target: RenderTarget? = null
+
+            override fun getSourceWorldPosition(context: HologramContext, partialTick: Float): Vector3fc =
+                super.getSourceWorldPosition(context, partialTick).add(offset, Vector3f())
         }
     }
 

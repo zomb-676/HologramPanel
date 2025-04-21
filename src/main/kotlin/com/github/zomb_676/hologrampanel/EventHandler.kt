@@ -7,6 +7,7 @@ import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
+import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
@@ -142,11 +143,45 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
+            val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+            val modifier = if (shiftDown) 0.05 else 0.2
+            val changeValue = event.scrollDeltaY * modifier
+
+            run {
+                val modifyTarget = PanelOperatorManager.modifyTarget ?: return@run
+                val window = Minecraft.getInstance().window.window
+                val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
+
+                when (GLFW.GLFW_PRESS) {
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> {
+                        locate.offset.x += changeValue.toFloat()
+                    }
+
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> {
+                        locate.offset.y += changeValue.toFloat()
+                    }
+
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> {
+                        locate.offset.z += changeValue.toFloat()
+                    }
+                }
+                event.isCanceled = true
+                return
+            }
+
+            HologramManager.getInteractHologram()?.also { state ->
+                val locate = state.locate as? LocateType.World.FacingVector ?: return@also
+
+                locate.scale = max(min(max(locate.scale + changeValue.toFloat(), 0.01f), 2.5f), 0.2f)
+                Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust hologram scale to %.2f".format(locate.scale)), false)
+
+                event.isCanceled = true
+                return
+            }
+
             if (AllRegisters.KeyMapping.scaleKey.isDown) {
                 val scale = Config.Client.globalHologramScale
-                val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                val modifier = if (shiftDown) 0.05 else 0.2
-                scale.setAndSave(min(max(scale.get() + event.scrollDeltaY * modifier, 0.01), 2.5))
+                scale.setAndSave(min(max(scale.get() + changeValue, 0.01), 2.5))
                 Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
                 event.isCanceled = true
                 return
@@ -160,9 +195,13 @@ object EventHandler {
         private fun onMouseButton(event: InputEvent.MouseButton.Pre) {
             if (MouseInputModeUtil.preventPlayerTurn()) {
                 event.isCanceled = true
+            }
+
+            if (CycleSelector.instanceExist()) {
                 if (event.action == GLFW.GLFW_PRESS) {
                     CycleSelector.onClick()
                 }
+                return
             }
 
             if (AllRegisters.KeyMapping.freeMouseMoveKey.isDown) {
