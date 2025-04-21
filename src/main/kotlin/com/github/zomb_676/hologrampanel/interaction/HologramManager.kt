@@ -1,6 +1,5 @@
 package com.github.zomb_676.hologrampanel.interaction
 
-import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
@@ -34,7 +33,7 @@ import org.joml.Matrix4f
 import org.joml.Vector2d
 import org.joml.Vector2f
 import org.joml.Vector3f
-import kotlin.math.abs
+import kotlin.math.sqrt
 
 object HologramManager {
     /**
@@ -97,7 +96,7 @@ object HologramManager {
             val state = HologramRenderState(widget, context, displayType, ticket)
             states[widget] = state
 
-            widget.onAdd()
+            widget.onAdd(state)
 
             return state
         }
@@ -510,15 +509,9 @@ object HologramManager {
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
         when (val locate = interact.locate) {
             is LocateType.World.FacingVector -> locate.byCamera(camera)
-            else -> interact.locate = LocateType.World.FacingVector().byCamera(camera)
-        }
-        val attach = when (val context = interact.context) {
-            is BlockHologramContext -> context.getBlockEntity() ?: return
-            is EntityHologramContext -> context.getEntity()
-        }
-        if (!attach.hasData(AllRegisters.AttachmentTypes.IDENTITY_UUID)) {
-            val data = attach.getData(AllRegisters.AttachmentTypes.IDENTITY_UUID)
-            attach.setData(AllRegisters.AttachmentTypes.IDENTITY_UUID, data)
+            else -> interact.locate = LocateType.World.FacingVector().byCamera(camera).apply {
+                camera.lookVector.mul(-sqrt(3f) / 2f, offset)
+            }
         }
     }
 

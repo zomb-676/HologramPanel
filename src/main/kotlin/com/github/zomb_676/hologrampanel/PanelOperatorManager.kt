@@ -31,7 +31,7 @@ object PanelOperatorManager {
     fun createInstance(): CycleSelector? {
         return CycleSelectorBuilder {
             if (modifyTarget == null) {
-                add(ComponentRenderElement("Set Modify Target").setScale(0.5)) {
+                add(ComponentRenderElement("Set Modify Target").setScale(0.8)) {
                     val hologram = HologramManager.getInteractHologram() ?: return@add
                     val message = if (hologram.locate is LocateType.World.FacingVector) {
                         modifyTarget = hologram
@@ -40,7 +40,7 @@ object PanelOperatorManager {
                     Minecraft.getInstance().gui.chat.addMessage(message)
                 }
             } else {
-                add(ComponentRenderElement("Clear Modify Target").setScale(0.5)) {
+                add(ComponentRenderElement("Clear Modify Target").setScale(0.8)) {
                     modifyTarget = null
                 }
             }

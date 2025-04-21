@@ -6,15 +6,10 @@ import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryBegin
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryEnd
 import com.github.zomb_676.hologrampanel.util.stack
-import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
-import com.github.zomb_676.hologrampanel.widget.element.ItemStackElement
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.network.chat.Component
-import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Items
 import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
@@ -113,9 +108,11 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             val size = entry.size(style)
             style.stack {
                 style.translate(
-                    (sin(centerDegree) * distance) - (size.width / 2),
-                    (cos(centerDegree) * distance) - (size.height / 2)
+                    (sin(centerDegree) * distance),
+                    (cos(centerDegree) * distance)
                 )
+                style.scale(entry.scale())
+                style.translate(-size.width / 2f, -size.height / 2f)
                 entry.renderContent(style, partialTick, isHover)
             }
         }

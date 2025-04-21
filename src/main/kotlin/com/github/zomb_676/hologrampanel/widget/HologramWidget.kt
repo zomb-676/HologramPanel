@@ -26,7 +26,7 @@ interface HologramWidget {
     }
 
     fun onRemove() {}
-    fun onAdd() {}
+    fun onAdd(state: HologramRenderState) {}
 
     /**
      * if the hologram only has ordinaryContent, we can skip render it to save performance

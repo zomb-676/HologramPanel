@@ -55,7 +55,7 @@ object AllRegisters {
     object KeyMapping {
         const val KEY_CATEGORY = "key.categories.${HologramPanel.MOD_ID}"
 
-        fun register(event : RegisterKeyMappingsEvent) {
+        fun register(event: RegisterKeyMappingsEvent) {
             event.register(panelKey)
             event.register(scaleKey)
             event.register(collapseKey)

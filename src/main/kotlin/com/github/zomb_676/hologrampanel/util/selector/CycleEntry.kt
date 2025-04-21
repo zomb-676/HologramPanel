@@ -13,7 +13,7 @@ sealed interface CycleEntry {
     fun onClose() {}
     fun renderContent(style: HologramStyle, partialTick: Float, isHover: Boolean)
     fun size(style: HologramStyle): Size
-
+    fun scale() : Double
 
     interface Group : CycleEntry {
         fun children(): List<CycleEntry>

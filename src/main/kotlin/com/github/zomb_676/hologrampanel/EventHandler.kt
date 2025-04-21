@@ -164,6 +164,8 @@ object EventHandler {
                     GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> {
                         locate.offset.z += changeValue.toFloat()
                     }
+
+                    else -> return@run
                 }
                 event.isCanceled = true
                 return

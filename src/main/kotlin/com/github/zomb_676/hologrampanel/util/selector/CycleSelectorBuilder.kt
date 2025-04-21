@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel.util.selector
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.packed.Size
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelectorBuilder.Companion.invoke
 import com.github.zomb_676.hologrampanel.widget.element.EmptyElement
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 
@@ -30,6 +31,9 @@ class CycleSelectorBuilder {
                     element.contentSize = element.measureContentSize(style)
                     return element.contentSize
                 }
+
+                override fun scale(): Double = element.getScale()
+
             }
             children.add(instance)
         }
@@ -55,6 +59,8 @@ class CycleSelectorBuilder {
                     element.contentSize = element.measureContentSize(style)
                     return element.contentSize
                 }
+
+                override fun scale(): Double = element.getScale()
             }
         }
     }
