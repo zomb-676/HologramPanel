@@ -33,7 +33,7 @@ open class ItemStackElement(val renderDecoration: Boolean = true, val itemStack:
     }
 
     protected val tooltipElement by lazy {
-        ScreenTooltipElement(itemStack, TooltipType.SCREEN_ALWAYS_BACKGROUND)
+        ScreenTooltipElement(itemStack)
     }
 
     override fun renderInteractive(

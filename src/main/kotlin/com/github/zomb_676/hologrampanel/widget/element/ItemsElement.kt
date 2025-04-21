@@ -117,7 +117,7 @@ open class ItemsElement protected constructor(val items: List<ItemStack>, itemEa
                 val index = decodeIndex(mouseX, mouseY)
                 if (index >= 0) {
                     val tooltip = map.computeIfAbsent(index) {
-                        ScreenTooltipElement(items[index], TooltipType.SCREEN_ALWAYS_BACKGROUND)
+                        ScreenTooltipElement(items[index])
                     }
                     if (tooltip.item.isEmpty) return@stack
                     tooltip.contentSize = tooltip.measureContentSize(style)

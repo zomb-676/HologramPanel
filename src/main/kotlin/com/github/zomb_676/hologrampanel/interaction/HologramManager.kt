@@ -27,7 +27,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.renderer.CoreShaders
+import net.minecraft.client.renderer.GameRenderer
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import org.joml.Matrix4f
 import org.joml.Vector2d
@@ -476,7 +476,7 @@ object HologramManager {
      */
     private fun renderPingScreenPrompt(style: HologramStyle, partialTicks: Float) {
 
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+        RenderSystem.setShader(GameRenderer::getPositionColorShader)
         RenderSystem.disableCull()
 
         this.screenPingHolograms.forEach { state ->
@@ -605,7 +605,7 @@ object HologramManager {
 
         RenderSystem.enableBlend()
         RenderSystem.disableCull()
-        RenderSystem.setShader(CoreShaders.POSITION_TEX)
+        RenderSystem.setShader(GameRenderer::getPositionTexShader)
         glDebugStack("world") {
             for ((target, states) in TransitRenderTargetManager.getEntries()) {
                 if (states.isEmpty()) continue
@@ -692,9 +692,9 @@ object HologramManager {
         }
         glDebugStack("clear") {
             TransitRenderTargetManager.getEntries().forEach { (target, _) ->
-                target.clear()
+                target.clear(Minecraft.ON_OSX)
             }
-            TransitRenderTargetManager.getInteractTarget().clear()
+            TransitRenderTargetManager.getInteractTarget().clear(Minecraft.ON_OSX)
         }
         Minecraft.getInstance().mainRenderTarget.bindWrite(true)
     }

@@ -13,7 +13,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.VertexFormat
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.CoreShaders
+import net.minecraft.client.renderer.GameRenderer
 import org.lwjgl.opengl.GL46
 import java.util.*
 
@@ -69,9 +69,9 @@ object TransitRenderTargetManager {
 
     fun onResize(width: Int, height: Int) {
         entries.keys.forEach { target ->
-            target.resize(width, height)
+            target.resize(width, height, Minecraft.ON_OSX)
         }
-        interactRenderTarget.resize(width, height)
+        interactRenderTarget.resize(width, height, Minecraft.ON_OSX)
         onGuiScaleChange()
     }
 
@@ -118,7 +118,7 @@ object TransitRenderTargetManager {
         RenderSystem.disableDepthTest()
         RenderSystem.enableBlend()
         RenderSystem.depthMask(false)
-        RenderSystem.setShader(CoreShaders.POSITION_TEX)
+        RenderSystem.setShader(GameRenderer::getPositionTexShader)
         val allocator = run {
             val window = Minecraft.getInstance().window
             RectAllocator(window.guiScaledWidth, window.guiScaledHeight)

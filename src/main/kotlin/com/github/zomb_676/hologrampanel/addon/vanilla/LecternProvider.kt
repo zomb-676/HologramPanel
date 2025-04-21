@@ -36,7 +36,7 @@ data object LecternProvider : ServerDataProvider<BlockHologramContext, LecternBl
         if (!bookItem.isEmpty) {
             builder.single("book") {
                 itemStack("lectern_item_logo",bookItem).smallItem()
-                component("lectern_item",bookItem.itemName)
+                component("lectern_item",bookItem.displayName)
             }
         }
     }

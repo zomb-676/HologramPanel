@@ -3,6 +3,12 @@ package com.github.zomb_676.hologrampanel.widget.element.progress
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement.Companion.shortDescription
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferUploader
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
+import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
@@ -22,8 +28,10 @@ class FluidBarElement(progress: ProgressData, val fluid: FluidType) : ProgressBa
         val tintColor = handle.tintColor
         val sprite: TextureAtlasSprite = FluidSpriteCache.getSprite(handle.stillTexture)
 
+        RenderSystem.setShaderTexture(0, sprite.atlasLocation())
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader)
         val matrix = style.poseMatrix()
-        val consumer = style.guiGraphics.bufferSource.getBuffer(RenderType.guiTextured(sprite.atlasLocation()))
+        val consumer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
 
         val maxU = (((sprite.u1 - sprite.u0) * percent) + sprite.u0).toFloat()
         val maxV = (((sprite.v1 - sprite.v0) * percent) + sprite.v0).toFloat()
@@ -32,6 +40,7 @@ class FluidBarElement(progress: ProgressData, val fluid: FluidType) : ProgressBa
         consumer.addVertex(matrix, left, height, 0f).setUv(sprite.u0, maxV).setColor(tintColor)
         consumer.addVertex(matrix, right, height, 0f).setUv(maxU, maxV).setColor(tintColor)
         consumer.addVertex(matrix, right, 0f, 0f).setUv(maxU, sprite.v0).setColor(tintColor)
+        BufferUploader.drawWithShader(consumer.buildOrThrow())
     }
 
     override fun getDescription(percent: Float): Component {

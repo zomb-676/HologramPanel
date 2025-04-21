@@ -32,7 +32,7 @@ class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderEl
         style: HologramStyle, partialTicks: Float
     ) {
         val size = this.contentSize
-        style.guiGraphics.blitSprite(RenderType::guiTextured, sprite, 0, 0, size.width, size.height)
+        style.guiGraphics.blit(0, 0, 0, size.width, size.height, sprite)
     }
 
     fun setRenderSize(width: Int, height: Int) {

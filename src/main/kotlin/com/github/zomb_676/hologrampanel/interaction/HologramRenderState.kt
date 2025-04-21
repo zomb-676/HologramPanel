@@ -159,7 +159,7 @@ class HologramRenderState(
 
         val dot = viewVector.dot(sourceVector)
         val angleInRadius = JomlMath.acos(dot)
-        val angel = JomlMath.toDegrees(angleInRadius)
+        val angel = JomlMath.toDegrees(angleInRadius.toDouble())
         this.inViewDegree = angel < Minecraft.getInstance().options.fov().get()
         return if (this.locate is LocateType.World) this.inViewDegree else true
     }
