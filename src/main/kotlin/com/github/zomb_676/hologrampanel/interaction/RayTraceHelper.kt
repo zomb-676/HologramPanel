@@ -97,14 +97,6 @@ object RayTraceHelper {
                 builder.build(BuildInPlugin.Companion.DefaultBlockDescriptionProvider, displayType, providers)
             }
         }.unsafeCast()
-        val syncProviders: List<ServerDataProvider<T, *>> = context.getRememberDataUnsafe<T>().serverDataEntries()
-        if (syncProviders.isNotEmpty()) {
-            val tag = CompoundTag()
-            syncProviders.forEach { provider ->
-                provider.additionInformationForServer(tag, context)
-            }
-            DataQueryManager.Client.query(widget, tag, syncProviders, context)
-        }
         return@profilerStack widget
     }
 

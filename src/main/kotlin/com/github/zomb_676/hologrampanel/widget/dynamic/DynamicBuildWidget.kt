@@ -1,13 +1,17 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.api.ServerDataProvider
+import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.payload.SyncClosePayload
+import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramComponentWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.google.common.collect.ImmutableBiMap
+import net.minecraft.nbt.CompoundTag
 
 /**
  * widget that support re-build partial when some [ComponentProvider] data have changed
@@ -45,6 +49,19 @@ class DynamicBuildWidget<T : HologramContext>(
         DataQueryManager.Client.closeForWidget(this)
         SyncClosePayload(target.getRememberData().uuid).sendToServer()
         markAlComponentInvalid(this.container)
+    }
+
+    override fun onAdd(state: HologramRenderState) {
+        super.onAdd(state)
+        val context = state.context.unsafeCast<T>()
+        val syncProviders: List<ServerDataProvider<T, *>> = context.getRememberDataUnsafe<T>().serverDataEntries()
+        if (syncProviders.isNotEmpty()) {
+            val tag = CompoundTag()
+            syncProviders.forEach { provider ->
+                provider.additionInformationForServer(tag, context)
+            }
+            DataQueryManager.Client.query(this, tag, syncProviders, context)
+        }
     }
 
     override fun hasNoneOrdinaryContent(): Boolean {
