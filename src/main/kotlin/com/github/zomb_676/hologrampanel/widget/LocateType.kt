@@ -35,6 +35,7 @@ sealed interface LocateType {
             private val view = Vector3f()
             private val left = Vector3f()
             private val up = Vector3f()
+            fun getView() : Vector3fc = view
             fun getLeft(): Vector3fc = left
             fun getUp(): Vector3fc = up
             var scale: Float = 1f

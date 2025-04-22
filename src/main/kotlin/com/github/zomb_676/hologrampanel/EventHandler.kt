@@ -149,24 +149,18 @@ object EventHandler {
 
             run {
                 val modifyTarget = PanelOperatorManager.modifyTarget ?: return@run
+                val player = Minecraft.getInstance().player ?: return@run
                 val window = Minecraft.getInstance().window.window
                 val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
 
-                when (GLFW.GLFW_PRESS) {
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> {
-                        locate.offset.x += changeValue.toFloat()
-                    }
-
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> {
-                        locate.offset.y += changeValue.toFloat()
-                    }
-
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> {
-                        locate.offset.z += changeValue.toFloat()
-                    }
-
+                val axisMode = PanelOperatorManager.axisMode
+                val vector = when (GLFW.GLFW_PRESS) {
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.extractX(player, locate)
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> axisMode.extractY(player, locate)
+                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.extractZ(player, locate)
                     else -> return@run
                 }
+                locate.offset.add(vector.mul(changeValue.toFloat()))
                 event.isCanceled = true
                 return
             }
