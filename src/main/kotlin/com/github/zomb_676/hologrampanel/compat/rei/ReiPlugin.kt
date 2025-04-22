@@ -13,11 +13,11 @@ import net.minecraft.world.item.ItemStack
  */
 @REIPluginClient
 class ReiPlugin : REIClientPlugin {
-    init {
-        ModInstalled.reiInstalled()
+    companion object {
+        fun getSearchEngine(): SearchBackend? = if (ReiSearchBackend.available()) ReiSearchBackend else null
     }
 
-    object ReiSearchBackend : SearchBackend {
+    private object ReiSearchBackend : SearchBackend {
         override fun available(): Boolean = REIRuntime.getInstance() != null
 
         override fun matches(item: ItemStack): Boolean {

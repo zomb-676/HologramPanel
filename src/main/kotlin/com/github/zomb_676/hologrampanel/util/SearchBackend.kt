@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.Config
-import com.github.zomb_676.hologrampanel.compat.rei.ModInstalled
+import com.github.zomb_676.hologrampanel.compat.ModInstalled
 import com.github.zomb_676.hologrampanel.compat.rei.ReiPlugin
 import net.minecraft.world.item.ItemStack
 
@@ -14,34 +14,41 @@ interface SearchBackend {
     enum class Type {
         DEFAULT {
             override fun isAvailable(): Boolean = true
+            override fun getSearchBackend(): SearchBackend = Default
         },
         REI {
-            override fun isAvailable(): Boolean = ModInstalled.isReiInstalled()
+            override fun isAvailable(): Boolean = ModInstalled.reiInstalled
+            override fun getSearchBackend(): SearchBackend? {
+                if (!isAvailable()) return null
+                return ReiPlugin.getSearchEngine()
+            }
+        },
+        JEI {
+            override fun isAvailable(): Boolean = ModInstalled.jeiInstalled
+            override fun getSearchBackend(): SearchBackend? {
+                if (!isAvailable()) return null
+                return null
+//                return JeiPlugin.getSearchEngine()
+            }
         },
         AUTO {
             override fun isAvailable(): Boolean = true
+            override fun getSearchBackend(): SearchBackend? =
+                JEI.getSearchBackend() ?: REI.getSearchBackend() ?: DEFAULT.getSearchBackend()
         };
 
         /**
          * indicates the target mod is installed or not
          */
         abstract fun isAvailable(): Boolean
+        abstract fun getSearchBackend(): SearchBackend?
     }
 
     companion object {
         fun getCurrentBackend(): SearchBackend {
-            val backend: SearchBackend = when (Config.Client.searchBackend.get()) {
-                Type.DEFAULT -> Default
-                Type.REI -> if (ModInstalled.isReiInstalled()) ReiPlugin.ReiSearchBackend else Default
-                Type.AUTO -> {
-                    if (ModInstalled.isReiInstalled()) {
-                        ReiPlugin.ReiSearchBackend
-                    } else {
-                        Default
-                    }
-                }
-            }
-            return backend
+            val backend = Config.Client.searchBackend.get().getSearchBackend()
+            if (backend != null) return backend
+            return Default
         }
     }
 

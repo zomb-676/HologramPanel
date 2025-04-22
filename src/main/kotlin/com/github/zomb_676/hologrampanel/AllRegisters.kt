@@ -68,7 +68,7 @@ object AllRegisters {
             "key.${HologramPanel.MOD_ID}.selector_panel_key",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_Y,
+            GLFW.GLFW_KEY_B,
             KEY_CATEGORY
         )
 

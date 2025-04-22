@@ -1,8 +1,12 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.compat.ModInstalled
 import com.github.zomb_676.hologrampanel.util.SearchBackend
 import com.github.zomb_676.hologrampanel.util.TooltipType
+import com.github.zomb_676.hologrampanel.util.setAndSave
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.network.chat.Component
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
@@ -134,6 +138,17 @@ object Config {
                 renderMinDistance.set(1.0)
                 renderMinDistance.set(8.0)
             }
+            when (searchBackend.get()) {
+                SearchBackend.Type.REI -> if (ModInstalled.reiInstalled) return
+                SearchBackend.Type.JEI -> if (ModInstalled.jeiInstalled) return
+                else -> return
+            }
+            searchBackend.setAndSave(SearchBackend.Type.AUTO)
+            Minecraft.getInstance().gui.chat.addMessage(
+                Component.literal(
+                    "search backend switch to auto for fallback"
+                )
+            )
         }
 
         val space: ModConfigSpec = builder.build()
