@@ -3,8 +3,8 @@ package com.github.zomb_676.hologrampanel.widget.element
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.TooltipType
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -117,7 +117,7 @@ open class ItemsElement protected constructor(val items: List<ItemStack>, itemEa
                 val index = decodeIndex(mouseX, mouseY)
                 if (index >= 0) {
                     val tooltip = map.computeIfAbsent(index) {
-                        ScreenTooltipElement(items[index])
+                        ScreenTooltipElement(items[index], TooltipType.SCREEN_BACKGROUND)
                     }
                     if (tooltip.item.isEmpty) return@stack
                     tooltip.contentSize = tooltip.measureContentSize(style)

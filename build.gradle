@@ -24,6 +24,10 @@ repositories {
         name 'IzzelAliz Maven'
         url 'https://maven.izzel.io/releases/'
     }
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
 }
 
 base {
@@ -129,6 +133,9 @@ dependencies {
 
 //    runtimeOnly("curse.maven:jade-324717:6170888")
     compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:18.0.800")
+
+    compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
+    runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
 
     runtimeOnly("icyllis.modernui:ModernUI-Core:${modernui_core_version}", modernUIExcludes)
     additionalRuntimeClasspath("icyllis.modernui:ModernUI-Core:${modernui_core_version}", modernUIExcludes)
