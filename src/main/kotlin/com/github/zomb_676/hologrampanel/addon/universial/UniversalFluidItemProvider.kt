@@ -26,7 +26,7 @@ data object UniversalFluidItemProvider : ServerDataProvider<EntityHologramContex
         repeat(cap.tanks) { index ->
             val fluidStack = cap.getFluidInTank(index)
             if (!fluidStack.isEmpty) {
-                val entry = FluidDataSyncEntry(fluidStack.fluid.fluidType, fluidStack.amount, cap.getTankCapacity(index))
+                val entry = FluidDataSyncEntry(fluidStack, cap.getTankCapacity(index))
                 FluidDataSyncEntry.STREAM_CODEC.encode(buffer, entry)
                 fluidCount++
             }
@@ -59,7 +59,7 @@ data object UniversalFluidItemProvider : ServerDataProvider<EntityHologramContex
                     builder.single("fluid_$index") {
                         val progress = progresses[index]
                         progress.current(fluid.current).max(fluid.max)
-                        fluid("item_fluid", progress, fluid.type)
+                        fluid("item_fluid", progress, fluid.fluidStack.fluid.fluidType)
                     }
                 }
             }
