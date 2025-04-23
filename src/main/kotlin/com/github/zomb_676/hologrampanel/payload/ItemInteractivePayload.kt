@@ -1,25 +1,18 @@
 package com.github.zomb_676.hologrampanel.payload
 
-import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.polyfill.*
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import net.minecraft.core.UUIDUtil
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.capabilities.Capabilities
-import net.neoforged.neoforge.items.wrapper.InvWrapper
-import net.neoforged.neoforge.items.wrapper.PlayerInvWrapper
-import net.neoforged.neoforge.network.PacketDistributor
-import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.handling.IPayloadHandler
+import net.minecraftforge.common.capabilities.ForgeCapabilities
+import net.minecraftforge.items.wrapper.InvWrapper
+import net.minecraftforge.items.wrapper.PlayerInvWrapper
+import net.minecraftforge.network.NetworkEvent
 import java.util.*
 import kotlin.math.min
 
@@ -30,19 +23,21 @@ class ItemInteractivePayload(
     val targetSlot: Int,
     val context: HologramContext,
     val syncUUID: UUID
-) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<ItemInteractivePayload> = TYPE
+) : CustomPacketPayload<ItemInteractivePayload> {
+
+    override fun handle(context: NetworkEvent.Context) {
+        HANDLE.handle(this, IPayloadContext(context))
+    }
 
     companion object {
 
-        val TYPE = CustomPacketPayload.Type<ItemInteractivePayload>(HologramPanel.rl("item_interactive"))
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ItemInteractivePayload> = StreamCodec.composite(
-            ItemStack.STREAM_CODEC, ItemInteractivePayload::itemStack,
+            ByteBufCodecs.ITEM_STACK, ItemInteractivePayload::itemStack,
             ByteBufCodecs.VAR_INT, ItemInteractivePayload::count,
             ByteBufCodecs.BOOL, ItemInteractivePayload::take,
             ByteBufCodecs.INT, ItemInteractivePayload::targetSlot,
             HologramContext.STREAM_CODE, ItemInteractivePayload::context,
-            UUIDUtil.STREAM_CODEC, ItemInteractivePayload::syncUUID,
+            ByteBufCodecs.UUID, ItemInteractivePayload::syncUUID,
             ::ItemInteractivePayload
         )
 
@@ -50,24 +45,23 @@ class ItemInteractivePayload(
         val HANDLE = object : IPayloadHandler<ItemInteractivePayload> {
             override fun handle(payload: ItemInteractivePayload, payloadContext: IPayloadContext) {
                 val cap = when (val context = payload.context) {
-                    is BlockHologramContext ->
-                        context.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, context.pos, null)
+                    is BlockHologramContext -> context.getBlockEntity()?.getCapability(ForgeCapabilities.ITEM_HANDLER) ?: return
 
                     is EntityHologramContext -> {
                         val entity = context.getEntity()
                         if (entity is ItemEntity) {
-                            entity.item.getCapability(Capabilities.ItemHandler.ITEM)
+                            entity.item.getCapability(ForgeCapabilities.ITEM_HANDLER)
                         } else {
-                            entity.getCapability(Capabilities.ItemHandler.ENTITY_AUTOMATION, null)
+                            entity.getCapability(ForgeCapabilities.ITEM_HANDLER)
                         }
                     }
-                } ?: return
+                }.orElse(null) ?: return
                 if (payload.targetSlot < 0) {
                     if (payload.take) {
                         var toTake = payload.count
                         for (index in 0..<cap.slots) {
                             val stored = cap.getStackInSlot(index)
-                            if (!ItemStack.isSameItemSameComponents(stored, payload.itemStack)) continue
+                            if (!ItemStack.isSameItemSameTags(stored, payload.itemStack)) continue
                             val extracted = cap.extractItem(index, min(stored.count, toTake), false)
                             toTake -= extracted.count
                             giveItemToPlayer(extracted, payloadContext.player() as ServerPlayer)
@@ -77,7 +71,7 @@ class ItemInteractivePayload(
                         val player = payloadContext.player() as ServerPlayer
                         var storeItem = payload.itemStack
                         storeItem.count = payload.count
-                        if (ItemStack.isSameItemSameComponents(player.mainHandItem, payload.itemStack)) {
+                        if (ItemStack.isSameItemSameTags(player.mainHandItem, payload.itemStack)) {
                             for (index in 0..<cap.slots) {
                                 if (storeItem.isEmpty) {
                                     break
@@ -97,7 +91,7 @@ class ItemInteractivePayload(
                             var storeIndex = 0
                             for (playerInvIndex in 0..playerInv.slots) {
                                 val playerItem = playerInv.getStackInSlot(playerInvIndex)
-                                if (!ItemStack.isSameItemSameComponents(playerItem, storeItem)) continue
+                                if (!ItemStack.isSameItemSameTags(playerItem, storeItem)) continue
                                 var toStoreItem = playerInv.extractItem(playerInvIndex, storeItem.count, false)
                                 storeItem.count -= toStoreItem.count
                                 while (storeIndex < cap.slots) {
@@ -123,13 +117,13 @@ class ItemInteractivePayload(
                     if (payload.targetSlot >= cap.slots) return
                     if (payload.take) {
                         val itemCanTake = cap.getStackInSlot(payload.targetSlot)
-                        if (!ItemStack.isSameItemSameComponents(itemCanTake, payload.itemStack)) return
+                        if (!ItemStack.isSameItemSameTags(itemCanTake, payload.itemStack)) return
                         val takeCount = min(itemCanTake.count, payload.count)
                         val actualTake = cap.extractItem(payload.targetSlot, takeCount, false)
                         giveItemToPlayer(actualTake, payloadContext.player() as ServerPlayer)
                     } else {
                         val stored = cap.getStackInSlot(payload.targetSlot)
-                        if (!stored.isEmpty && !ItemStack.isSameItemSameComponents(stored, payload.itemStack)) return
+                        if (!stored.isEmpty && !ItemStack.isSameItemSameTags(stored, payload.itemStack)) return
                         var storeCount = if (stored.isEmpty) {
                             payload.count
                         } else {
@@ -139,7 +133,7 @@ class ItemInteractivePayload(
                         val player = payloadContext.player() as ServerPlayer
                         run {
                             val mainHandItem = player.mainHandItem
-                            if (!ItemStack.isSameItemSameComponents(mainHandItem, stored)) return@run
+                            if (!ItemStack.isSameItemSameTags(mainHandItem, stored)) return@run
                             val toStoreItem = mainHandItem.copyWithCount(min(storeCount, mainHandItem.count))
                             val res = cap.insertItem(payload.targetSlot, toStoreItem, false)
                             mainHandItem.count = mainHandItem.count - (toStoreItem.count - res.count)
@@ -150,7 +144,7 @@ class ItemInteractivePayload(
                             val playerInv = InvWrapper(player.inventory)
                             for (invIndex in 0..<playerInv.slots) {
                                 val invItem = playerInv.getStackInSlot(invIndex)
-                                if (!ItemStack.isSameItemSameComponents(invItem, payload.itemStack)) continue
+                                if (!ItemStack.isSameItemSameTags(invItem, payload.itemStack)) continue
                                 val extracted = playerInv.extractItem(invIndex, storeCount, false)
                                 val res = cap.insertItem(payload.targetSlot, extracted, false)
                                 if (!res.isEmpty) {
@@ -173,7 +167,7 @@ class ItemInteractivePayload(
             val itemEntity = player.drop(extracted, false)
             if (itemEntity != null) {
                 itemEntity.setNoPickUpDelay()
-                itemEntity.target = player.uuid
+                itemEntity.setTarget(player.uuid)
             }
         }
 
@@ -182,7 +176,7 @@ class ItemInteractivePayload(
             if (targetSlot < 0 && count > itemStack.maxStackSize) return
             val syncUUID = DataQueryManager.Client.queryContextUUID(context) ?: return
             val payload = ItemInteractivePayload(itemStack, count, true, targetSlot, context, syncUUID)
-            PacketDistributor.sendToServer(payload)
+            payload.sendToServer()
         }
 
         fun store(itemStack: ItemStack, count: Int, context: HologramContext, targetSlot: Int = -1) {
@@ -190,7 +184,7 @@ class ItemInteractivePayload(
             if (targetSlot < 0 && count > itemStack.maxStackSize) return
             val syncUUID = DataQueryManager.Client.queryContextUUID(context) ?: return
             val payload = ItemInteractivePayload(itemStack, count, false, targetSlot, context, syncUUID)
-            PacketDistributor.sendToServer(payload)
+            payload.sendToServer()
         }
     }
 }

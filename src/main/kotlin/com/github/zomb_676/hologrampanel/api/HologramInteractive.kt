@@ -22,7 +22,7 @@ interface HologramInteractive {
      * @param mouseX mouse position related to left-up of interactive target
      * @param mouseY mouse position related to left-up of interactive target
      *
-     * @return true will consume the input, will prevent [net.neoforged.neoforge.client.event.InputEvent.MouseButton]
+     * @return true will consume the input, will prevent [net.minecraftforge.client.event.InputEvent.MouseButton]
      */
     fun onMouseClick(player: LocalPlayer, data: MouseButton, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean =
         false
@@ -33,7 +33,7 @@ interface HologramInteractive {
      * @param mouseX mouse position related to left-up of interactive target
      * @param mouseY mouse position related to left-up of interactive target
      *
-     * @return true will consume the input, will prevent [net.neoforged.neoforge.client.event.InputEvent.MouseScrollingEvent]
+     * @return true will consume the input, will prevent [net.minecraftforge.client.event.InputEvent.MouseScrollingEvent]
      */
     fun onMouseScroll(player: LocalPlayer, data: MouseScroll, context: HologramContext, interactiveSize: Size, mouseX: Int, mouseY: Int): Boolean =
         false

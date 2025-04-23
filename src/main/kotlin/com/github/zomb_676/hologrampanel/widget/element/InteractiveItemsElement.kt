@@ -12,7 +12,7 @@ import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.items.IItemHandler
+import net.minecraftforge.items.IItemHandler
 import org.lwjgl.glfw.GLFW
 import kotlin.math.min
 
@@ -55,7 +55,7 @@ open class InteractiveItemsElement protected constructor(
                     if (!itemStack.isEmpty) {
                         val count = if (shiftDown) {
                             val mainHand = player.mainHandItem
-                            if (ItemStack.isSameItemSameComponents(mainHand, itemStack)) {
+                            if (ItemStack.isSameItemSameTags(mainHand, itemStack)) {
                                 if (mainHand.count == mainHand.maxStackSize) itemStack.maxStackSize
                                 else min(mainHand.maxStackSize - mainHand.count, itemStack.count)
                             } else min(itemStack.maxStackSize, itemStack.count)
@@ -74,7 +74,7 @@ open class InteractiveItemsElement protected constructor(
                     } else {
                         val count = if (isShiftDown) {
                             val mainHand = player.mainHandItem
-                            if (ItemStack.isSameItemSameComponents(mainHand, itemStack)) mainHand.count
+                            if (ItemStack.isSameItemSameTags(mainHand, itemStack)) mainHand.count
                             else itemStack.maxStackSize
                         } else 1
                         ItemInteractivePayload.Companion.store(itemStack, count, context, -1)

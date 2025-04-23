@@ -9,14 +9,14 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
-import net.neoforged.neoforge.capabilities.Capabilities
+import net.minecraftforge.common.capabilities.ForgeCapabilities
 
 data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity<ItemEntity>() ?: return false
-        val cap = entity.item.getCapability(Capabilities.EnergyStorage.ITEM) ?: return false
+        val cap = entity.item.getCapability(ForgeCapabilities.ENERGY).orElse(null) ?: return false
         targetData.putInt("energy_stored", cap.energyStored)
         targetData.putInt("energy_max", cap.maxEnergyStored)
         return true
@@ -46,6 +46,6 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
     override fun appliesTo(
         context: EntityHologramContext, check: ItemEntity
     ): Boolean {
-        return check.item.getCapability(Capabilities.EnergyStorage.ITEM) != null
+        return check.item.getCapability(ForgeCapabilities.ENERGY).isPresent
     }
 }

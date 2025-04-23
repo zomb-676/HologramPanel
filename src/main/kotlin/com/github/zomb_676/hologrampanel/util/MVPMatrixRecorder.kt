@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.util.packed.ScreenCoordinate
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.math.Axis
 import net.minecraft.client.Minecraft
 import net.minecraft.core.Vec3i
 import net.minecraft.world.phys.Vec3
@@ -22,6 +23,9 @@ object MVPMatrixRecorder {
 
     fun recordMVPMatrixByCurrentState() {
         this.transformMatrix.set(RenderSystem.getProjectionMatrix()).mul(RenderSystem.getModelViewMatrix())
+        val camera = Minecraft.getInstance().gameRenderer.mainCamera
+        this.transformMatrix.rotate(Axis.XP.rotationDegrees(camera.xRot))
+        this.transformMatrix.rotate(Axis.YP.rotationDegrees(camera.yRot + 180f))
     }
 
     fun transform(vec3: Vec3) = transform(vec3.x, vec3.y, vec3.z)
@@ -50,8 +54,8 @@ object MVPMatrixRecorder {
         //in NDC space now
         //depth value z is not used for use, divide by abs(w) can make 2d bracketing detection
         val w = max(abs(vector.w), 1e-5f)
-        vector.x /= abs(w)
-        vector.y /= abs(w)
+        vector.x /= w
+        vector.y /= w
 
         return ScreenCoordinate.of(vector)
     }

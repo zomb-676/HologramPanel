@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
 import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.ProgressData
@@ -31,10 +32,10 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         }
 
         if (data.isEmpty()) return
-        val buffer = builder.context.warpRegistryFriendlyByteBuf(data)
-        val item0 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
-        val item1 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
-        val item2 = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
+        val buffer = builder.context.warpFriendlyByteBuf(data)
+        val item0 = ByteBufCodecs.ITEM_STACK.decode(buffer)
+        val item1 = ByteBufCodecs.ITEM_STACK.decode(buffer)
+        val item2 = ByteBufCodecs.ITEM_STACK.decode(buffer)
         val litTimeRemaining = buffer.readVarInt()
         buffer.readVarInt()
         val cookingTimer = buffer.readVarInt()
@@ -60,9 +61,9 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val furnace = context.getBlockEntity<AbstractFurnaceBlockEntity>() ?: return true
-        val buffer = context.createRegistryFriendlyByteBuf()
+        val buffer = context.createFriendlyByteBuf()
         furnace.items.forEach {
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, it)
+            ByteBufCodecs.ITEM_STACK.encode(buffer, it)
         }
         buffer.writeVarInt(furnace.litTime)
         buffer.writeVarInt(furnace.litDuration)

@@ -1,25 +1,23 @@
 package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.polyfill.RegistryFriendlyByteBuf
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import com.mojang.blaze3d.platform.InputConstants
-import io.netty.buffer.ByteBuf
 import net.minecraft.client.KeyMapping
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.Registries
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.resources.ResourceKey
 import net.minecraft.world.level.Level
-import net.neoforged.api.distmarker.Dist
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent
-import net.neoforged.neoforge.client.settings.KeyConflictContext
-import net.neoforged.neoforge.fluids.FluidType
-import net.neoforged.neoforge.registries.NeoForgeRegistries
-import net.neoforged.neoforge.registries.NewRegistryEvent
-import net.neoforged.neoforge.registries.RegistryBuilder
+import net.minecraftforge.api.distmarker.Dist
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent
+import net.minecraftforge.client.settings.KeyConflictContext
+import net.minecraftforge.eventbus.api.IEventBus
+import net.minecraftforge.fluids.FluidType
+import net.minecraftforge.registries.*
 import org.lwjgl.glfw.GLFW
+import java.util.function.Supplier
 
 object AllRegisters {
     fun initEvents(dist: Dist, modBus: IEventBus) {
@@ -27,29 +25,67 @@ object AllRegisters {
     }
 
     private fun addNewRegistry(event: NewRegistryEvent) {
-        event.register(ComponentHologramProviderRegistry.REGISTRY)
+        ComponentHologramProviderRegistry.registry = event.create(ComponentHologramProviderRegistry.registryBuilder)
     }
 
+    @Suppress("UnstableApiUsage")
     object ComponentHologramProviderRegistry {
+        val location = HologramPanel.rl("component_hologram_provider")
         val RESOURCE_KEY: ResourceKey<Registry<ComponentProvider<*, *>>> = ResourceKey
-            .createRegistryKey(HologramPanel.rl("component_hologram_provider"))
-        val REGISTRY: Registry<ComponentProvider<*, *>> =
-            RegistryBuilder(RESOURCE_KEY)
-                .sync(true)
-                .create()
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*, *>> =
-            ByteBufCodecs.registry(RESOURCE_KEY)
+            .createRegistryKey(location)
+        val registryBuilder = RegistryBuilder<ComponentProvider<*, *>>()
+            .setName(location)
 
-        fun getId(provider: ComponentProvider<*, *>) = REGISTRY.getId(provider)
-        fun byId(id: Int) = REGISTRY.byId(id)
+        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*, *>> =
+            object : StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*, *>> {
+                override fun decode(buffer: RegistryFriendlyByteBuf): ComponentProvider<*, *> {
+                    return byId(buffer.readVarInt())
+                }
+
+                override fun encode(
+                    buffer: RegistryFriendlyByteBuf,
+                    value: ComponentProvider<*, *>
+                ) {
+                    buffer.writeVarInt(getId(value))
+                }
+
+            }
+
+        lateinit var registry: Supplier<IForgeRegistry<ComponentProvider<*, *>>>
+
+        val ID_MAP by lazy { RegistryManager.ACTIVE.getRegistry(RESOURCE_KEY) }
+
+        fun getId(provider: ComponentProvider<*, *>) = ID_MAP.getID(provider)
+        fun byId(id: Int): ComponentProvider<*, *> = ID_MAP.getValue(id)
+
     }
 
     object Codecs {
-        val LEVEL_STREAM_CODE: StreamCodec<ByteBuf, ResourceKey<Level>> =
-            ResourceKey.streamCodec(Registries.DIMENSION)
+        val LEVEL_STREAM_CODE: StreamCodec<FriendlyByteBuf, ResourceKey<Level>> = object : StreamCodec<FriendlyByteBuf, ResourceKey<Level>> {
+            override fun decode(buffer: FriendlyByteBuf): ResourceKey<Level> {
+                return buffer.readResourceKey(Registries.DIMENSION)
+            }
 
-        val FLUID_TYPE_STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, FluidType> =
-            ByteBufCodecs.registry(NeoForgeRegistries.Keys.FLUID_TYPES)
+            override fun encode(buffer: FriendlyByteBuf, value: ResourceKey<Level>) {
+                buffer.writeResourceKey(value)
+            }
+        }
+
+        val FLUID_TYPE_STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, FluidType> = object : StreamCodec<RegistryFriendlyByteBuf, FluidType> {
+            override fun decode(buffer: RegistryFriendlyByteBuf): FluidType {
+                val key = buffer.readResourceKey(ForgeRegistries.Keys.FLUID_TYPES)
+                return ForgeRegistries.FLUID_TYPES.get().getValue(key.location())!!
+            }
+
+            override fun encode(
+                buffer: RegistryFriendlyByteBuf,
+                value: FluidType
+            ) {
+                val resourceKey = ForgeRegistries.FLUID_TYPES.get().getResourceKey(value).orElseThrow()
+                buffer.writeResourceKey(resourceKey)
+            }
+
+        }
     }
 
     object KeyMapping {

@@ -11,7 +11,7 @@ import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
 import net.minecraft.world.phys.Vec3
-import net.neoforged.neoforge.client.event.InputEvent
+import net.minecraftforge.client.event.InputEvent
 import org.jetbrains.annotations.ApiStatus
 import org.lwjgl.glfw.GLFW
 
@@ -227,8 +227,7 @@ object HologramInteractionManager {
     }
 
     data class MouseScroll(
-        val scrollDeltaX: Double,
-        val scrollDeltaY: Double,
+        val scrollDelta: Double,
         val mouseX: Double,
         val mouseY: Double,
         val leftDown: Boolean,
@@ -239,7 +238,7 @@ object HologramInteractionManager {
             @ApiStatus.Internal
             internal fun create(event: InputEvent.MouseScrollingEvent): MouseScroll {
                 return MouseScroll(
-                    event.scrollDeltaX, event.scrollDeltaY, event.mouseX, event.mouseY, event.isLeftDown, event.isMiddleDown, event.isRightDown
+                    event.scrollDelta, event.mouseX, event.mouseY, event.isLeftDown, event.isMiddleDown, event.isRightDown
                 )
             }
         }

@@ -1,6 +1,8 @@
 package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.mouseX
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.mouseY
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.LocateType

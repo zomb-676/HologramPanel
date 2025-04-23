@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
 import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.ProgressData
@@ -25,11 +26,11 @@ data object BrewStandProvider : ServerDataProvider<BlockHologramContext, Brewing
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val brewStand = context.getBlockEntity<BrewingStandBlockEntity>() ?: return true
-        val buffer = context.createRegistryFriendlyByteBuf()
+        val buffer = context.createFriendlyByteBuf()
         buffer.writeVarInt(brewStand.brewTime)
         buffer.writeVarInt(brewStand.fuel)
         brewStand.items.forEach {
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, it)
+            ByteBufCodecs.ITEM_STACK.encode(buffer, it)
         }
         targetData.putByteArray("brew", buffer.extractArray())
         return true
@@ -46,11 +47,11 @@ data object BrewStandProvider : ServerDataProvider<BlockHologramContext, Brewing
             TransSource.create(context.getBlockEntity()!!)
         }
         if (data.isEmpty()) return
-        val buffer = context.warpRegistryFriendlyByteBuf(data)
+        val buffer = context.warpFriendlyByteBuf(data)
         val brewTime = buffer.readVarInt()
         val fuel = buffer.readVarInt()
         val items = List(5) {
-            ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
+            ByteBufCodecs.ITEM_STACK.decode(buffer)
         }
 
         builder.single("brew_state") {

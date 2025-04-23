@@ -14,14 +14,16 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
-import net.neoforged.fml.ModList
-import net.neoforged.fml.config.ModConfig
-import net.neoforged.neoforge.common.ModConfigSpec
+import net.minecraftforge.common.ForgeConfigSpec
+import net.minecraftforge.fml.ModList
+import net.minecraftforge.fml.ModLoadingContext
+import net.minecraftforge.fml.config.ModConfig
+import net.minecraftforge.forgespi.language.ModFileScanData
 import org.jetbrains.annotations.ApiStatus
 import java.lang.annotation.ElementType
 import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
-import kotlin.streams.asSequence
+import kotlin.sequences.toList
 
 @ApiStatus.Internal
 internal class PluginManager private constructor(val plugins: List<IHologramPlugin>) {
@@ -35,7 +37,6 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
                 LOGGER.error("not init plugin manager more than once")
                 return
             }
-
             val plugins = run {
                 ModList.get().allScanData.asSequence()
                     .flatMap { it.getAnnotatedBy(HologramPlugin::class.java, ElementType.TYPE).asSequence() }.map {
@@ -61,6 +62,11 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             INSTANCE = PluginManager(plugins)
         }
 
+        private fun ModFileScanData.getAnnotatedBy(type: Class<out Annotation>, elementType: ElementType): Sequence<ModFileScanData.AnnotationData> {
+            val t = org.objectweb.asm.Type.getType(type)
+            return annotations.asSequence().filter { it.targetType == elementType && it.annotationType == t}
+        }
+
         fun <T, V> flatten(source: Map<*, T>, f: (T) -> Collection<V>): Sequence<V> =
             source.values.asSequence().flatMap(f)
 
@@ -76,7 +82,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
 
         internal fun collectProvidersFromRegistry() {
             mapper.resetMapper()
-            AllRegisters.ComponentHologramProviderRegistry.REGISTRY.forEach { provider ->
+            AllRegisters.ComponentHologramProviderRegistry.ID_MAP.forEach { provider ->
                 mapper.getMutableMapper().computeIfAbsent(provider.targetClass()) { mutableListOf() }.add(provider)
             }
         }
@@ -130,16 +136,16 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
     internal val hideEntityTypes: MutableSet<EntityType<*>> = mutableSetOf()
     internal val hideEntityCallback: MutableSet<Predicate<Entity>> = mutableSetOf()
 
-    internal val globalPluginSettingsMap: MutableMap<ModConfigSpec, PluginGlobalSetting> = mutableMapOf()
+    internal val globalPluginSettingsMap: MutableMap<ForgeConfigSpec, PluginGlobalSetting> = mutableMapOf()
     internal val globalPluginSettings: MutableMap<IHologramPlugin, PluginGlobalSetting> = mutableMapOf()
 
     internal fun registerPluginConfigs() {
         plugins.forEach { plugin ->
-            val configBuilder = ModConfigSpec.Builder()
+            val configBuilder = ForgeConfigSpec.Builder()
             val pluginEnable = configBuilder.define("${plugin.location()}_enable_plugin", true)
             plugin.registerClientConfig(configBuilder)
 
-            val providerEnableData: MutableMap<ComponentProvider<*, *>, ModConfigSpec.BooleanValue> = mutableMapOf()
+            val providerEnableData: MutableMap<ComponentProvider<*, *>, ForgeConfigSpec.BooleanValue> = mutableMapOf()
             commonRegistration[plugin]!!.also { registration ->
                 registration.blockProviders.forEach { provider ->
                     val enable = configBuilder.define("${plugin.location()}_${provider.location()}_enable_block", true)
@@ -153,7 +159,7 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
             val container = ModList.get().getModContainerById(HologramPanel.MOD_ID).getOrNull()!!
             val configName = Config.modFolderConfig("plugins/${plugin.location()}").replace(":", "_")
             val configSpec = configBuilder.build()
-            container.registerConfig(ModConfig.Type.CLIENT, configSpec, configName)
+            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, configSpec, configName)
             val globalSetting = PluginGlobalSetting(plugin, pluginEnable, providerEnableData)
             globalPluginSettings[plugin] = globalSetting
             globalPluginSettingsMap[configSpec] = globalSetting
@@ -162,12 +168,12 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
 
     class PluginGlobalSetting(
         val plugin: IHologramPlugin,
-        val enable: ModConfigSpec.BooleanValue,
-        val providerEnableData: Map<ComponentProvider<*, *>, ModConfigSpec.BooleanValue>
+        val enable: ForgeConfigSpec.BooleanValue,
+        val providerEnableData: Map<ComponentProvider<*, *>, ForgeConfigSpec.BooleanValue>
     )
 
     fun onPluginSettingChange(config: ModConfig) {
-        globalPluginSettingsMap[config.spec] ?: return
+        globalPluginSettingsMap[config.getSpec()] ?: return
         //clear and re-collect providers
         ProviderManager.collectProvidersFromRegistry()
         //clear all cache

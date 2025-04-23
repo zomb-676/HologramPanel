@@ -5,7 +5,9 @@ import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
-import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactHologram
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -28,7 +30,7 @@ import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.GameRenderer
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent
+import net.minecraftforge.client.event.RenderLevelStageEvent
 import org.joml.Matrix4f
 import org.joml.Vector2d
 import org.joml.Vector2f
@@ -480,7 +482,8 @@ object HologramManager {
         RenderSystem.disableCull()
 
         this.screenPingHolograms.forEach { state ->
-            val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+            val builder = Tesselator.getInstance().builder
+            builder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
 
             if (!state.displayed) return@forEach
             if (state.inViewDegree) {
@@ -499,7 +502,7 @@ object HologramManager {
                     style.poseMatrix()
                 )
             }
-            val meshData = builder.build() ?: return
+            val meshData = builder.endOrDiscardIfEmpty() ?: return
             BufferUploader.drawWithShader(meshData)
         }
     }
@@ -599,7 +602,7 @@ object HologramManager {
     fun renderWorldPart(event: RenderLevelStageEvent) {
         if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
         val pose = event.poseStack
-        val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
+        val partialTick = event.partialTick
         val camPos = event.camera.position
         pose.translate(-camPos.x, -camPos.y, -camPos.z)
 
@@ -610,7 +613,8 @@ object HologramManager {
             for ((target, states) in TransitRenderTargetManager.getEntries()) {
                 if (states.isEmpty()) continue
                 RenderSystem.setShaderTexture(0, target.colorTextureId)
-                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+                val builder = Tesselator.getInstance().builder
+                builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
                 for (state in states) {
                     val locate = state.locate as? LocateType.World.FacingVector? ?: continue
                     val center = state.sourcePosition(partialTick)
@@ -619,7 +623,7 @@ object HologramManager {
                     val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
 
                     fun Vector3f.add(): VertexConsumer {
-                        return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
+                        return builder.vertex(pose.last().pose(), this.x, this.y, this.z)
                     }
 
                     val window = Minecraft.getInstance().window
@@ -634,25 +638,25 @@ object HologramManager {
                     //left-up
                     containerVector.set(center).add(left).add(up).apply {
                         locate.updateLeftUp(this)
-                        if (!state.isInteractAt()) add().setUv(u0, v1)
+                        if (!state.isInteractAt()) add().uv(u0, v1).endVertex()
                     }
                     //left-down
                     containerVector.set(center).add(left).sub(up).apply {
                         locate.updateLeftDown(this)
-                        if (!state.isInteractAt()) add().setUv(u0, v0)
+                        if (!state.isInteractAt()) add().uv(u0, v0).endVertex()
                     }
                     //right-down
                     containerVector.set(center).sub(left).sub(up).apply {
                         locate.updateRightDown(this)
-                        if (!state.isInteractAt()) add().setUv(u1, v0)
+                        if (!state.isInteractAt()) add().uv(u1, v0).endVertex()
                     }
                     //right-up
                     containerVector.set(center).sub(left).add(up).apply {
                         locate.updateRightUp(this)
-                        if (!state.isInteractAt()) add().setUv(u1, v1)
+                        if (!state.isInteractAt()) add().uv(u1, v1).endVertex()
                     }
                 }
-                builder.build()?.apply(BufferUploader::drawWithShader)
+                builder.endOrDiscardIfEmpty()?.apply(BufferUploader::drawWithShader)
             }
             getInteractHologram()?.also { state ->
                 val locate = state.locate as? LocateType.World.FacingVector? ?: return@also
@@ -661,14 +665,15 @@ object HologramManager {
                 val width = window.guiScaledWidth
                 val height = window.guiScaledHeight
 
-                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+                val builder = Tesselator.getInstance().builder
+                builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
                 RenderSystem.setShaderTexture(0, TransitRenderTargetManager.getInteractTarget().colorTextureId)
 
                 val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
                 val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
 
                 fun Vector3f.add(): VertexConsumer {
-                    return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
+                    return builder.vertex(pose.last().pose(), this.x, this.y, this.z)
                 }
 
                 val u0 = 0.0f
@@ -678,15 +683,15 @@ object HologramManager {
 
                 val containerVector = Vector3f()
                 //left-up
-                containerVector.set(center).add(left).add(up).add().setUv(u0, v1)
+                containerVector.set(center).add(left).add(up).add().uv(u0, v1).endVertex()
                 //left-down
-                containerVector.set(center).add(left).sub(up).add().setUv(u0, v0)
+                containerVector.set(center).add(left).sub(up).add().uv(u0, v0).endVertex()
                 //right-down
-                containerVector.set(center).sub(left).sub(up).add().setUv(u1, v0)
+                containerVector.set(center).sub(left).sub(up).add().uv(u1, v0).endVertex()
                 //right-up
-                containerVector.set(center).sub(left).add(up).add().setUv(u1, v1)
+                containerVector.set(center).sub(left).add(up).add().uv(u1, v1).endVertex()
 
-                BufferUploader.drawWithShader(builder.buildOrThrow())
+                BufferUploader.drawWithShader(builder.end())
             }
             TransitRenderTargetManager.refresh()
         }

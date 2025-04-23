@@ -5,7 +5,6 @@ import com.github.zomb_676.hologrampanel.PluginManager
 import com.github.zomb_676.hologrampanel.addon.BuildInPlugin
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.HologramHolder
-import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
@@ -13,11 +12,9 @@ import com.github.zomb_676.hologrampanel.util.profilerStack
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.EntitySelector
 import net.minecraft.world.entity.projectile.ProjectileUtil
 import net.minecraft.world.phys.BlockHitResult

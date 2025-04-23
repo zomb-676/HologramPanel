@@ -10,10 +10,12 @@ import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
+import net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffectUtil
 import net.minecraft.world.entity.LivingEntity
+import java.util.*
 
 data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
     override fun appendServerData(
@@ -23,13 +25,13 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
     ): Boolean {
         val entity = context.getEntity<LivingEntity>() ?: return true
         val effects = entity.activeEffects
-        val data = context.createRegistryFriendlyByteBuf()
+        val data = context.createFriendlyByteBuf()
         if (effects.isEmpty()) {
             data.writeVarInt(0)
         } else {
             data.writeVarInt(effects.size)
             effects.forEach { effect ->
-                MobEffectInstance.STREAM_CODEC.encode(data, effect)
+                ClientboundUpdateMobEffectPacket(0, effect).write(data)
             }
         }
         targetData.putByteArray("potions", data.asByteBuf().extractArray())
@@ -40,12 +42,10 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
      * copied from [net.minecraft.client.gui.screens.inventory.EffectsInInventory.getEffectName]
      */
     private fun getEffectName(effect: MobEffectInstance): Component {
-        val component = effect.effect.value().displayName.copy()
+        val component = effect.effect.displayName.copy()
         if (effect.amplifier >= 1 && effect.amplifier <= 9) {
-            component.append(CommonComponents.SPACE)
-                .append(Component.translatable("enchantment.level." + (effect.amplifier + 1)))
+            component.append(CommonComponents.SPACE).append(Component.translatable("enchantment.level." + (effect.getAmplifier() + 1)))
         }
-
         return component
     }
 
@@ -57,11 +57,14 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
         context.getEntity<LivingEntity>()
         val remember = context.getRememberData()
         val data by remember.server(0, listOf()) { tag ->
-            val data = context.warpRegistryFriendlyByteBuf(tag.getByteArray("potions"))
+            val data = context.warpFriendlyByteBuf(tag.getByteArray("potions"))
             val count = data.readVarInt()
             if (count != 0) {
                 List(count) {
-                    MobEffectInstance.STREAM_CODEC.decode(data)
+                    ClientboundUpdateMobEffectPacket(data).run {
+                        MobEffectInstance(this.effect, effectDurationTicks, effectAmplifier.toInt(), isEffectAmbient, isEffectVisible,
+                            effectShowsIcon(), null, Optional.ofNullable(factorData))
+                    }
                 }
             } else {
                 listOf()
@@ -79,7 +82,6 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
                             MobEffectUtil.formatDuration(
                                 effect,
                                 1.0f,
-                                Minecraft.getInstance().level!!.tickRateManager().tickrate()
                             )
                         )
                     }

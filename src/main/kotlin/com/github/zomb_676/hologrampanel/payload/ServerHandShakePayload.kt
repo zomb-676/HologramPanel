@@ -1,22 +1,24 @@
 package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.HologramPanel
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.handling.IPayloadHandler
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadContext
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadHandler
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
+import net.minecraft.network.FriendlyByteBuf
+import net.minecraftforge.network.NetworkEvent
 
 /**
  * handshake packet to let the client know this mod is installed at server side
  */
-class ServerHandShakePayload(val id: Int = 0) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<ServerHandShakePayload> = TYPE
+class ServerHandShakePayload(val id: Int = 0) : CustomPacketPayload<ServerHandShakePayload> {
+
+    override fun handle(context: NetworkEvent.Context) {
+        HANDLE.handle(this, IPayloadContext(context))
+    }
 
     companion object {
-        val TYPE = CustomPacketPayload.Type<ServerHandShakePayload>(HologramPanel.rl("server_hand_shake"))
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ServerHandShakePayload> = StreamCodec.composite(
+        val STREAM_CODEC: StreamCodec<FriendlyByteBuf, ServerHandShakePayload> = StreamCodec.composite(
             ByteBufCodecs.INT, ServerHandShakePayload::id,
             ::ServerHandShakePayload
         )

@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
@@ -10,7 +11,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.capabilities.Capabilities
+import net.minecraftforge.common.capabilities.ForgeCapabilities
 
 data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
     override fun appendServerData(
@@ -19,13 +20,13 @@ data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologram
         context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity()
-        val cap = entity.getCapability(Capabilities.ItemHandler.ENTITY) ?: return false
-        val buffer = context.createRegistryFriendlyByteBuf()
+        val cap = entity.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null) ?: return false
+        val buffer = context.createFriendlyByteBuf()
         var writeItemCount = 0
         repeat(cap.slots) { index ->
             val item = cap.getStackInSlot(index)
             if (!item.isEmpty) {
-                ItemStack.STREAM_CODEC.encode(buffer, item)
+                ByteBufCodecs.ITEM_STACK.encode(buffer, item)
                 writeItemCount++
             }
         }
@@ -42,9 +43,9 @@ data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologram
         val remember = builder.context.getRememberData()
         val items by remember.server(0, listOf()) { tag ->
             val count = tag.getInt("item_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("item_data"))
+            val buffer = context.warpFriendlyByteBuf(tag.getByteArray("item_data"))
             List(count) {
-                ItemStack.STREAM_CODEC.decode(buffer)
+                ByteBufCodecs.ITEM_STACK.decode(buffer)
             }
         }
         if (items.isNotEmpty()) {
@@ -62,6 +63,6 @@ data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologram
         context: EntityHologramContext,
         check: Entity
     ): Boolean {
-        return check.getCapability(Capabilities.ItemHandler.ENTITY) != null
+        return check.getCapability(ForgeCapabilities.ITEM_HANDLER).isPresent
     }
 }

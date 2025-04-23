@@ -9,7 +9,6 @@ import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
 import com.github.zomb_676.hologrampanel.util.MousePositionManager.component2
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
-import net.minecraft.client.Minecraft
 import net.minecraft.client.player.LocalPlayer
 import org.joml.Matrix4f
 import org.joml.Vector4f

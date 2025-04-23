@@ -2,21 +2,16 @@ package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.EfficientConst
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import io.netty.buffer.Unpooled
-import net.minecraft.client.player.LocalPlayer
 import net.minecraft.core.RegistryAccess
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.HitResult
-import net.neoforged.neoforge.common.extensions.ICommonPacketListener
 import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3fc
 
@@ -106,13 +101,6 @@ sealed interface HologramContext {
      */
     fun stillValid(): Boolean
 
-    @ApiStatus.NonExtendable
-    fun getConnection(): ICommonPacketListener = if (this.getLogicSide().isClientSide) {
-        (this.getPlayer() as LocalPlayer).connection
-    } else {
-        (this.getPlayer() as ServerPlayer).connection
-    }
-
     /**
      * helper function to get a [RegistryAccess] or [net.minecraft.core.HolderLookup.Provider]
      */
@@ -120,21 +108,19 @@ sealed interface HologramContext {
     fun getRegistryAccess(): RegistryAccess = this.getLevel().registryAccess()
 
     /**
-     * helper function to create a [RegistryFriendlyByteBuf]
+     * helper function to create a [FriendlyByteBuf]
      */
     @ApiStatus.NonExtendable
-    fun createRegistryFriendlyByteBuf(): RegistryFriendlyByteBuf {
-        return RegistryFriendlyByteBuf(Unpooled.buffer(), this.getRegistryAccess(), getConnection().connectionType)
+    fun createFriendlyByteBuf(): FriendlyByteBuf {
+        return FriendlyByteBuf(Unpooled.buffer())
     }
 
     /**
-     * helper function to create a [RegistryFriendlyByteBuf] from a [java.nio.ByteBuffer]
+     * helper function to create a [FriendlyByteBuf] from a [java.nio.ByteBuffer]
      */
     @ApiStatus.NonExtendable
-    fun warpRegistryFriendlyByteBuf(data: ByteArray): RegistryFriendlyByteBuf {
-        return RegistryFriendlyByteBuf(
-            Unpooled.wrappedBuffer(data), getRegistryAccess(), getConnection().connectionType
-        )
+    fun warpFriendlyByteBuf(data: ByteArray): FriendlyByteBuf {
+        return FriendlyByteBuf(Unpooled.wrappedBuffer(data))
     }
 
     companion object {

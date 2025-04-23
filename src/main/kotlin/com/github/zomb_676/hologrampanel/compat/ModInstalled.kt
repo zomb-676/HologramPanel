@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.compat
 
-import net.neoforged.fml.ModList
+import net.minecraftforge.fml.ModList
+
 
 @Suppress("SpellCheckingInspection")
 object ModInstalled {

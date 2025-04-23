@@ -1,14 +1,13 @@
 package com.github.zomb_676.hologrampanel.trans
 
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.energy.IEnergyStorage
-import net.neoforged.neoforge.fluids.FluidStack
-import net.neoforged.neoforge.fluids.capability.IFluidHandler
-import net.neoforged.neoforge.items.IItemHandler
+import net.minecraftforge.energy.IEnergyStorage
+import net.minecraftforge.fluids.FluidStack
+import net.minecraftforge.fluids.capability.IFluidHandler
+import net.minecraftforge.items.IItemHandler
 
 /**
  * query/store actual/test object in handles
@@ -78,12 +77,12 @@ sealed interface TransPath<in H : Any, R : Any> {
          *
          * @property index slot index
          * @property count operate count
-         * @property target work as a filter, use [ItemStack.isSameItemSameComponents]
+         * @property target work as a filter, use [ItemStack.isSameItemSameTags]
          */
         data class ByIndex(val index: Int, override var count: Int, val target: ItemStack = ItemStack.EMPTY) : Item {
             override fun extractActual(handle: IItemHandler): ItemStack {
                 if (handle.isInRange(index)) {
-                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, handle.getStackInSlot(index))) return ItemStack.EMPTY
+                    if (!target.isEmpty && !ItemStack.isSameItemSameTags(target, handle.getStackInSlot(index))) return ItemStack.EMPTY
                     return handle.extractItem(index, count, false)
                 }
                 return ItemStack.EMPTY
@@ -91,7 +90,7 @@ sealed interface TransPath<in H : Any, R : Any> {
 
             override fun extractTest(handle: IItemHandler): ItemStack {
                 if (handle.isInRange(index)) {
-                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, handle.getStackInSlot(index))) return ItemStack.EMPTY
+                    if (!target.isEmpty && !ItemStack.isSameItemSameTags(target, handle.getStackInSlot(index))) return ItemStack.EMPTY
                     return handle.extractItem(index, count, true)
                 }
                 return ItemStack.EMPTY
@@ -112,10 +111,10 @@ sealed interface TransPath<in H : Any, R : Any> {
             }
 
             companion object {
-                val STREAM_CODE: StreamCodec<RegistryFriendlyByteBuf, ByIndex> = StreamCodec.composite(
+                val STREAM_CODE: StreamCodec<FriendlyByteBuf, ByIndex> = StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, ByIndex::index,
                     ByteBufCodecs.VAR_INT, ByIndex::count,
-                    ItemStack.OPTIONAL_STREAM_CODEC, ByIndex::target,
+                    ByteBufCodecs.ITEM_STACK, ByIndex::target,
                     ::ByIndex
                 )
             }
@@ -135,7 +134,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                 val itemReturn = itemStack.copyWithCount(0)
                 for (index in 0..<handle.slots) {
                     if (itemReturn.count < itemStack.count) {
-                        if (ItemStack.isSameItemSameComponents(itemStack, handle.getStackInSlot(index))) {
+                        if (ItemStack.isSameItemSameTags(itemStack, handle.getStackInSlot(index))) {
                             itemReturn.count += handle.extractItem(index, itemStack.count - itemReturn.count, false).count
                         }
                     } else break
@@ -147,7 +146,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                 val itemReturn = itemStack.copyWithCount(0)
                 for (index in 0..<handle.slots) {
                     if (itemReturn.count < itemStack.count) {
-                        if (ItemStack.isSameItemSameComponents(itemStack, handle.getStackInSlot(index))) {
+                        if (ItemStack.isSameItemSameTags(itemStack, handle.getStackInSlot(index))) {
                             itemReturn.count += handle.extractItem(index, itemStack.count - itemReturn.count, true).count
                         }
                     } else break
@@ -176,16 +175,16 @@ sealed interface TransPath<in H : Any, R : Any> {
             }
 
             companion object {
-                val STREAM_CODE: StreamCodec<RegistryFriendlyByteBuf, ByItem> = StreamCodec.composite(
-                    ItemStack.OPTIONAL_STREAM_CODEC, ByItem::itemStack,
+                val STREAM_CODE: StreamCodec<FriendlyByteBuf, ByItem> = StreamCodec.composite(
+                    ByteBufCodecs.ITEM_STACK, ByItem::itemStack,
                     ::ByItem
                 )
             }
         }
 
         companion object {
-            val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, Item> = object : StreamCodec<RegistryFriendlyByteBuf, Item> {
-                override fun decode(buffer: RegistryFriendlyByteBuf): Item {
+            val STREAM_CODEC: StreamCodec<FriendlyByteBuf, Item> = object : StreamCodec<FriendlyByteBuf, Item> {
+                override fun decode(buffer: FriendlyByteBuf): Item {
                     return when (buffer.readShort().toInt()) {
                         0 -> ByIndex.STREAM_CODE.decode(buffer)
                         1 -> ByItem.STREAM_CODE.decode(buffer)
@@ -193,7 +192,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                     }
                 }
 
-                override fun encode(buffer: RegistryFriendlyByteBuf, value: Item) {
+                override fun encode(buffer: FriendlyByteBuf, value: Item) {
                     when (value) {
                         is ByIndex -> {
                             buffer.writeShort(0)
@@ -255,7 +254,7 @@ sealed interface TransPath<in H : Any, R : Any> {
             override fun extractActual(handle: IFluidHandler): FluidStack {
                 if (index in 0..<handle.tanks) {
                     if (stack.isEmpty) return FluidStack.EMPTY
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
+                    if (stack.isFluidStackIdentical(handle.getFluidInTank(index))) return FluidStack.EMPTY
                     return handle.drain(stack, IFluidHandler.FluidAction.EXECUTE)
                 } else return FluidStack.EMPTY
             }
@@ -263,14 +262,14 @@ sealed interface TransPath<in H : Any, R : Any> {
             override fun extractTest(handle: IFluidHandler): FluidStack {
                 if (index in 0..<handle.tanks) {
                     if (stack.isEmpty) return FluidStack.EMPTY
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
+                    if (stack.isFluidStackIdentical(handle.getFluidInTank(index))) return FluidStack.EMPTY
                     return handle.drain(stack, IFluidHandler.FluidAction.SIMULATE)
                 } else return FluidStack.EMPTY
             }
 
             override fun storeActual(handle: IFluidHandler, store: FluidStack): FluidStack {
                 if (index in 0..<handle.tanks) {
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
+                    if (stack.isFluidStackIdentical(handle.getFluidInTank(index))) return FluidStack.EMPTY
                     val filledCount = handle.fill(stack, IFluidHandler.FluidAction.EXECUTE)
                     stack.amount -= filledCount
                     return stack
@@ -279,7 +278,7 @@ sealed interface TransPath<in H : Any, R : Any> {
 
             override fun storeTest(handle: IFluidHandler, store: FluidStack): FluidStack {
                 if (index in 0..<handle.tanks) {
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
+                    if (stack.isFluidStackIdentical(handle.getFluidInTank(index))) return FluidStack.EMPTY
                     val filledCount = handle.fill(stack, IFluidHandler.FluidAction.SIMULATE)
                     stack.amount -= filledCount
                     return stack
@@ -287,32 +286,32 @@ sealed interface TransPath<in H : Any, R : Any> {
             }
 
             companion object {
-                val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ByIndex> = object : StreamCodec<RegistryFriendlyByteBuf, ByIndex> {
-                    override fun decode(buffer: RegistryFriendlyByteBuf): ByIndex {
+                val STREAM_CODEC: StreamCodec<FriendlyByteBuf, ByIndex> = object : StreamCodec<FriendlyByteBuf, ByIndex> {
+                    override fun decode(buffer: FriendlyByteBuf): ByIndex {
                         val index = buffer.readVarInt()
-                        val stack = FluidStack.OPTIONAL_STREAM_CODEC.decode(buffer)
+                        val stack = ByteBufCodecs.FLUID_STACK.decode(buffer)
                         return ByIndex(index, stack)
                     }
 
                     override fun encode(
-                        buffer: RegistryFriendlyByteBuf,
+                        buffer: FriendlyByteBuf,
                         value: ByIndex
                     ) {
                         buffer.writeVarInt(value.index)
-                        FluidStack.OPTIONAL_STREAM_CODEC.encode(buffer, value.stack)
+                        ByteBufCodecs.FLUID_STACK.encode(buffer, value.stack)
                     }
                 }
             }
         }
 
         companion object {
-            val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, Fluid> = object : StreamCodec<RegistryFriendlyByteBuf, Fluid> {
-                override fun decode(buffer: RegistryFriendlyByteBuf): Fluid {
+            val STREAM_CODEC: StreamCodec<FriendlyByteBuf, Fluid> = object : StreamCodec<FriendlyByteBuf, Fluid> {
+                override fun decode(buffer: FriendlyByteBuf): Fluid {
                     TODO("Not yet implemented")
                 }
 
                 override fun encode(
-                    buffer: RegistryFriendlyByteBuf,
+                    buffer: FriendlyByteBuf,
                     value: Fluid
                 ) {
                     TODO("Not yet implemented")
@@ -322,8 +321,8 @@ sealed interface TransPath<in H : Any, R : Any> {
     }
 
     companion object {
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, TransPath<*, *>> = object : StreamCodec<RegistryFriendlyByteBuf, TransPath<*, *>> {
-            override fun decode(buffer: RegistryFriendlyByteBuf): TransPath<*, *> {
+        val STREAM_CODEC: StreamCodec<FriendlyByteBuf, TransPath<*, *>> = object : StreamCodec<FriendlyByteBuf, TransPath<*, *>> {
+            override fun decode(buffer: FriendlyByteBuf): TransPath<*, *> {
                 return when (buffer.readShort().toInt()) {
                     0 -> Item.STREAM_CODEC.decode(buffer)
                     1 -> Fluid.STREAM_CODEC.decode(buffer)
@@ -333,7 +332,7 @@ sealed interface TransPath<in H : Any, R : Any> {
             }
 
             override fun encode(
-                buffer: RegistryFriendlyByteBuf,
+                buffer: FriendlyByteBuf,
                 value: TransPath<*, *>
             ) {
                 when (value) {

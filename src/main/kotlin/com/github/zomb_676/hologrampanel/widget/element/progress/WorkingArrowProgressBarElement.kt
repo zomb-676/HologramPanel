@@ -34,7 +34,7 @@ class WorkingArrowProgressBarElement(progress: ProgressData, barWidth: Float = 1
         val height = height.toFloat()
         style.guiGraphics.flush()
 
-        val buffer = style.guiGraphics.bufferSource
+        val buffer = style.guiGraphics.bufferSource()
         val consumer = buffer.getBuffer(RenderType.gui())
         val width = this.barWidth
 
@@ -43,34 +43,34 @@ class WorkingArrowProgressBarElement(progress: ProgressData, barWidth: Float = 1
         val halfHeight = height / 2
         val cuttingPointX = width - (height / 2.0f)
         //draw base
-        consumer.addVertex(pose, left, halfHeight - AXIAL_HALF_WIDTH, 0.0f).setColor(BASE_COLOR)
-        consumer.addVertex(pose, left, halfHeight + AXIAL_HALF_WIDTH, 0.0f).setColor(BASE_COLOR)
-        consumer.addVertex(pose, cuttingPointX, halfHeight + AXIAL_HALF_WIDTH, 0.0f).setColor(BASE_COLOR)
-        consumer.addVertex(pose, cuttingPointX, halfHeight - AXIAL_HALF_WIDTH, 0.0f).setColor(BASE_COLOR)
+        consumer.vertex(pose, left, halfHeight - AXIAL_HALF_WIDTH, 0.0f).color(BASE_COLOR).endVertex()
+        consumer.vertex(pose, left, halfHeight + AXIAL_HALF_WIDTH, 0.0f).color(BASE_COLOR).endVertex()
+        consumer.vertex(pose, cuttingPointX, halfHeight + AXIAL_HALF_WIDTH, 0.0f).color(BASE_COLOR).endVertex()
+        consumer.vertex(pose, cuttingPointX, halfHeight - AXIAL_HALF_WIDTH, 0.0f).color(BASE_COLOR).endVertex()
 
-        consumer.addVertex(pose, width, height / 2, 0.0f).setColor(BASE_COLOR)
-        consumer.addVertex(pose, cuttingPointX, 0.0f, 0.0f).setColor(BASE_COLOR)
-        consumer.addVertex(pose, cuttingPointX, height, 0.0f).setColor(BASE_COLOR)
+        consumer.vertex(pose, width, height / 2, 0.0f).color(BASE_COLOR).endVertex()
+        consumer.vertex(pose, cuttingPointX, 0.0f, 0.0f).color(BASE_COLOR).endVertex()
+        consumer.vertex(pose, cuttingPointX, height, 0.0f).color(BASE_COLOR).endVertex()
         //another for quad
-        consumer.addVertex(pose, cuttingPointX, height, 0.0f).setColor(BASE_COLOR)
+        consumer.vertex(pose, cuttingPointX, height, 0.0f).color(BASE_COLOR).endVertex()
 
         //draw fill
         if (right <= cuttingPointX) {
-            consumer.addVertex(pose, left, halfHeight - AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, left, halfHeight + AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, right, halfHeight + AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, right, halfHeight - AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
+            consumer.vertex(pose, left, halfHeight - AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, left, halfHeight + AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, right, halfHeight + AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, right, halfHeight - AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
         } else {
-            consumer.addVertex(pose, left, halfHeight - AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, left, halfHeight + AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, cuttingPointX, halfHeight + AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, cuttingPointX, halfHeight - AXIAL_HALF_WIDTH, 0.0f).setColor(FILL_COLOR)
+            consumer.vertex(pose, left, halfHeight - AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, left, halfHeight + AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, cuttingPointX, halfHeight + AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, cuttingPointX, halfHeight - AXIAL_HALF_WIDTH, 0.0f).color(FILL_COLOR).endVertex()
 
-            consumer.addVertex(pose, cuttingPointX, 0.0f, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, cuttingPointX, height, 0.0f).setColor(FILL_COLOR)
+            consumer.vertex(pose, cuttingPointX, 0.0f, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, cuttingPointX, height, 0.0f).color(FILL_COLOR).endVertex()
             val remain = width - right
-            consumer.addVertex(pose, right, halfHeight + remain, 0.0f).setColor(FILL_COLOR)
-            consumer.addVertex(pose, right, halfHeight - remain, 0.0f).setColor(FILL_COLOR)
+            consumer.vertex(pose, right, halfHeight + remain, 0.0f).color(FILL_COLOR).endVertex()
+            consumer.vertex(pose, right, halfHeight - remain, 0.0f).color(FILL_COLOR).endVertex()
         }
     }
 

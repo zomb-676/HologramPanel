@@ -16,7 +16,7 @@ import net.minecraft.client.player.LocalPlayer
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.items.IItemHandler
+import net.minecraftforge.items.IItemHandler
 import org.lwjgl.glfw.GLFW
 
 /**

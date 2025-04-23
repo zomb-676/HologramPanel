@@ -37,7 +37,7 @@ open class EntityRenderElement(val entity: Entity, val entityScale: Double) : Re
 
             dispatcher.setRenderShadow(false)
             dispatcher.render(
-                entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, guiGraphics.pose(), guiGraphics.bufferSource, LightTexture.FULL_BRIGHT
+                entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, guiGraphics.pose(), guiGraphics.bufferSource(), LightTexture.FULL_BRIGHT
             )
             guiGraphics.flush()
             dispatcher.setRenderShadow(true)

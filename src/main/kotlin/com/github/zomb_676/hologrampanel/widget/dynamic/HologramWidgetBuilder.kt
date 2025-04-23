@@ -15,7 +15,6 @@ import com.github.zomb_676.hologrampanel.widget.element.progress.WorkingCirclePr
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.ImmutableBiMap
-import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
@@ -23,8 +22,8 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.fluids.FluidType
-import net.neoforged.neoforge.items.IItemHandler
+import net.minecraftforge.fluids.FluidType
+import net.minecraftforge.items.IItemHandler
 import java.util.*
 
 class HologramWidgetBuilder<T : HologramContext>(val context: T) {
@@ -277,10 +276,14 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return ScreenTooltipElement(item).attach(name)
         }
 
-        fun heart(name: String): TextureAtlasSpriteRenderElement {
-            val location = Gui.HeartType.NORMAL.getSprite(false, false, false)
-            val atlas = Minecraft.getInstance().guiSprites.getSprite(location)
-            return sprite(name, atlas).apply { setPositionOffset(0, -1) }
+        fun heart(name: String): RawTextureAtlasSpriteRenderElement {
+            val heart = Gui.HeartType.NORMAL
+            val atlas = Gui.GUI_ICONS_LOCATION
+            //ugly constant used by mojang
+            return RawTextureAtlasSpriteRenderElement(
+                atlas, heart.getX(false, false),
+                0, 9, 9
+            ).attach(name)
         }
 
         fun entity(name: String, entity: Entity) = if (entity is ItemEntity) {

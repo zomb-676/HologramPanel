@@ -1,14 +1,14 @@
 package com.github.zomb_676.hologrampanel.trans
 
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.StreamCodec
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
-import net.neoforged.neoforge.capabilities.Capabilities
-import net.neoforged.neoforge.energy.IEnergyStorage
-import net.neoforged.neoforge.fluids.capability.IFluidHandler
-import net.neoforged.neoforge.items.IItemHandler
+import net.minecraftforge.common.capabilities.ForgeCapabilities
+import net.minecraftforge.energy.IEnergyStorage
+import net.minecraftforge.fluids.capability.IFluidHandler
+import net.minecraftforge.items.IItemHandler
 
 /**
  * get the handle form [TransSource], like getCapability
@@ -20,7 +20,7 @@ import net.neoforged.neoforge.items.IItemHandler
 sealed interface TransHandle<in S : Any, out H : Any> {
     fun getHandle(source: S): H?
 
-    fun hasHandle(source: S) : Boolean = getHandle(source) != null
+    fun hasHandle(source: S): Boolean = getHandle(source) != null
 
     fun <R : Any> queryActual(source: S, path: TransPath<H, R>): R? = getHandle(source)?.run(path::extractActual)
     fun <R : Any> queryTest(source: S, path: TransPath<H, R>): R? = getHandle(source)?.run(path::extractTest)
@@ -36,48 +36,46 @@ sealed interface TransHandle<in S : Any, out H : Any> {
     }
 
     object EntityItemTransHandle : TransHandle<Entity, IItemHandler> {
-        override fun getHandle(source: Entity): IItemHandler? = source.getCapability(Capabilities.ItemHandler.ENTITY_AUTOMATION, null)
+        override fun getHandle(source: Entity): IItemHandler? = source.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null)
     }
 
     object BlockItemTransHandle : TransHandle<BlockEntity, IItemHandler> {
         override fun getHandle(source: BlockEntity): IItemHandler? {
-            val level = source.level ?: return null
-            return level.getCapability(Capabilities.ItemHandler.BLOCK, source.blockPos, source.blockState, source, null)
+            return source.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null)
         }
     }
 
     object ItemItemTransHandle : TransHandle<ItemStack, IItemHandler> {
-        override fun getHandle(source: ItemStack): IItemHandler? = source.getCapability(Capabilities.ItemHandler.ITEM)
+        override fun getHandle(source: ItemStack): IItemHandler? = source.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null)
     }
 
     object EntityFluidTransHandle : TransHandle<Entity, IFluidHandler> {
-        override fun getHandle(source: Entity): IFluidHandler? = source.getCapability(Capabilities.FluidHandler.ENTITY, null)
+        override fun getHandle(source: Entity): IFluidHandler? = source.getCapability(ForgeCapabilities.FLUID_HANDLER).orElse(null)
     }
 
     object BlockFluidTransHandle : TransHandle<BlockEntity, IFluidHandler> {
         override fun getHandle(source: BlockEntity): IFluidHandler? {
-            val level = source.level ?: return null
-            return level.getCapability(Capabilities.FluidHandler.BLOCK, source.blockPos, source.blockState, source, null)
+            return source.getCapability(ForgeCapabilities.FLUID_HANDLER).orElse(null)
         }
     }
 
     object ItemFluidTransHandle : TransHandle<ItemStack, IFluidHandler> {
-        override fun getHandle(source: ItemStack): IFluidHandler? = source.getCapability(Capabilities.FluidHandler.ITEM)
+        override fun getHandle(source: ItemStack): IFluidHandler? = source.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).orElse(null)
     }
 
     object EntityEnergyTransHandle : TransHandle<Entity, IEnergyStorage> {
-        override fun getHandle(source: Entity): IEnergyStorage? = source.getCapability(Capabilities.EnergyStorage.ENTITY, null)
+        override fun getHandle(source: Entity): IEnergyStorage? = source.getCapability(ForgeCapabilities.ENERGY).orElse(null)
     }
 
     object BlockEnergyTransHandle : TransHandle<BlockEntity, IEnergyStorage> {
         override fun getHandle(source: BlockEntity): IEnergyStorage? {
-            val level = source.level ?: return null
-            return level.getCapability(Capabilities.EnergyStorage.BLOCK, source.blockPos, source.blockState, source, null)
+            return source.getCapability(ForgeCapabilities.ENERGY).orElse(null)
         }
     }
 
     object ItemEnergyTransHandle : TransHandle<ItemStack, IEnergyStorage> {
-        override fun getHandle(source: ItemStack): IEnergyStorage? = source.getCapability(Capabilities.EnergyStorage.ITEM)
+        override fun getHandle(source: ItemStack): IEnergyStorage? =
+            source.getCapability(ForgeCapabilities.ENERGY).orElse(null)
     }
 
     class ChainTransHandle<S : Any, H : Any, R : Any, H2 : Any>(
@@ -94,7 +92,7 @@ sealed interface TransHandle<in S : Any, out H : Any> {
     fun <R : Any, H2 : Any> then(path: TransPath<H, R>, transHandle: TransHandle<R, H2>): TransHandle<S, H2> =
         ChainTransHandle(this, path, transHandle)
 
-    object TransTargetStreamCodec : StreamCodec<RegistryFriendlyByteBuf, TransHandle<*, *>> {
+    object TransTargetStreamCodec : StreamCodec<FriendlyByteBuf, TransHandle<*, *>> {
         private enum class TargetType {
             ENTITY_ITEM,
             BLOCK_ITEM,
@@ -108,7 +106,7 @@ sealed interface TransHandle<in S : Any, out H : Any> {
             CHAIN
         }
 
-        override fun decode(buf: RegistryFriendlyByteBuf): TransHandle<*, *> {
+        override fun decode(buf: FriendlyByteBuf): TransHandle<*, *> {
             val type = buf.readEnum(TargetType::class.java)
             return when (type) {
                 TargetType.ENTITY_ITEM -> EntityItemTransHandle
@@ -124,7 +122,7 @@ sealed interface TransHandle<in S : Any, out H : Any> {
             }
         }
 
-        override fun encode(buf: RegistryFriendlyByteBuf, value: TransHandle<*, *>) {
+        override fun encode(buf: FriendlyByteBuf, value: TransHandle<*, *>) {
             when (value) {
                 EntityItemTransHandle -> buf.writeEnum(TargetType.ENTITY_ITEM)
                 BlockItemTransHandle -> buf.writeEnum(TargetType.BLOCK_ITEM)
@@ -140,7 +138,7 @@ sealed interface TransHandle<in S : Any, out H : Any> {
         }
 
         @Suppress("UNCHECKED_CAST")
-        private fun decodeChainTarget(buf: RegistryFriendlyByteBuf): TransHandle<*, *> {
+        private fun decodeChainTarget(buf: FriendlyByteBuf): TransHandle<*, *> {
             val before = decode(buf)
             val path = TransPath.STREAM_CODEC.decode(buf)
             val transTarget = decode(buf)
@@ -151,7 +149,7 @@ sealed interface TransHandle<in S : Any, out H : Any> {
             )
         }
 
-        private fun encodeChainTarget(buf: RegistryFriendlyByteBuf, chain: ChainTransHandle<*, *, *, *>) {
+        private fun encodeChainTarget(buf: FriendlyByteBuf, chain: ChainTransHandle<*, *, *, *>) {
             buf.writeEnum(TargetType.CHAIN)
             encode(buf, chain.before)
             TransPath.STREAM_CODEC.encode(buf, chain.path)

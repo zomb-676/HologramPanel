@@ -8,13 +8,13 @@ import com.mojang.blaze3d.vertex.BufferUploader
 import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.Tesselator
 import com.mojang.blaze3d.vertex.VertexFormat
+import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.client.renderer.RenderType
+import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
-import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions
-import net.neoforged.neoforge.client.textures.FluidSpriteCache
-import net.neoforged.neoforge.fluids.FluidType
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions
+import net.minecraftforge.fluids.FluidType
 
 class FluidBarElement(progress: ProgressData, val fluid: FluidType) : ProgressBarElement(progress) {
     override fun requireOutlineDecorate(): Boolean = true
@@ -26,21 +26,23 @@ class FluidBarElement(progress: ProgressData, val fluid: FluidType) : ProgressBa
 
         val handle: IClientFluidTypeExtensions = IClientFluidTypeExtensions.of(fluid)
         val tintColor = handle.tintColor
-        val sprite: TextureAtlasSprite = FluidSpriteCache.getSprite(handle.stillTexture)
+        @Suppress("DEPRECATION") val sprite: TextureAtlasSprite = Minecraft.getInstance().getModelManager()
+            .getAtlas(TextureAtlas.LOCATION_BLOCKS).getSprite(handle.stillTexture)
 
         RenderSystem.setShaderTexture(0, sprite.atlasLocation())
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader)
         val matrix = style.poseMatrix()
-        val consumer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
+        val consumer = Tesselator.getInstance().builder
+        consumer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
 
         val maxU = (((sprite.u1 - sprite.u0) * percent) + sprite.u0).toFloat()
         val maxV = (((sprite.v1 - sprite.v0) * percent) + sprite.v0).toFloat()
 
-        consumer.addVertex(matrix, left, 0f, 0f).setUv(sprite.u0, sprite.v0).setColor(tintColor)
-        consumer.addVertex(matrix, left, height, 0f).setUv(sprite.u0, maxV).setColor(tintColor)
-        consumer.addVertex(matrix, right, height, 0f).setUv(maxU, maxV).setColor(tintColor)
-        consumer.addVertex(matrix, right, 0f, 0f).setUv(maxU, sprite.v0).setColor(tintColor)
-        BufferUploader.drawWithShader(consumer.buildOrThrow())
+        consumer.vertex(matrix, left, 0f, 0f).uv(sprite.u0, sprite.v0).color(tintColor).endVertex()
+        consumer.vertex(matrix, left, height, 0f).uv(sprite.u0, maxV).color(tintColor).endVertex()
+        consumer.vertex(matrix, right, height, 0f).uv(maxU, maxV).color(tintColor).endVertex()
+        consumer.vertex(matrix, right, 0f, 0f).uv(maxU, sprite.v0).color(tintColor).endVertex()
+        BufferUploader.drawWithShader(consumer.end())
     }
 
     override fun getDescription(percent: Float): Component {

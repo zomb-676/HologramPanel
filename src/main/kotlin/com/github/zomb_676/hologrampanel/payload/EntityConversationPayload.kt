@@ -2,37 +2,40 @@ package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
-import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.RayTraceHelper
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadContext
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadHandler
+import com.github.zomb_676.hologrampanel.polyfill.RegistryFriendlyByteBuf
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.minecraft.client.Minecraft
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.core.registries.Registries
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.resources.ResourceKey
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.Level
-import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.handling.IPayloadHandler
+import net.minecraftforge.network.NetworkEvent
 
 /**
  * notify the client that a mob is converted into another
  *
  * notice that, due to many reasons, old and new entity can't be guaranteed to be existed at client side
  */
-class EntityConversationPayload(val oldEntityID: Int, val newEntityID: Int, val level: ResourceKey<Level>) :
-    CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<EntityConversationPayload> = TYPE
+class EntityConversationPayload(val oldEntityID: Int, val newEntityID: Int, val level: ResourceKey<Level>)
+    : CustomPacketPayload<EntityConversationPayload> {
+
+    override fun handle(context: NetworkEvent.Context) {
+        HANDLE.handle(this, IPayloadContext(context))
+    }
 
     companion object {
         private val paddingEntities: Int2ObjectOpenHashMap<HologramRenderState?> = Int2ObjectOpenHashMap()
 
-        val TYPE = CustomPacketPayload.Type<EntityConversationPayload>(HologramPanel.rl("entity_conversation"))
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, EntityConversationPayload> = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, EntityConversationPayload::oldEntityID,
             ByteBufCodecs.VAR_INT, EntityConversationPayload::newEntityID,

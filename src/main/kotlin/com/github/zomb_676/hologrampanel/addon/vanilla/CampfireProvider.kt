@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
@@ -22,7 +23,7 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
         context: BlockHologramContext
     ): Boolean {
         val campfire = context.getBlockEntity<CampfireBlockEntity>() ?: return true
-        val buffer = context.createRegistryFriendlyByteBuf()
+        val buffer = context.createFriendlyByteBuf()
         for (progress in campfire.cookingProgress) {
             buffer.writeVarInt(progress)
         }
@@ -30,7 +31,7 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
             buffer.writeVarInt(progress)
         }
         for (item in campfire.items) {
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, item)
+            ByteBufCodecs.ITEM_STACK.encode(buffer, item)
         }
         targetData.putByteArray("campfire", buffer.extractArray())
         return true
@@ -45,10 +46,10 @@ data object CampfireProvider : ServerDataProvider<BlockHologramContext, Campfire
         val progresses = remember.keep(0) { List(4) { ProgressData() } }
         val data by remember.server(1, ByteArray(0), Arrays::equals) { tag -> tag.getByteArray("campfire") }
         if (data.isEmpty()) return
-        val buffer = context.warpRegistryFriendlyByteBuf(data)
+        val buffer = context.warpFriendlyByteBuf(data)
         val cookingProgresses = IntArray(4) { buffer.readVarInt() }
         val cookingTimes = IntArray(4) { buffer.readVarInt() }
-        val items = List(4) { ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer) }
+        val items = List(4) { ByteBufCodecs.ITEM_STACK.decode(buffer) }
 
         if (items.all(ItemStack::isEmpty)) return
         builder.single("cooking") {

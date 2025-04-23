@@ -2,9 +2,9 @@ package com.github.zomb_676.hologrampanel.trans
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.payload.TransTargetPayload
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import com.github.zomb_676.hologrampanel.util.unsafeCast
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.StreamCodec
+import net.minecraft.network.FriendlyByteBuf
 
 /**
  * define the whole transformation chain, including query and store
@@ -39,7 +39,7 @@ data class TransOperation<in S1 : Any, in S2 : Any, H1 : Any, H2 : Any, R : Any>
             )
         }
 
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, TransOperation<*, *, *, *, *>> = StreamCodec.composite(
+        val STREAM_CODEC: StreamCodec<FriendlyByteBuf, TransOperation<*, *, *, *, *>> = StreamCodec.composite(
             TransHandle.TransTargetStreamCodec, TransOperation<*, *, *, *, *>::query,
             TransPath.STREAM_CODEC, TransOperation<*, *, *, *, *>::queryPath,
             TransHandle.TransTargetStreamCodec, TransOperation<*, *, *, *, *>::store,

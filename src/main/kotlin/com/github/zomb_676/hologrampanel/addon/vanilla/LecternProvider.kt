@@ -19,7 +19,7 @@ data object LecternProvider : ServerDataProvider<BlockHologramContext, LecternBl
         val lectern = context.getBlockEntity<LecternBlockEntity>() ?: return false
         if (lectern.hasBook()) {
             val item = lectern.book
-            targetData.put("book", item.saveOptional(context.getRegistryAccess()))
+            targetData.put("book", item.save(CompoundTag()))
             return true
         } else {
             targetData.put("book", CompoundTag())

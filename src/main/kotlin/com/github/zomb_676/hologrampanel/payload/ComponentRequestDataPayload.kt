@@ -1,23 +1,20 @@
 package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
-import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
-import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadContext
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadHandler
+import com.github.zomb_676.hologrampanel.polyfill.RegistryFriendlyByteBuf
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
-import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.handling.IPayloadHandler
+import net.minecraftforge.network.NetworkEvent
 import java.util.*
 
 /**
@@ -30,15 +27,17 @@ import java.util.*
  */
 class ComponentRequestDataPayload<T : HologramContext>(
     val uuid: UUID, val additionDataTag: CompoundTag, val providers: List<ServerDataProvider<T, *>>, val context: T
-) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<out ComponentRequestDataPayload<*>> = TYPE
+) : CustomPacketPayload<ComponentRequestDataPayload<T>>  {
+
+    override fun handle(context: NetworkEvent.Context) {
+        HANDLE.handle(this, IPayloadContext(context))
+    }
 
     companion object {
-        val TYPE = CustomPacketPayload.Type<ComponentRequestDataPayload<*>>(HologramPanel.rl("component_request_data"))
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentRequestDataPayload<*>> =
             object : StreamCodec<RegistryFriendlyByteBuf, ComponentRequestDataPayload<*>> {
                 override fun decode(buffer: RegistryFriendlyByteBuf): ComponentRequestDataPayload<*> {
-                    val uuid = UUIDUtil.STREAM_CODEC.decode(buffer)
+                    val uuid = ByteBufCodecs.UUID.decode(buffer)
                     val additionDataTag = ByteBufCodecs.COMPOUND_TAG.decode(buffer)
                     val providerSize = ByteBufCodecs.VAR_INT.decode(buffer)
                     val providers = List(providerSize) { _ ->
@@ -51,7 +50,7 @@ class ComponentRequestDataPayload<T : HologramContext>(
                 override fun encode(
                     buffer: RegistryFriendlyByteBuf, value: ComponentRequestDataPayload<*>
                 ) {
-                    UUIDUtil.STREAM_CODEC.encode(buffer, value.uuid)
+                    ByteBufCodecs.UUID.encode(buffer, value.uuid)
                     ByteBufCodecs.COMPOUND_TAG.encode(buffer, value.additionDataTag)
                     ByteBufCodecs.VAR_INT.encode(buffer, value.providers.size)
                     for (provider in value.providers) {

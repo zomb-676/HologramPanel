@@ -4,14 +4,14 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.EnderChestBlock
-import net.neoforged.neoforge.items.wrapper.InvWrapper
+import net.minecraftforge.items.wrapper.InvWrapper
 
 data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderChestBlock> {
     override fun appendServerData(
@@ -22,12 +22,12 @@ data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderC
         val player = context.getPlayer()
         val inventory = player.enderChestInventory ?: return false
         val wrapper = InvWrapper(inventory)
-        val buffer = context.createRegistryFriendlyByteBuf()
+        val buffer = context.createFriendlyByteBuf()
         var writeItemCount = 0
         repeat(wrapper.slots) { index ->
             val item = wrapper.getStackInSlot(index)
             if (!item.isEmpty) {
-                ItemStack.STREAM_CODEC.encode(buffer, item)
+                ByteBufCodecs.ITEM_STACK.encode(buffer, item)
                 writeItemCount++
             }
         }
@@ -44,9 +44,9 @@ data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderC
         val remember = builder.context.getRememberData()
         val items by remember.server(0, listOf()) { tag ->
             val count = tag.getInt("item_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("item_data"))
+            val buffer = context.warpFriendlyByteBuf(tag.getByteArray("item_data"))
             List(count) {
-                ItemStack.STREAM_CODEC.decode(buffer)
+                ByteBufCodecs.ITEM_STACK.decode(buffer)
             }
         }
         if (items.isNotEmpty()) {

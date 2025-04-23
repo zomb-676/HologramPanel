@@ -45,7 +45,7 @@ object DataQueryManager {
             syncs[uuid] = widget
             maps[widget] = context
             val payload = ComponentRequestDataPayload(uuid, additionDataTag, providers, context)
-            Minecraft.getInstance().player!!.connection.send(payload)
+            payload.sendToServer()
         }
 
         fun queryContextUUID(context: HologramContext): UUID? {
@@ -107,7 +107,7 @@ object DataQueryManager {
             val data = builder.build()
             if (data.isNotEmpty()) {
                 val payload = ComponentResponseDataPayload.of(payload.uuid, data)
-                player.connection.send(payload)
+                payload.sendToPlayer(player)
             }
         }
 
@@ -137,7 +137,7 @@ object DataQueryManager {
                         val data = builder.build()
                         if (data.isNotEmpty()) {
                             val payload = ComponentResponseDataPayload.of(payload.uuid, data)
-                            player.connection.send(payload)
+                            payload.sendToPlayer(player)
                         }
                     }
                 }

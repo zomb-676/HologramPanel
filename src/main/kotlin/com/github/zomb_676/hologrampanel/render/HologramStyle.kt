@@ -3,6 +3,8 @@ package com.github.zomb_676.hologrampanel.render
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.EfficientConst
 import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component2
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
@@ -33,7 +35,7 @@ interface HologramStyle {
     val guiGraphics: GuiGraphics
     var contextColor: Int
 
-    fun drawFullyBackground(size : Size)
+    fun drawFullyBackground(size: Size)
 
     /**
      * @param contentSize [HologramWidgetComponent.Single.contentSize]
@@ -117,12 +119,12 @@ interface HologramStyle {
     }
 
     fun fill(minX: Float, minY: Float, maxX: Float, maxY: Float, color: Int = contextColor) {
-        val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
+        val consumer = guiGraphics.bufferSource().getBuffer(RenderType.gui())
         val pose = guiGraphics.pose().last().pose()
-        consumer.addVertex(pose, minX, minY, 0.0f).setColor(color)
-        consumer.addVertex(pose, minX, maxY, 0.0f).setColor(color)
-        consumer.addVertex(pose, maxX, maxY, 0.0f).setColor(color)
-        consumer.addVertex(pose, maxX, minY, 0.0f).setColor(color)
+        consumer.vertex(pose, minX, minY, 0.0f).color(color).endVertex()
+        consumer.vertex(pose, minX, maxY, 0.0f).color(color).endVertex()
+        consumer.vertex(pose, maxX, maxY, 0.0f).color(color).endVertex()
+        consumer.vertex(pose, maxX, minY, 0.0f).color(color).endVertex()
     }
 
     /**
@@ -154,7 +156,7 @@ interface HologramStyle {
     }
 
     fun mulPose(matrix: Matrix4f) {
-        this.pose().mulPose(matrix)
+        this.pose().mulPoseMatrix(matrix)
     }
 
     fun mulPose(quaternion: Quaternionf) {
@@ -284,27 +286,28 @@ interface HologramStyle {
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader)
         val tesselator = Tesselator.getInstance()
-        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
+        val builder = tesselator.builder
+        builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
 
         val matrix = guiGraphics.pose().last().pose()
-        builder.addVertex(matrix, 0f, 0f, 0f).setColor(colorIn)
+        builder.vertex(matrix, 0f, 0f, 0f).color(colorIn).endVertex()
 
         var radius = beginRadian
         val step = Math.toRadians(360.0 / tessellationCount).toFloat()
         while (true) {
             if (abs(radius - endRadian) > abs(step)) {
-                builder.addVertex(
+                builder.vertex(
                     matrix, sin(radius).toFloat() * outRadius, cos(radius).toFloat() * outRadius, 0.0f
-                ).setColor(colorOut)
+                ).color(colorOut).endVertex()
                 radius += step
             } else {
                 break
             }
         }
-        builder.addVertex(matrix, sin(endRadian).toFloat() * outRadius, cos(endRadian).toFloat() * outRadius, 0.0f)
-            .setColor(colorOut)
+        builder.vertex(matrix, sin(endRadian).toFloat() * outRadius, cos(endRadian).toFloat() * outRadius, 0.0f)
+            .color(colorOut).endVertex()
 
-        BufferUploader.drawWithShader(builder.buildOrThrow())
+        BufferUploader.drawWithShader(builder.end())
     }
 
     /**
@@ -351,7 +354,8 @@ interface HologramStyle {
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader)
         val tesselator = Tesselator.getInstance()
-        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+        val builder = tesselator.builder
+        builder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
 
         val matrix = guiGraphics.pose().last().pose()
 
@@ -361,8 +365,8 @@ interface HologramStyle {
         fun fillVertex(fillVertexRadius: Double) {
             val lastSin = sin(fillVertexRadius).toFloat()
             val lastCos = cos(fillVertexRadius).toFloat()
-            builder.addVertex(matrix, lastSin * inRadius, lastCos * inRadius, 0.0f).setColor(colorIn)
-            builder.addVertex(matrix, lastSin * outRadius, lastCos * outRadius, 0.0f).setColor(colorOut)
+            builder.vertex(matrix, lastSin * inRadius, lastCos * inRadius, 0.0f).color(colorIn).endVertex()
+            builder.vertex(matrix, lastSin * outRadius, lastCos * outRadius, 0.0f).color(colorOut).endVertex()
         }
 
         while (true) {
@@ -375,7 +379,7 @@ interface HologramStyle {
             }
         }
 
-        BufferUploader.drawWithShader(builder.buildOrThrow())
+        BufferUploader.drawWithShader(builder.end())
     }
 
     companion object {
@@ -445,7 +449,7 @@ interface HologramStyle {
 
             //draw collapse indicator
             val matrix = guiGraphics.pose().last().pose()
-            val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
+            val consumer = guiGraphics.bufferSource().getBuffer(RenderType.gui())
             run {
                 val centerY = (descriptionSize.height / 2.0f) + SINGLE_INNER_PADDING.up
                 val left = SINGLE_INNER_PADDING.left.toFloat()
@@ -455,15 +459,15 @@ interface HologramStyle {
                 val down = centerY + 2
                 val lineHalfWidth = 0.5f
 
-                consumer.addVertex(matrix, left, (centerY - lineHalfWidth), 0.0f).setColor(color)
-                consumer.addVertex(matrix, left, (centerY + lineHalfWidth), 0.0f).setColor(color)
-                consumer.addVertex(matrix, right, (centerY + lineHalfWidth), 0.0f).setColor(color)
-                consumer.addVertex(matrix, right, (centerY - lineHalfWidth), 0.0f).setColor(color)
+                consumer.vertex(matrix, left, (centerY - lineHalfWidth), 0.0f).color(color).endVertex()
+                consumer.vertex(matrix, left, (centerY + lineHalfWidth), 0.0f).color(color).endVertex()
+                consumer.vertex(matrix, right, (centerY + lineHalfWidth), 0.0f).color(color).endVertex()
+                consumer.vertex(matrix, right, (centerY - lineHalfWidth), 0.0f).color(color).endVertex()
                 if (!collapse) {
-                    consumer.addVertex(matrix, centerX - lineHalfWidth, up, 0.0f).setColor(color)
-                    consumer.addVertex(matrix, centerX - lineHalfWidth, down, 0.0f).setColor(color)
-                    consumer.addVertex(matrix, centerX + lineHalfWidth, down, 0.0f).setColor(color)
-                    consumer.addVertex(matrix, centerX + lineHalfWidth, up, 0.0f).setColor(color)
+                    consumer.vertex(matrix, centerX - lineHalfWidth, up, 0.0f).color(color).endVertex()
+                    consumer.vertex(matrix, centerX - lineHalfWidth, down, 0.0f).color(color).endVertex()
+                    consumer.vertex(matrix, centerX + lineHalfWidth, down, 0.0f).color(color).endVertex()
+                    consumer.vertex(matrix, centerX + lineHalfWidth, up, 0.0f).color(color).endVertex()
                 }
             }
 

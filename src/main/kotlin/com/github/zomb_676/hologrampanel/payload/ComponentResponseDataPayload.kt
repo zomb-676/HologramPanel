@@ -1,21 +1,13 @@
 package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.polyfill.*
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.google.common.collect.ImmutableMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.handling.IPayloadHandler
+import net.minecraftforge.network.NetworkEvent
 import java.util.*
 
 /**
@@ -30,11 +22,13 @@ class ComponentResponseDataPayload private constructor(
     val uuid: UUID,
     val data: ImmutableMap<ComponentProvider<*, *>, CompoundTag>,
     val sizeInBytes: Int
-) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<ComponentResponseDataPayload> = TYPE
+) : CustomPacketPayload<ComponentResponseDataPayload> {
+
+    override fun handle(context: NetworkEvent.Context) {
+        HANDLE.handle(this, IPayloadContext(context))
+    }
 
     companion object {
-        val TYPE = CustomPacketPayload.Type<ComponentResponseDataPayload>(HologramPanel.rl("component_response_data"))
 
         val CONTAINER_STREAM_CODEC: StreamCodec<FriendlyByteBuf, ImmutableMap<ComponentProvider<*, *>, CompoundTag>> =
             object : StreamCodec<FriendlyByteBuf, ImmutableMap<ComponentProvider<*, *>, CompoundTag>> {
@@ -43,7 +37,7 @@ class ComponentResponseDataPayload private constructor(
                     val builder: ImmutableMap.Builder<ComponentProvider<*, *>, CompoundTag> = ImmutableMap.builder()
                     repeat(size) { _ ->
                         val id = buffer.readVarInt()
-                        val provider = AllRegisters.ComponentHologramProviderRegistry.byId(id)!!
+                        val provider = AllRegisters.ComponentHologramProviderRegistry.byId(id)
                         val tag = ByteBufCodecs.COMPOUND_TAG.decode(buffer)
                         builder.put(provider, tag)
                     }
@@ -63,7 +57,7 @@ class ComponentResponseDataPayload private constructor(
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentResponseDataPayload> =
             object : StreamCodec<RegistryFriendlyByteBuf, ComponentResponseDataPayload> {
                 override fun decode(buffer: RegistryFriendlyByteBuf): ComponentResponseDataPayload {
-                    val uuid = UUIDUtil.STREAM_CODEC.decode(buffer)
+                    val uuid = ByteBufCodecs.UUID.decode(buffer)
                     val begin = buffer.readerIndex()
                     val data = CONTAINER_STREAM_CODEC.decode(buffer)
                     val size = buffer.readerIndex() - begin
@@ -73,7 +67,7 @@ class ComponentResponseDataPayload private constructor(
                 override fun encode(
                     buffer: RegistryFriendlyByteBuf, value: ComponentResponseDataPayload
                 ) {
-                    UUIDUtil.STREAM_CODEC.encode(buffer, value.uuid)
+                    ByteBufCodecs.UUID.encode(buffer, value.uuid)
                     CONTAINER_STREAM_CODEC.encode(buffer, value.data)
                 }
 

@@ -2,12 +2,12 @@ package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.api.EfficientConst
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.util.IgnorePacketException
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
-import net.minecraft.core.UUIDUtil
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.codec.StreamCodec
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
@@ -15,7 +15,7 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
-import net.neoforged.neoforge.server.ServerLifecycleHooks
+import net.minecraftforge.server.ServerLifecycleHooks
 import org.joml.Vector3f
 import org.joml.Vector3fc
 import java.util.*
@@ -110,8 +110,8 @@ class EntityHologramContext(
                         val server = ServerLifecycleHooks.getCurrentServer()!!
                         val level = server.getLevel(levelKey)!!
                         val entity = level.getEntity(buffer.readVarInt())!!
-                        val player = server.playerList.getPlayer(UUIDUtil.STREAM_CODEC.decode(buffer))!!
-                        val location = buffer.readOptional(VEC3_STREAM_CODE).getOrNull()
+                        val player = server.playerList.getPlayer(ByteBufCodecs.UUID.decode(buffer))!!
+                        val location = buffer.readOptional(VEC3_STREAM_CODE::decode).getOrNull()
                         val hit = if (location != null) {
                             EntityHitResult(entity, location)
                         } else null
@@ -124,8 +124,8 @@ class EntityHologramContext(
                 override fun encode(buffer: FriendlyByteBuf, value: EntityHologramContext) {
                     AllRegisters.Codecs.LEVEL_STREAM_CODE.encode(buffer, value.entity.level().dimension())
                     buffer.writeVarInt(value.entity.id)
-                    UUIDUtil.STREAM_CODEC.encode(buffer, value.player.uuid)
-                    buffer.writeOptional(Optional.ofNullable(value.hitResult?.location), VEC3_STREAM_CODE)
+                    ByteBufCodecs.UUID.encode(buffer, value.player.uuid)
+                    buffer.writeOptional(Optional.ofNullable(value.hitResult?.location), VEC3_STREAM_CODE::encode)
                 }
             }
     }

@@ -34,10 +34,10 @@ object LinkLineRender {
             val endX = end.x.toFloat()
             val endY = end.y.toFloat()
             val offset = Vector2f(endY - beginY, beginX - endX).normalize().mul(halfLineWidth)
-            builder.addVertex(matrix, beginX - offset.x, beginY - offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, beginX + offset.x, beginY + offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, endX + offset.x, endY + offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, endX - offset.x, endY - offset.y, 1f).setColor(lineColor)
+            builder.vertex(matrix, beginX - offset.x, beginY - offset.y, 1f).color(lineColor).endVertex()
+            builder.vertex(matrix, beginX + offset.x, beginY + offset.y, 1f).color(lineColor).endVertex()
+            builder.vertex(matrix, endX + offset.x, endY + offset.y, 1f).color(lineColor).endVertex()
+            builder.vertex(matrix, endX - offset.x, endY - offset.y, 1f).color(lineColor).endVertex()
             return
         }
 
@@ -46,13 +46,13 @@ object LinkLineRender {
         if (beginPoint.y < endPoint.y) {
             beginCircle = Vector2d(beginPoint.x, beginPoint.y + radius)
             endCircle = Vector2d(endPoint.x, endPoint.y - radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            builder.vertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
+            builder.vertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
         } else {
             beginCircle = Vector2d(beginPoint.x, beginPoint.y - radius)
             endCircle = Vector2d(endPoint.x, endPoint.y + radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            builder.vertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
+            builder.vertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
         }
 
         val sign = if (beginPoint.y < endPoint.y) 1 else -1
@@ -60,39 +60,39 @@ object LinkLineRender {
             val the = theta * 2 / segment * it
             val sin = sin(the)
             val cos = cos(the)
-            builder.addVertex(
+            builder.vertex(
                 matrix, (beginCircle.x + sin * (radius + halfLineWidth)).toFloat(),
                 (beginCircle.y - cos * sign * (radius + halfLineWidth)).toFloat(),
                 1f
-            ).setColor(lineColor)
-            builder.addVertex(
+            ).color(lineColor).endVertex()
+            builder.vertex(
                 matrix, (beginCircle.x + sin * (radius - halfLineWidth)).toFloat(),
                 (beginCircle.y - cos * sign * (radius - halfLineWidth)).toFloat(),
                 1f
-            ).setColor(lineColor)
+            ).color(lineColor).endVertex()
         }
         for (it in segment downTo 0) {
             val the = theta * 2 / segment * it
             val sin = sin(the)
             val cos = cos(the)
-            builder.addVertex(
+            builder.vertex(
                 matrix, (endCircle.x - sin * (radius - halfLineWidth)).toFloat(),
                 (endCircle.y + cos * sign * (radius - halfLineWidth)).toFloat(),
                 1f
-            ).setColor(lineColor)
-            builder.addVertex(
+            ).color(lineColor).endVertex()
+            builder.vertex(
                 matrix, (endCircle.x - sin * (radius + halfLineWidth)).toFloat(),
                 (endCircle.y + cos * sign * (radius + halfLineWidth)).toFloat(),
                 1f
-            ).setColor(lineColor)
+            ).color(lineColor).endVertex()
         }
 
         if (beginPoint.y < endPoint.y) {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            builder.vertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
+            builder.vertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
         } else {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            builder.vertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
+            builder.vertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).color(lineColor).endVertex()
         }
     }
 

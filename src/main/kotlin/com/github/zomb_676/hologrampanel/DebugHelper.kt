@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.payload.DebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.payload.QueryDebugStatisticsPayload
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadContext
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.FontBufferSource
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
@@ -15,19 +16,18 @@ import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LevelRenderer
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.util.FastColor
-import net.neoforged.neoforge.client.event.ClientTickEvent
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent
-import net.neoforged.neoforge.network.handling.IPayloadContext
+import net.minecraftforge.client.event.RenderLevelStageEvent
+import net.minecraftforge.client.gui.overlay.ForgeGui
+import net.minecraftforge.client.gui.overlay.IGuiOverlay
+import net.minecraftforge.event.TickEvent
 import org.joml.Vector3fc
 import kotlin.math.max
 
@@ -91,7 +91,8 @@ object DebugHelper {
             }
         }
 
-        fun tick(event: ClientTickEvent) {
+        fun tick(event: TickEvent.ClientTickEvent) {
+            if (Minecraft.getInstance().level == null) return
             val current = Config.Client.renderDebugLayer.get()
             if (current != lastDebugState) {
                 lastDebugState = current
@@ -137,12 +138,13 @@ object DebugHelper {
         fun renderLevelLast(event: RenderLevelStageEvent) {
             if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
             val pose = event.poseStack
-            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
+            val partialTick = event.partialTick
             val camPos = event.camera.position
             pose.translate(-camPos.x, -camPos.y, -camPos.z)
 
             if (Config.Client.renderDebugHologramLifeCycleBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
-                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+                val builder = Tesselator.getInstance().builder
+                builder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
                 RenderSystem.setShader(GameRenderer::getPositionColorShader)
                 RenderSystem.disableDepthTest()
                 if (queryUpdateData.isNotEmpty()) {
@@ -172,7 +174,7 @@ object DebugHelper {
                         fill(next.key.sourcePosition(partialTick), color, pose, builder)
                     }
                 }
-                BufferUploader.drawWithShader(builder.buildOrThrow())
+                BufferUploader.drawWithShader(builder.end())
                 RenderSystem.enableDepthTest()
             }
             if (Config.Client.renderNetworkDebugInfo.get() && queryUpdateData.isNotEmpty()) {
@@ -197,9 +199,9 @@ object DebugHelper {
             }
         }
 
-        fun getLayer() = object : LayeredDraw.Layer {
-            override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
-                if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
+        fun getLayer() = object : IGuiOverlay {
+            override fun render(forgeGui: ForgeGui, guiGraphics: GuiGraphics, partialTick: Float, screenWidth: Int, screenHeight: Int) {
+                if (Minecraft.getInstance().options.renderDebug) return
                 if (!Config.Client.renderDebugLayer.get()) return
                 val drawHelper = DrawHelper(guiGraphics)
                 drawHelper.drawString("syncRate:${Config.Server.updateInternal.get()}Tick").nextLine()
@@ -302,7 +304,7 @@ object DebugHelper {
                 queryPlayer.forEach { player ->
                     val forPlayer = DataQueryManager.Server.syncCountForPlayer(player)
                     val payload = DebugStatisticsPayload(totalSyncCount, forPlayer)
-                    player.connection.send(payload)
+                    payload.sendToServer()
                 }
             }
         }

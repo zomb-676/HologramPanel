@@ -6,9 +6,10 @@ import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
+import com.github.zomb_676.hologrampanel.util.stack
+import com.github.zomb_676.hologrampanel.util.stackIf
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.google.common.collect.ImmutableBiMap
 import kotlin.math.max

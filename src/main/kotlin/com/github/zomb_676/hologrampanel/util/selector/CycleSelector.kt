@@ -7,7 +7,6 @@ import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.t
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryEnd
 import com.github.zomb_676.hologrampanel.util.stack
 import com.mojang.blaze3d.systems.RenderSystem
-import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import kotlin.math.atan
@@ -46,7 +45,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     private var canBackToParent = false
 
-    private fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
+    private fun render(graphics: GuiGraphics, partialTick: Float) {
         this.current = null
         run {
             val nextChildren = this.nextGroup
@@ -56,7 +55,6 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             }
         }
 
-        val partialTick = tracker.getGameTimeDeltaPartialTick(false)
         val style = HologramStyle.DefaultStyle(graphics)
         val window = Minecraft.getInstance().window
         val centerX = window.guiScaledWidth / 2
@@ -131,7 +129,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     override fun openGroup(group: CycleEntry.Group) {
         this.nextGroup = group
-        this.openStack.addLast(this.currentGroup)
+        this.openStack.add(this.currentGroup)
     }
 
     override fun recoveryToParent() {
@@ -143,9 +141,9 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     companion object {
 
-        fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+        fun render(guiGraphics: GuiGraphics, partialTick: Float) {
             val instance = instance ?: return
-            instance.render(guiGraphics, deltaTracker)
+            instance.render(guiGraphics, partialTick)
         }
 
 

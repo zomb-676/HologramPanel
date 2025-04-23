@@ -11,9 +11,12 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.*
+import com.github.zomb_676.hologrampanel.util.RebuildValue
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
+import com.github.zomb_676.hologrampanel.util.stack
+import com.github.zomb_676.hologrampanel.util.stackIf
+import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent.Group

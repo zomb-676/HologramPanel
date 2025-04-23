@@ -2,19 +2,14 @@ package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
-import com.mojang.blaze3d.vertex.VertexConsumer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
 import net.minecraft.util.profiling.ProfilerFiller
-import net.neoforged.neoforge.client.GlStateBackup
-import net.neoforged.neoforge.common.ModConfigSpec
-import org.joml.Matrix4f
-import org.joml.Vector3f
+import net.minecraftforge.common.ForgeConfigSpec
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL46
 import java.util.concurrent.ConcurrentHashMap
@@ -74,12 +69,6 @@ inline fun <reified T> requireInstanceOf(claz: Class<*>): Class<out T> {
 inline fun <reified T> getClassOf(className: String): Class<out T> =
     requireInstanceOf<T>(Class.forName(className, false, Thread.currentThread().contextClassLoader))
 
-inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> Unit) {
-    RenderSystem.backupGlState(state)
-    code.invoke()
-    RenderSystem.restoreGlState(state)
-}
-
 inline val profiler: ProfilerFiller get() = Minecraft.getInstance().profiler
 
 /**
@@ -111,7 +100,7 @@ inline fun glDebugStack(debugLabelName: String, id: Int = 0, crossinline code: (
     }
 }
 
-inline fun ModConfigSpec.Builder.stack(name: String, crossinline f: () -> Unit) {
+inline fun ForgeConfigSpec.Builder.stack(name: String, crossinline f: () -> Unit) {
     this.push(name)
     f.invoke()
     this.pop()
@@ -125,13 +114,13 @@ fun ByteBuf.extractArray(): ByteArray {
     return this.array()
 }
 
-fun ModConfigSpec.BooleanValue.switch(): Boolean {
+fun ForgeConfigSpec.BooleanValue.switch(): Boolean {
     val state = !this.get()
     this.set(state)
     return state
 }
 
-fun ModConfigSpec.BooleanValue.switchAndSave(): Boolean {
+fun ForgeConfigSpec.BooleanValue.switchAndSave(): Boolean {
     val state = !this.get()
     this.setAndSave(state)
     return state
@@ -140,7 +129,7 @@ fun ModConfigSpec.BooleanValue.switchAndSave(): Boolean {
 private object ConfigSaveHelper {
     val hasSetTask = AtomicBoolean(false)
     val lock = StampedLock()
-    val saveTasks: MutableSet<ModConfigSpec.ConfigValue<*>> = ConcurrentHashMap.newKeySet()
+    val saveTasks: MutableSet<ForgeConfigSpec.ConfigValue<*>> = ConcurrentHashMap.newKeySet()
 
     fun scheduleTask() {
         val stamp = lock.tryWriteLock()
@@ -172,7 +161,7 @@ private object ConfigSaveHelper {
         }
     }
 
-    fun save(value: ModConfigSpec.ConfigValue<*>) {
+    fun save(value: ForgeConfigSpec.ConfigValue<*>) {
         saveTasks.add(value)
 
         if (hasSetTask.compareAndSet(false, true)) {
@@ -181,15 +170,7 @@ private object ConfigSaveHelper {
     }
 }
 
-fun <T : Any> ModConfigSpec.ConfigValue<T>.setAndSave(value: T) {
+fun <T : Any> ForgeConfigSpec.ConfigValue<T>.setAndSave(value: T) {
     this.set(value)
     ConfigSaveHelper.save(this)
-}
-
-/**
- * use the [container] to reduce object allocation during the context scope
- */
-context(container: Vector3f) fun VertexConsumer.vertex(matrix4f: Matrix4f, x: Float, y: Float, z: Float): VertexConsumer {
-    matrix4f.transformPosition(x, y, z, container)
-    return this.addVertex(container.x, container.y, container.z)
 }

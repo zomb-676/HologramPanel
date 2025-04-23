@@ -22,7 +22,7 @@ import java.util.*
  */
 object TransitRenderTargetManager {
 
-    private val entries: SequencedMap<TransitRenderTarget, MutableList<HologramRenderState>> = Object2ObjectLinkedOpenHashMap()
+    private val entries: MutableMap<TransitRenderTarget, MutableList<HologramRenderState>> = Object2ObjectLinkedOpenHashMap()
     private val interactRenderTarget: TransitRenderTarget = TransitRenderTarget.create()
 
     /**
@@ -118,7 +118,6 @@ object TransitRenderTargetManager {
         RenderSystem.disableDepthTest()
         RenderSystem.enableBlend()
         RenderSystem.depthMask(false)
-        RenderSystem.setShader(GameRenderer::getPositionTexShader)
         val allocator = run {
             val window = Minecraft.getInstance().window
             RectAllocator(window.guiScaledWidth, window.guiScaledHeight)
@@ -128,19 +127,21 @@ object TransitRenderTargetManager {
             yieldAll(entries.keys)
         }
         for (target in sequence) {
+            RenderSystem.setShader(GameRenderer::getPositionTexShader)
             val rect = allocator.allocate(target.width / 16, target.height / 16)
             if (!rect.assigned) break
             RenderSystem.setShaderTexture(0, target.getColorTextureId())
-            val builder = RenderSystem.renderThreadTesselator().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
-            val x = rect.x.toFloat()
-            val y = rect.y.toFloat()
-            val w = rect.width.toFloat()
-            val h = rect.height.toFloat()
-            builder.addVertex(x, y, 0f).setUv(0f, 1f)
-            builder.addVertex(x, y + h, 0f).setUv(0f, 0f)
-            builder.addVertex(x + w, y + h, 0f).setUv(1f, 0f)
-            builder.addVertex(x + w, y, 0f).setUv(1f, 1f)
-            BufferUploader.drawWithShader(builder.buildOrThrow())
+            val builder = RenderSystem.renderThreadTesselator().builder
+            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+            val x = rect.x.toDouble()
+            val y = rect.y.toDouble()
+            val w = rect.width.toDouble()
+            val h = rect.height.toDouble()
+            builder.vertex(x, y, 0.0).uv(0f, 1f).endVertex()
+            builder.vertex(x, y + h, 0.0).uv(0f, 0f).endVertex()
+            builder.vertex(x + w, y + h, 0.0).uv(1f, 0f).endVertex()
+            builder.vertex(x + w, y, 0.0).uv(1f, 1f).endVertex()
+            BufferUploader.drawWithShader(builder.end())
 
             style.guiGraphics.renderOutline(rect.x, rect.y, rect.width, rect.height, -1)
         }

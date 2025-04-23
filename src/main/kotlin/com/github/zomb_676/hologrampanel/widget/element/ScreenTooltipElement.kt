@@ -2,16 +2,15 @@ package com.github.zomb_676.hologrampanel.widget.element
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.TooltipType
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil
-import net.minecraft.core.component.DataComponents
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.client.ClientHooks
+import net.minecraftforge.client.ForgeHooksClient
 import kotlin.math.max
 
 /**
@@ -21,7 +20,8 @@ open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipTyp
     var tooltips: List<ClientTooltipComponent> = listOf()
     override fun measureContentSize(style: HologramStyle): Size {
         val window = Minecraft.getInstance().window
-        tooltips = ClientHooks.gatherTooltipComponents(
+        @Suppress("UnstableApiUsage")
+        tooltips = ForgeHooksClient.gatherTooltipComponents(
             item,
             Screen.getTooltipFromItem(Minecraft.getInstance(), item),
             item.tooltipImage,
@@ -63,7 +63,7 @@ open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipTyp
 
             tooltips.forEachIndexed { index, tooltip ->
                 tooltip.renderText(
-                    font, 0, height, style.poseMatrix(), style.guiGraphics.bufferSource
+                    font, 0, height, style.poseMatrix(), style.guiGraphics.bufferSource()
                 )
                 height += tooltip.height
             }

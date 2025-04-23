@@ -13,33 +13,31 @@ import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
-import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
 import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.HoverEvent
 import net.minecraft.network.chat.Style
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.api.distmarker.Dist
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
-import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent
-import net.neoforged.neoforge.client.event.*
-import net.neoforged.neoforge.client.gui.VanillaGuiLayers
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.RegisterCommandsEvent
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent
-import net.neoforged.neoforge.event.entity.living.LivingConversionEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
-import net.neoforged.neoforge.event.level.LevelEvent
-import net.neoforged.neoforge.event.tick.ServerTickEvent
-import net.neoforged.neoforge.network.PacketDistributor
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
-import net.neoforged.neoforge.registries.RegisterEvent
-import net.neoforged.neoforge.server.ServerLifecycleHooks
-import net.neoforged.neoforge.server.command.EnumArgument
+import net.minecraftforge.api.distmarker.Dist
+import net.minecraftforge.client.event.*
+import net.minecraftforge.client.gui.overlay.ForgeGui
+import net.minecraftforge.client.gui.overlay.IGuiOverlay
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.event.RegisterCommandsEvent
+import net.minecraftforge.event.TickEvent
+import net.minecraftforge.event.entity.EntityJoinLevelEvent
+import net.minecraftforge.event.entity.living.LivingConversionEvent
+import net.minecraftforge.event.entity.player.PlayerEvent
+import net.minecraftforge.event.level.LevelEvent
+import net.minecraftforge.eventbus.api.IEventBus
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent
+import net.minecraftforge.registries.RegisterEvent
+import net.minecraftforge.server.ServerLifecycleHooks
+import net.minecraftforge.server.command.EnumArgument
 import org.lwjgl.glfw.GLFW
 import kotlin.math.max
 import kotlin.math.min
@@ -47,8 +45,7 @@ import kotlin.math.min
 object EventHandler {
     fun initEvents(dist: Dist, modBus: IEventBus) {
 
-        val forgeBus = NeoForge.EVENT_BUS
-        modBus.addListener(EventHandler::registerPayload)
+        val forgeBus = MinecraftForge.EVENT_BUS
         forgeBus.addListener(EventHandler::registerCommand)
         forgeBus.addListener(EventHandler::registerClientCommand)
         forgeBus.addListener(EventHandler::tickClientPostEvent)
@@ -69,7 +66,7 @@ object EventHandler {
 
     object ClientOnly {
         fun initEvents(modBus: IEventBus) {
-            val forgeBus = NeoForge.EVENT_BUS
+            val forgeBus = MinecraftForge.EVENT_BUS
             modBus.addListener(ClientOnly::registerLayer)
             modBus.addListener(ClientOnly::registerKey)
             forgeBus.addListener(ClientOnly::onKey)
@@ -88,7 +85,7 @@ object EventHandler {
             AllRegisters.KeyMapping.register(event)
         }
 
-        private fun onClientTickPost(event: ClientTickEvent.Post) {
+        private fun onClientTickPost(event: TickEvent.ClientTickEvent) {
 
         }
 
@@ -96,7 +93,7 @@ object EventHandler {
             DebugHelper.Client.onJoinLevel()
         }
 
-        private fun onClientTickPre(event: ClientTickEvent.Pre) {
+        private fun onClientTickPre(event: TickEvent.ClientTickEvent) {
             DebugHelper.Client.tick(event)
         }
 
@@ -145,7 +142,7 @@ object EventHandler {
 
             val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
             val modifier = if (shiftDown) 0.05 else 0.2
-            val changeValue = event.scrollDeltaY * modifier
+            val changeValue = event.scrollDelta * modifier
 
             run {
                 val modifyTarget = PanelOperatorManager.modifyTarget ?: return@run
@@ -225,16 +222,16 @@ object EventHandler {
 //            event.isCanceled = true
         }
 
-        private fun registerLayer(event: RegisterGuiLayersEvent) {
+        private fun registerLayer(event: RegisterGuiOverlaysEvent) {
             event.registerBelow(
-                VanillaGuiLayers.CROSSHAIR, HologramPanel.rl("interaction_mode_layer"), InteractionLayer.getLayer()
+                VanillaGuiOverlay.CROSSHAIR.id(), "interaction_mode_layer", InteractionLayer.getLayer()
             )
-            event.registerAboveAll(HologramPanel.rl("cycle_selector"), object : LayeredDraw.Layer {
-                override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
-                    CycleSelector.render(guiGraphics, deltaTracker)
+            event.registerAboveAll("cycle_selector", object : IGuiOverlay {
+                override fun render(gui: ForgeGui, guiGraphics: GuiGraphics, partialTick: Float, screenWidth: Int, screenHeight: Int) {
+                    CycleSelector.render(guiGraphics, partialTick)
                 }
             })
-            event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.Client.getLayer())
+            event.registerAboveAll("debug_layer", DebugHelper.Client.getLayer())
         }
 
         private fun onPlayerLogIn(event: ClientPlayerNetworkEvent.LoggingIn) {
@@ -254,30 +251,6 @@ object EventHandler {
                 HologramManager.renderWorldPart(event)
             }
         }
-    }
-
-    private fun registerPayload(event: RegisterPayloadHandlersEvent) {
-        event.registrar("1.0").playToClient(
-            ServerHandShakePayload.TYPE, ServerHandShakePayload.STREAM_CODEC, ServerHandShakePayload.HANDLE
-        ).playToServer(
-            ComponentRequestDataPayload.TYPE, ComponentRequestDataPayload.STREAM_CODEC, ComponentRequestDataPayload.HANDLE
-        ).playToClient(
-            ComponentResponseDataPayload.TYPE, ComponentResponseDataPayload.STREAM_CODEC, ComponentResponseDataPayload.HANDLE
-        ).playBidirectional(
-            SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE
-        ).playToClient(
-            EntityConversationPayload.TYPE, EntityConversationPayload.STREAM_CODEC, EntityConversationPayload.HANDLE
-        ).playToServer(
-            QueryDebugStatisticsPayload.TYPE, QueryDebugStatisticsPayload.STREAM_CODEC, QueryDebugStatisticsPayload.HANDLE
-        ).playToClient(
-            DebugStatisticsPayload.TYPE, DebugStatisticsPayload.STREAM_CODEC, DebugStatisticsPayload.HANDLE
-        ).playToServer(
-            ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
-        ).playBidirectional(
-            MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE
-        ).playToServer(
-            TransTargetPayload.TYPE, TransTargetPayload.STREAM_CODEC, TransTargetPayload.HANDLE
-        )
     }
 
     private fun registerCommand(event: RegisterCommandsEvent) {
@@ -434,7 +407,7 @@ object EventHandler {
     private fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
         val player = event.entity as ServerPlayer
         val payload = ServerHandShakePayload()
-        player.connection.send(payload)
+        payload.sendToPlayer(player)
     }
 
     private fun onPlayerLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
@@ -454,12 +427,12 @@ object EventHandler {
         DataQueryManager.Server.clearForPlayer(player)
     }
 
-    private fun tickServerPostEvent(event: ServerTickEvent.Post) {
+    private fun tickServerPostEvent(event: TickEvent.ServerTickEvent) {
         DataQueryManager.Server.tick()
         DebugHelper.Server.serverTick()
     }
 
-    private fun tickClientPostEvent(event: ClientTickEvent.Post) {
+    private fun tickClientPostEvent(event: TickEvent.ClientTickEvent) {
         HologramManager.clientTick()
         if (Config.Client.enablePopUp.get()) {
             PopupManager.tickPopup()
@@ -518,6 +491,6 @@ object EventHandler {
         val old = event.entity
         val new = event.outcome
         val payload = EntityConversationPayload(old.id, new.id, new.level().dimension())
-        PacketDistributor.sendToPlayersTrackingEntity(old, payload)
+        payload.sendToTraceEntityWithSelf(old)
     }
 }

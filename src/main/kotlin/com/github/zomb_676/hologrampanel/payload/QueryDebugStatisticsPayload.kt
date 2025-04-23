@@ -1,23 +1,24 @@
 package com.github.zomb_676.hologrampanel.payload
 
 import com.github.zomb_676.hologrampanel.DebugHelper
-import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadContext
+import com.github.zomb_676.hologrampanel.polyfill.IPayloadHandler
+import com.github.zomb_676.hologrampanel.polyfill.RegistryFriendlyByteBuf
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import net.minecraft.client.Minecraft
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.handling.IPayloadHandler
+import net.minecraftforge.network.NetworkEvent
 
 /**
  * notify the servet to begin/end send statistics data to clinet
  */
-class QueryDebugStatisticsPayload(val enable: Boolean) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<QueryDebugStatisticsPayload> = TYPE
+class QueryDebugStatisticsPayload(val enable: Boolean) : CustomPacketPayload<QueryDebugStatisticsPayload> {
+
+    override fun handle(context: NetworkEvent.Context) {
+        HANDLE.handle(this, IPayloadContext(context))
+    }
 
     companion object {
-        val TYPE = CustomPacketPayload.Type<QueryDebugStatisticsPayload>(HologramPanel.rl("query_debug_statistics"))
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, QueryDebugStatisticsPayload> = StreamCodec.composite(
             ByteBufCodecs.BOOL, QueryDebugStatisticsPayload::enable,
             ::QueryDebugStatisticsPayload
@@ -32,8 +33,7 @@ class QueryDebugStatisticsPayload(val enable: Boolean) : CustomPacketPayload {
             if (!state) {
                 DebugStatisticsPayload.clear()
             }
-            val player = Minecraft.getInstance().player ?: return
-            player.connection.send(QueryDebugStatisticsPayload(state))
+            QueryDebugStatisticsPayload(state).sendToServer()
         }
     }
 }

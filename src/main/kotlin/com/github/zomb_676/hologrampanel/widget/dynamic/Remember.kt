@@ -148,9 +148,7 @@ class Remember<T : HologramContext> private constructor() {
         equals: (ItemStack, ItemStack) -> Boolean = ItemStack::matches
     ): Holder<T, ItemStack> {
         return server(identity, ItemStack.EMPTY, equals) { tag ->
-            ItemStack.parseOptional(
-                context.getLevel().registryAccess(), tag.getCompound(keyName)
-            )
+            ItemStack.of(tag)
         }
     }
 

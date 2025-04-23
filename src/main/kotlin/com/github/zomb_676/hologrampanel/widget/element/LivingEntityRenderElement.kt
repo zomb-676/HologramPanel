@@ -29,10 +29,9 @@ open class LivingEntityRenderElement(val entity: LivingEntity, val entityScale: 
     override fun render(style: HologramStyle, partialTicks: Float) {
         InventoryScreen.renderEntityInInventory(
             style.guiGraphics,
-            contentSize.width.toFloat() / 2,
-            contentSize.height.toFloat(),
-            entityScale.toFloat(),
-            EMPTY_VECTOR,
+            contentSize.width / 2,
+            contentSize.height,
+            entityScale.toInt(),
             QUATERNION,
             null,
             entity

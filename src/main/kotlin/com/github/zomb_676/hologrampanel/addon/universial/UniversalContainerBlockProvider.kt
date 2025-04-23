@@ -3,6 +3,8 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.RegistryFriendlyByteBuf
 import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.extractArray
@@ -10,19 +12,13 @@ import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
-import net.minecraft.core.Holder
-import net.minecraft.core.component.DataComponentPatch
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.core.registries.Registries
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
-import net.neoforged.neoforge.capabilities.Capabilities
+import net.minecraftforge.common.capabilities.ForgeCapabilities
+import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.util.*
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -31,8 +27,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val be = context.getBlockEntity() ?: return false
-        val cap = be.level?.getCapability(Capabilities.ItemHandler.BLOCK, be.blockPos, be.blockState, be, null)
-            ?: return false
+        val cap = be.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null) ?: return false
 
         val container: Object2IntOpenCustomHashMap<ItemStack> = Object2IntOpenCustomHashMap(ItemStackWithComponentStrategy)
         repeat(cap.slots) { index ->
@@ -41,7 +36,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
             container.addTo(item, item.count)
         }
 
-        val buffer = context.createRegistryFriendlyByteBuf()
+        val buffer = context.createFriendlyByteBuf()
         buffer.writeVarInt(container.size)
         val iterator = container.object2IntEntrySet().fastIterator()
         while (iterator.hasNext()) {
@@ -52,8 +47,6 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         return true
     }
 
-    private val ITEM_STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, Holder<Item>> = ByteBufCodecs.holderRegistry<Item>(Registries.ITEM)
-
     /**
      * custom encode function to avoid item instance creation
      *
@@ -61,16 +54,28 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
      * @param count use this count
      */
     private fun encodeItem(buffer: RegistryFriendlyByteBuf, itemStack: ItemStack, count: Int) {
-        require(!itemStack.isEmpty)
+        if (itemStack.isEmpty) {
+            buffer.writeBoolean(false)
+            return
+        }
+        buffer.writeBoolean(true)
+        val item = itemStack.item
+        @Suppress("DEPRECATION")
+        buffer.writeId(BuiltInRegistries.ITEM, item)
         buffer.writeVarInt(count)
-        ITEM_STREAM_CODEC.encode(buffer, itemStack.itemHolder)
-        DataComponentPatch.STREAM_CODEC.encode(buffer, itemStack.components.asPatch())
-        ItemStack.OPTIONAL_LIST_STREAM_CODEC
+        val tag = if (item.isDamageable(itemStack) || item.shouldOverrideMultiplayerNbt()) {
+            itemStack.tag
+        } else null
+        buffer.writeNbt(tag)
     }
 
     object ItemStackWithComponentStrategy : Hash.Strategy<ItemStack?> {
-        override fun hashCode(itemStack: ItemStack?): Int = ItemStack.hashItemAndComponents(itemStack)
-        override fun equals(a: ItemStack?, b: ItemStack?): Boolean = if (b == null) a == null else ItemStack.isSameItemSameComponents(a, b)
+        override fun hashCode(itemStack: ItemStack?): Int {
+            if (itemStack == null) return 0
+            return HashCodeBuilder().append(itemStack.item).append(itemStack.tag?.hashCode()).toHashCode()
+        }
+
+        override fun equals(a: ItemStack?, b: ItemStack?): Boolean = if (b == null) a == null else ItemStack.isSameItemSameTags(a, b)
     }
 
     override fun appendComponent(
@@ -82,10 +87,10 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
             tag.getByteArray("items")
         }
         if (data.isEmpty()) return
-        val buffer = context.warpRegistryFriendlyByteBuf(data)
+        val buffer = context.warpFriendlyByteBuf(data)
         val count = buffer.readVarInt()
         val items = MutableList(count) {
-            ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
+            ByteBufCodecs.ITEM_STACK.decode(buffer)
         }
         if (items.isNotEmpty()) {
             items.sortWith(Comparator.comparingInt { BuiltInRegistries.ITEM.getId(it.item) })
@@ -102,10 +107,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
     override fun appliesTo(
         context: BlockHologramContext, check: BlockEntity
     ): Boolean {
-        val level = context.getLevel()
-        val cap = level.getCapability(
-            Capabilities.ItemHandler.BLOCK, check.blockPos, check.blockState, check, null
-        )
+        val cap = check.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null)
         return cap != null && cap.slots < 128
     }
 }

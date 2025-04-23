@@ -1,10 +1,10 @@
 package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.neoforged.neoforge.fluids.FluidType
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.RegistryFriendlyByteBuf
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
+import net.minecraftforge.fluids.FluidType
 
 data class FluidDataSyncEntry(val type: FluidType, val current: Int, val max: Int) {
     companion object {

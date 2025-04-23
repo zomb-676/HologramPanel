@@ -1,21 +1,19 @@
 package com.github.zomb_676.hologrampanel.interaction.context
 
 import com.github.zomb_676.hologrampanel.api.EfficientConst
+import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
 import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.BlockPos
-import net.minecraft.core.UUIDUtil
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.phys.BlockHitResult
-import net.neoforged.neoforge.server.ServerLifecycleHooks
-import org.jetbrains.annotations.ApiStatus
+import net.minecraftforge.server.ServerLifecycleHooks
 import org.joml.Vector3f
 import org.joml.Vector3fc
 import java.util.*
@@ -96,8 +94,8 @@ class BlockHologramContext(
         val STREAM_CODEC: StreamCodec<FriendlyByteBuf, BlockHologramContext> =
             object : StreamCodec<FriendlyByteBuf, BlockHologramContext> {
                 override fun decode(buffer: FriendlyByteBuf): BlockHologramContext {
-                    val pos = BlockPos.STREAM_CODEC.decode(buffer)
-                    val playerUUID = UUIDUtil.STREAM_CODEC.decode(buffer)
+                    val pos = ByteBufCodecs.BLOCK_POS.decode(buffer)
+                    val playerUUID = ByteBufCodecs.UUID.decode(buffer)
                     val player = ServerLifecycleHooks.getCurrentServer()!!.playerList.getPlayer(playerUUID)
                     val hit = buffer.readOptional(FriendlyByteBuf::readBlockHitResult)
                     return BlockHologramContext(pos, player!!, hit.getOrNull())
@@ -107,8 +105,8 @@ class BlockHologramContext(
                     buffer: FriendlyByteBuf,
                     value: BlockHologramContext
                 ) {
-                    BlockPos.STREAM_CODEC.encode(buffer, value.pos)
-                    UUIDUtil.STREAM_CODEC.encode(buffer, value.player.uuid)
+                    ByteBufCodecs.BLOCK_POS.encode(buffer, value.pos)
+                    ByteBufCodecs.UUID.encode(buffer, value.player.uuid)
                     buffer.writeOptional(Optional.ofNullable(value.hitResult), FriendlyByteBuf::writeBlockHitResult)
                 }
             }

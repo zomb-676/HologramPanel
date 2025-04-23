@@ -5,8 +5,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramConte
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
-import net.neoforged.neoforge.fluids.FluidStack
-import net.neoforged.neoforge.fluids.FluidType
+import net.minecraftforge.fluids.FluidType
 
 /**
  * register and setup setting on both physical dist

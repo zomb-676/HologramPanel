@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.api
 
 import net.minecraft.resources.ResourceLocation
-import net.neoforged.neoforge.common.ModConfigSpec
+import net.minecraftforge.common.ForgeConfigSpec
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,6 +25,6 @@ interface IHologramPlugin {
     fun registerClient(register: HologramClientRegistration) {}
 
     @ApiStatus.Experimental
-    fun registerClientConfig(register: ModConfigSpec.Builder) {
+    fun registerClientConfig(register: ForgeConfigSpec.Builder) {
     }
 }

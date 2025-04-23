@@ -1,16 +1,18 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.payload.NetworkHandle
 import net.minecraft.resources.ResourceLocation
-import net.neoforged.api.distmarker.Dist
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.common.Mod
-import net.neoforged.fml.javafmlmod.FMLModContainer
-import net.neoforged.fml.loading.FMLEnvironment
+import net.minecraftforge.api.distmarker.Dist
+import net.minecraftforge.eventbus.api.IEventBus
+import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+import net.minecraftforge.fml.loading.FMLEnvironment
+import net.minecraftforge.fml.loading.FMLLoader
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
 @Mod(HologramPanel.MOD_ID)
-class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: IEventBus) {
+class HologramPanel() {
     companion object {
         const val MOD_NAME = "Hologram Panel"
         const val MOD_ID = "hologram_panel"
@@ -20,7 +22,7 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
         val underDevelopment = !FMLEnvironment.production
         val underDebug = underDevelopment
 
-        fun rl(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
+        fun rl(path: String): ResourceLocation = ResourceLocation(MOD_ID, path)
 
         var serverInstalled: Boolean = false
             internal set
@@ -28,8 +30,12 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
 
     init {
+        val context = FMLJavaModLoadingContext.get()
+        val dist: Dist = FMLLoader.getDist()
+        val modBus: IEventBus = context.modEventBus
+
         PluginManager.init()
-        Config.registerConfig(container, modBus)
+        Config.registerConfig(modBus)
 
         if (dist == Dist.DEDICATED_SERVER) {
             serverInstalled = true
@@ -38,5 +44,6 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
         EventHandler.initEvents(dist, modBus)
         AllRegisters.initEvents(dist, modBus)
         Config.initEvents(dist, modBus)
+        NetworkHandle.registerPackets()
     }
 }

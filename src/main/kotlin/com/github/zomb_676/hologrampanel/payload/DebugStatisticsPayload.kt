@@ -1,12 +1,8 @@
 package com.github.zomb_676.hologrampanel.payload
 
-import com.github.zomb_676.hologrampanel.HologramPanel
-import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
-import net.minecraft.network.codec.StreamCodec
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.neoforged.neoforge.network.handling.IPayloadContext
-import net.neoforged.neoforge.network.handling.IPayloadHandler
+import com.github.zomb_676.hologrampanel.polyfill.*
+import net.minecraft.network.FriendlyByteBuf
+import net.minecraftforge.network.NetworkEvent
 
 /**
  * debug statistics data sent server to client
@@ -14,8 +10,11 @@ import net.neoforged.neoforge.network.handling.IPayloadHandler
  * @param total total count for HologramWidget to sync
  * @param forPlayer sync count request by the corresponding player
  */
-class DebugStatisticsPayload(val total: Int, val forPlayer: Int) : CustomPacketPayload {
-    override fun type(): CustomPacketPayload.Type<DebugStatisticsPayload> = TYPE
+class DebugStatisticsPayload(val total: Int, val forPlayer: Int) : CustomPacketPayload<DebugStatisticsPayload> {
+
+    override fun handle(context: NetworkEvent.Context) {
+        HANDLE.handle(this, IPayloadContext(context))
+    }
 
     companion object {
         var TOTAL_SYNC_COUNT: Int = -1
@@ -23,7 +22,6 @@ class DebugStatisticsPayload(val total: Int, val forPlayer: Int) : CustomPacketP
         var SYNC_COUNT_FOR_PLAYER: Int = -1
             private set
 
-        val TYPE = CustomPacketPayload.Type<DebugStatisticsPayload>(HologramPanel.rl("debug_statistics"))
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, DebugStatisticsPayload> = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, DebugStatisticsPayload::total,
             ByteBufCodecs.VAR_INT, DebugStatisticsPayload::forPlayer,

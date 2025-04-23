@@ -11,7 +11,7 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import net.neoforged.neoforge.capabilities.Capabilities
+import net.minecraftforge.common.capabilities.ForgeCapabilities
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
@@ -19,13 +19,13 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
         additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity()
-        val cap = entity.getCapability(Capabilities.FluidHandler.ENTITY, null) ?: return false
-        val buffer = context.createRegistryFriendlyByteBuf()
+        val cap = entity.getCapability(ForgeCapabilities.FLUID_HANDLER).orElse(null) ?: return false
+        val buffer = context.createFriendlyByteBuf()
         var fluidCount = 0
         repeat(cap.tanks) { index ->
             val fluidStack = cap.getFluidInTank(index)
             if (!fluidStack.isEmpty) {
-                val entry = FluidDataSyncEntry(fluidStack.fluidType, fluidStack.amount, cap.getTankCapacity(index))
+                val entry = FluidDataSyncEntry(fluidStack.fluid.fluidType, fluidStack.amount, cap.getTankCapacity(index))
                 FluidDataSyncEntry.STREAM_CODEC.encode(buffer, entry)
                 fluidCount++
             }
@@ -42,7 +42,7 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
         val remember = builder.context.getRememberData()
         val fluids by remember.server(0, listOf()) { tag ->
             val count = tag.getInt("fluid_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("fluid_data"))
+            val buffer = context.warpFriendlyByteBuf(tag.getByteArray("fluid_data"))
             List(count) {
                 FluidDataSyncEntry.STREAM_CODEC.decode(buffer)
             }
@@ -71,6 +71,6 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
     override fun appliesTo(
         context: EntityHologramContext, check: Entity
     ): Boolean {
-        return check.getCapability(Capabilities.FluidHandler.ENTITY, null) != null
+        return check.getCapability(ForgeCapabilities.FLUID_HANDLER).isPresent
     }
 }

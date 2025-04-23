@@ -22,7 +22,7 @@ data object ItemEntityTooltipProvider : ComponentProvider<EntityHologramContext,
         val context = builder.context
         val item = context.getEntity<ItemEntity>()?.item ?: return
         val tooltips by context.getRememberData().client(0, listOf()) {
-            item.getTooltipLines(Item.TooltipContext.of(context.getLevel()), context.getPlayer(), TooltipFlag.ADVANCED)
+            item.getTooltipLines(context.getPlayer(), TooltipFlag.ADVANCED)
         }
 
         when (Config.Style.itemTooltipType.get()) {
