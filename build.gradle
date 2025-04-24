@@ -16,6 +16,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '2.1.20'
     id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    id "com.gradleup.shadow" version "8.3.5"
 }
 
 apply plugin: 'org.spongepowered.mixin'
@@ -178,9 +179,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.20") {
         exclude group: 'org.jetbrains', module: 'annotations'
     }
-    jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")) {
-        exclude group: 'org.jetbrains', module: 'annotations'
-    }
     minecraftLibrary("org.jetbrains.kotlin:kotlin-stdlib:2.1.20") {
         exclude group: 'org.jetbrains', module: 'annotations'
     }
@@ -247,4 +245,16 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+tasks.shadowJar {
+    relocate("kotlin", "hologram.kotlin")
+    dependencies {
+        include(dependency("org.jetbrains.kotlin:kotlin-stdlib:.*"))
+    }
+}
+
+tasks.build.dependsOn(tasks.shadowJar)
+afterEvaluate {
+    tasks.reobfJarJar.dependsOn(tasks.shadowJar)
 }
