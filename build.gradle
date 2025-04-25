@@ -17,6 +17,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
     id "com.gradleup.shadow" version "8.3.5"
+    id "me.modmuss50.mod-publish-plugin" version "0.8.4"
 }
 
 apply plugin: 'org.spongepowered.mixin'
@@ -31,7 +32,7 @@ tasks.named('wrapper', Wrapper).configure {
 }
 
 group = mod_group_id
-version = mod_version
+version = "$minecraft_version-$platform_name-$mod_version"
 
 repositories {
     mavenLocal()
@@ -257,4 +258,32 @@ tasks.shadowJar {
 tasks.build.dependsOn(tasks.shadowJar)
 afterEvaluate {
     tasks.reobfJarJar.dependsOn(tasks.shadowJar)
+}
+
+publishMods {
+    file = shadowJar.archiveFile
+    changelog = "# Markdown changelog content"
+    type = STABLE
+
+    def name = "$mod_name".replace(" ", "")
+    displayName = "${name} ${project.version}"
+
+    modLoaders.add("$platform_name")
+
+    curseforge {
+        accessToken = providers.environmentVariable("CURSE_FORGE_TOKEN")
+        projectId = "1234869"
+        minecraftVersions.add("$minecraft_version")
+
+        javaVersions.add(JavaVersion.VERSION_21)
+
+        clientRequired = true
+        serverRequired = true
+    }
+
+    modrinth {
+        accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+        projectId = "BGwc3Y3t"
+        minecraftVersions.add("$minecraft_version")
+    }
 }
