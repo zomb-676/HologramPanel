@@ -16,10 +16,6 @@ object Config {
         context.registerConfig(ModConfig.Type.SERVER, Server.space, modFolderConfig("server"))
         context.registerConfig(ModConfig.Type.CLIENT, Client.space, modFolderConfig("client"))
         context.registerConfig(ModConfig.Type.CLIENT, Style.space, modFolderConfig("style"))
-
-        context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory::class.java,) {
-            ConfigScreenHandler.ConfigScreenFactory { mc, screen -> screen }
-        }
     }
 
     fun modFolderConfig(fileName: String): String = "HologramPanel/$fileName.toml"
