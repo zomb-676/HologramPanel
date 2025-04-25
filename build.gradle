@@ -182,6 +182,9 @@ publishMods {
     changelog = "# Markdown changelog content"
     type = STABLE
 
+    def name = "$mod_name".replace(" ", "")
+    displayName = "${name} ${project.version}"
+
     modLoaders.add("$platform_name")
 
     curseforge {
