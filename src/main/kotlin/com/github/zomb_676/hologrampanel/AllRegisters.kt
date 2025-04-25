@@ -15,8 +15,6 @@ import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent
 import net.neoforged.neoforge.client.settings.KeyConflictContext
-import net.neoforged.neoforge.fluids.FluidType
-import net.neoforged.neoforge.registries.NeoForgeRegistries
 import net.neoforged.neoforge.registries.NewRegistryEvent
 import net.neoforged.neoforge.registries.RegistryBuilder
 import org.lwjgl.glfw.GLFW
@@ -47,9 +45,6 @@ object AllRegisters {
     object Codecs {
         val LEVEL_STREAM_CODE: StreamCodec<ByteBuf, ResourceKey<Level>> =
             ResourceKey.streamCodec(Registries.DIMENSION)
-
-        val FLUID_TYPE_STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, FluidType> =
-            ByteBufCodecs.registry(NeoForgeRegistries.Keys.FLUID_TYPES)
     }
 
     object KeyMapping {
