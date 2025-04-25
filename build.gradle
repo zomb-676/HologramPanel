@@ -4,6 +4,7 @@ plugins {
     id 'idea'
     id 'net.neoforged.moddev' version '2.0.78'
     id 'org.jetbrains.kotlin.jvm' version '2.1.20'
+    id "me.modmuss50.mod-publish-plugin" version "0.8.4"
 }
 
 version = "$minecraft_version-$platform_name-$mod_version"
@@ -173,5 +174,30 @@ idea {
     module {
         downloadSources = true
         downloadJavadoc = true
+    }
+}
+
+publishMods {
+    file = jar.archiveFile
+    changelog = "# Markdown changelog content"
+    type = STABLE
+
+    modLoaders.add("$platform_name")
+
+    curseforge {
+        accessToken = providers.environmentVariable("CURSE_FORGE_TOKEN")
+        projectId = "1234869"
+        minecraftVersions.add("$minecraft_version")
+
+        javaVersions.add(JavaVersion.VERSION_21)
+
+        clientRequired = true
+        serverRequired = true
+    }
+
+    modrinth {
+        accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+        projectId = "BGwc3Y3t"
+        minecraftVersions.add("$minecraft_version")
     }
 }
