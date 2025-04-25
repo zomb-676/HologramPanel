@@ -177,18 +177,12 @@ dependencies {
     // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.20") {
-        exclude group: 'org.jetbrains', module: 'annotations'
-    }
-    minecraftLibrary("org.jetbrains.kotlin:kotlin-stdlib:2.1.20") {
-        exclude group: 'org.jetbrains', module: 'annotations'
-    }
+    implementation fg.deobf("curse.maven:kotlin-for-forge-351264:5402061")
 
 //    runtimeOnly("curse.maven:jade-324717:6170888")
     fg.deobf compileOnly("me.shedaniel:RoughlyEnoughItems-forge:12.1.785")
 
     compileOnly("org.jetbrains:annotations:26.0.2")
-
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
