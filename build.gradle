@@ -286,4 +286,12 @@ publishMods {
         projectId = "BGwc3Y3t"
         minecraftVersions.add("$minecraft_version")
     }
+
+    afterEvaluate {
+        project.tasks.forEach {
+            if (it.group == "publishing") {
+                it.dependsOn(tasks.named("reobfJarJar"))
+            }
+        }
+    }
 }
