@@ -275,7 +275,7 @@ publishMods {
         projectId = "1234869"
         minecraftVersions.add("$minecraft_version")
 
-        javaVersions.add(JavaVersion.VERSION_21)
+        javaVersions.add(JavaVersion.VERSION_17)
 
         clientRequired = true
         serverRequired = true
