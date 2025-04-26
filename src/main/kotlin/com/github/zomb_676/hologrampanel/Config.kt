@@ -172,6 +172,30 @@ object Config {
         val widgetBackgroundAlpha: ModConfigSpec.IntValue = builder
             .defineInRange("widget_background_alpha", 0x7f, 0x00, 0xff)
 
+        val pinPaddingLeft : ModConfigSpec.IntValue = builder
+            .defineInRange("pin_padding_left", 0, 10, Int.MAX_VALUE)
+
+        val pinPaddingUp : ModConfigSpec.IntValue = builder
+            .defineInRange("pin_padding_up", 0, 10, Int.MAX_VALUE)
+
+        val pinPromptLineWidth: ModConfigSpec.DoubleValue = builder
+            .defineInRange("pin_prompt_line_width", 0.8, 0.001, 10.0)
+
+        val pingPromptRadius : ModConfigSpec.DoubleValue = builder
+            .defineInRange("pin_prompt_radius", 10.0, 1.0, 100.0)
+
+        val pingPromptTerminalStraightLineLength : ModConfigSpec.DoubleValue = builder
+            .defineInRange("ping_prompt_terminal_straight_line_length", 20.0, 0.1, 100.0)
+
+        val dragPromptXOffset : ModConfigSpec.DoubleValue = builder
+            .defineInRange("drag_prompt_x_offset", 3.0, -1000.0, 1000.0)
+
+        val dragPromptYOffset : ModConfigSpec.DoubleValue = builder
+            .defineInRange("drag_prompt_y_offset", 3.0, -1000.0, 1000.0)
+
+        val dragPromptAlpha : ModConfigSpec.DoubleValue = builder
+            .defineInRange("drag_prompt_alpha", 0.8, 0.01, 1.0)
+
         val space: ModConfigSpec = builder.build()
     }
 

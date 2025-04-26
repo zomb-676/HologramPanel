@@ -229,6 +229,7 @@ object EventHandler {
                 }
             })
             event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.Client.getLayer())
+            event.registerAboveAll(HologramPanel.rl("drag_entries"), InteractionLayer.getDraggingLayer())
         }
 
         private fun onPlayerLogIn(event: ClientPlayerNetworkEvent.LoggingIn) {
