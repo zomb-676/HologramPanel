@@ -1,11 +1,14 @@
 package com.github.zomb_676.hologrampanel.interaction
 
+import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
-import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactHologram
+import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -128,7 +131,7 @@ object HologramManager {
         DebugHelper.Client.clearRenderRelatedInfo()
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
-            if (Config.Client.skipHologramIfEmpty.get() && !widget.hasNoneOrdinaryContent()) {
+            if (Config.Client.skipHologramIfEmpty.get() && !AllRegisters.KeyMapping.detailStateKey.isDown && !widget.hasNoneOrdinaryContent()) {
                 state.displayed = false
                 return@forEach
             }
@@ -458,7 +461,7 @@ object HologramManager {
      * sort screen ping hologram by their y of screen position
      */
     private fun arrangeScreenPingWidget(partialTicks: Float) {
-        val initial = AlignedScreenPosition.of(10, 10)
+        val initial = AlignedScreenPosition.of(Config.Style.pinPaddingLeft.get(), Config.Style.pinPaddingUp.get())
         var pos = initial.toNotAligned()
         var size = Size.ZERO
         screenPingHolograms.sortBy {
@@ -495,10 +498,11 @@ object HologramManager {
                 LinkLineRender.fillThreeSegmentConnectionLine(
                     Vector2d(widgetX, widgetY),
                     Vector2d(worldX.toDouble(), worldY.toDouble()),
-                    10.0,
-                    20.0,
+                    radius = Config.Style.pingPromptRadius.get(),
+                    lineLength = Config.Style.pingPromptTerminalStraightLineLength.get(),
                     builder,
-                    style.poseMatrix()
+                    style.poseMatrix(),
+                    halfLineWidth = Config.Style.pinPromptLineWidth.get().toFloat() / 2.0f
                 )
             }
             val meshData = builder.build() ?: return
