@@ -448,8 +448,10 @@ object HologramManager {
 
     fun tryPingInteractScreen() {
         val interact = getInteractHologram() ?: return
-        interact.locate = LocateType.Screen(Vector2f(30f, 30f))
-        this.screenPingHolograms.add(interact)
+        if (interact.locate !is LocateType.Screen) {
+            interact.locate = LocateType.Screen(Vector2f(30f, 30f))
+            this.screenPingHolograms.add(interact)
+        }
     }
 
     /**
