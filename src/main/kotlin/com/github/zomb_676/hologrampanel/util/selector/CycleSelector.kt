@@ -84,9 +84,13 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         val sqrt = sqrt(x * x + y * y)
         val canSelect = sqrt > 20
 
+        val currentVisible = currentGroup.children()
+            .onEach(CycleEntry::tick)
+            .filter(CycleEntry::isVisible)
+
         val currentRadian = Math.toRadians(degree)
-        val degreeForEach = 360.0 / currentGroup.childrenCount()
-        currentGroup.children().forEachIndexed { index, entry ->
+        val degreeForEach = 360.0 / currentVisible.size
+        currentVisible.forEachIndexed { index, entry ->
             val from = Math.toRadians((degreeForEach * index) + 1)
             val to = Math.toRadians((degreeForEach * (index + 1)) - 1)
             val isHover = canSelect && currentRadian in from..to
@@ -96,10 +100,12 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             } else {
                 0x7fffffff.toInt()
             }
+            RenderSystem.enableBlend()
             style.drawTorus(
                 20f, 70f, colorOut = color, colorIn = 0x7fffffff,
                 beginRadian = from, endRadian = to, isClockWise = false
             )
+            RenderSystem.disableBlend()
 
             val distance = 45f
             val centerDegree = (from + to) / 2
@@ -116,11 +122,13 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         this.canBackToParent = !canSelect && sqrt < 20 * 0.8 && this.openStack.isNotEmpty()
+        RenderSystem.enableBlend()
         if (this.canBackToParent) {
             style.drawCycle(16f, colorOut = 0xffffff00.toInt(), colorIn = 0x7fffffff.toInt())
         } else if (this.openStack.isNotEmpty()) {
             style.drawCycle(16f, colorOut = 0x7fffffff.toInt())
         }
+        RenderSystem.disableBlend()
 
         style.guiGraphics.flush()
         RenderSystem.disableBlend()
@@ -150,24 +158,15 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         fun tryBegin() {
             if (this.instance == null) {
                 MouseInputModeUtil.tryEnter()
-//                this.instance = CycleSelectorBuilder {
-//                    repeat(5) { index ->
-//                        add(ComponentRenderElement(index.toString())) {
-//                            Minecraft.getInstance().gui.chat.addMessage(Component.literal("$index"))
-//                        }
-//                    }
-//
-//                }
                 this.instance = PanelOperatorManager.createInstance()
             }
         }
 
         fun tryEnd() {
-            if (this.instance != null) {
-                instance?.current?.onClose()
-                this.instance = null
-                MouseInputModeUtil.exit()
-            }
+            val selector = this.instance ?: return
+            instance?.current?.onClose(selector)
+            this.instance = null
+            MouseInputModeUtil.exit()
         }
 
         fun onClick() {
@@ -176,7 +175,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
                 selector.recoveryToParent()
             } else {
                 val target = selector.current ?: return
-                target.onClick(selector)
+                target.onClick(selector, CycleEntry.TrigType.BY_CLICK)
             }
         }
 

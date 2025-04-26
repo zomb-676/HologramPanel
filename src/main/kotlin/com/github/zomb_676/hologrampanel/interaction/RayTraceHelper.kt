@@ -17,36 +17,55 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
 import net.minecraft.world.entity.EntitySelector
 import net.minecraft.world.entity.projectile.ProjectileUtil
+import net.minecraft.world.level.ClipContext
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 
 object RayTraceHelper {
+    fun rayTraceBlock(radius: Double, partialTicks: Float): BlockHitResult? {
+        val player = Minecraft.getInstance().player!!
+        val eyePosition = player.getEyePosition(partialTicks)
+        val viewVector = player.getViewVector(partialTicks)
+        val targetPosition = eyePosition.add(viewVector.x * radius, viewVector.y * radius, viewVector.z * radius)
+        val hit = player.level().clip(
+            ClipContext(
+                eyePosition, targetPosition,
+                ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, player
+            )
+        )
+        return if (hit.type == HitResult.Type.MISS) null else hit
+    }
+
+    fun rayTraceEntity(radius: Double, partialTicks: Float): EntityHitResult? {
+        val player = Minecraft.getInstance().player!!
+        val from = player.eyePosition
+        val viewVector = player.getViewVector(partialTicks)
+        val to = from.add(viewVector.x * radius, viewVector.y * radius, viewVector.z * radius)
+        val aabb = player.boundingBox.expandTowards(viewVector.scale(radius)).inflate(1.0, 1.0, 10.0)
+        val entityHit = ProjectileUtil.getEntityHitResult(
+            player, from, to, aabb, EntitySelector.ENTITY_STILL_ALIVE, radius
+        ) ?: return null
+        return if (entityHit.type == HitResult.Type.MISS) null else entityHit
+    }
+
+
+    fun rayTrace(radius: Double, partialTicks: Float): HitResult? {
+        val player = Minecraft.getInstance().player!!
+        val blockHit = rayTraceBlock(radius, partialTicks)
+        val entityHit = rayTraceEntity(radius, partialTicks)
+        if (blockHit == null && entityHit == null) return null
+        val blockDistance = blockHit?.distanceTo(player) ?: Double.MAX_VALUE
+        val entityDistance = entityHit?.distanceTo(player) ?: Double.MAX_VALUE
+        return if (blockDistance < entityDistance) blockHit else entityHit
+    }
+
     /**
      * use ray-trace to create a satisfied [HologramContext]
      */
     fun findTarget(radius: Double, partialTicks: Float): HologramContext? = profilerStack("hologram_find_target") {
-        val player = Minecraft.getInstance().player!!
-        val blockHit = player.pick(radius, partialTicks, true)
-        val entityHit = run {
-            val from = player.eyePosition
-            val viewVector = player.getViewVector(partialTicks)
-            val to = from.add(viewVector.x * radius, viewVector.y * radius, viewVector.z * radius)
-            val aabb = player.boundingBox.expandTowards(viewVector.scale(radius)).inflate(1.0, 1.0, 10.0)
-            ProjectileUtil.getEntityHitResult(
-                player, from, to, aabb, EntitySelector.ENTITY_STILL_ALIVE, radius
-            )
-        }
-        val result: HitResult = run {
-            if (entityHit == null) {
-                return@run blockHit
-            }
-            val blockDistance = blockHit.distanceTo(player)
-            val entityDistance = entityHit.distanceTo(player)
-            return@run if (blockDistance < entityDistance) blockHit else entityHit
-        }
-
-        if (result.type == HitResult.Type.MISS) return@profilerStack null
+        val player = Minecraft.getInstance().player ?: return@profilerStack null
+        val result = rayTrace(radius, partialTicks) ?: return@profilerStack null
         return@profilerStack when (result) {
             is BlockHitResult -> {
                 val context = BlockHologramContext.of(result, player)
@@ -63,7 +82,6 @@ object RayTraceHelper {
                 }
                 context
             }
-
             else -> throw RuntimeException("unknown hit result:$result")
         }
     }

@@ -104,5 +104,6 @@ object NetworkHandle {
             TransTargetPayload.STREAM_CODEC
                     as StreamCodec<RegistryFriendlyByteBuf, TransTargetPayload<Any, Any>>
         )
+        register(SetProjectorSettingPayload.STREAM_CODEC)
     }
 }

@@ -3,12 +3,17 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.payload.*
+import com.github.zomb_676.hologrampanel.projector.IHologramStorage
+import com.github.zomb_676.hologrampanel.projector.ProjectorManager
 import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
-import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
+import com.github.zomb_676.hologrampanel.widget.locateType.AdjustType
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.TransformOrientation
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
@@ -26,6 +31,7 @@ import net.minecraftforge.client.gui.overlay.ForgeGui
 import net.minecraftforge.client.gui.overlay.IGuiOverlay
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay
 import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent
 import net.minecraftforge.event.RegisterCommandsEvent
 import net.minecraftforge.event.TickEvent
 import net.minecraftforge.event.entity.EntityJoinLevelEvent
@@ -38,6 +44,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent
 import net.minecraftforge.registries.RegisterEvent
 import net.minecraftforge.server.ServerLifecycleHooks
 import net.minecraftforge.server.command.EnumArgument
+import org.joml.Quaternionf
 import org.lwjgl.glfw.GLFW
 import kotlin.math.max
 import kotlin.math.min
@@ -57,6 +64,7 @@ object EventHandler {
         modBus.addListener(EventHandler::onRegistryEvent)
         modBus.addListener(EventHandler::onClientSetup)
         modBus.addListener(EventHandler::onLoadComplete)
+        modBus.addListener(EventHandler::registerCapability)
         forgeBus.addListener(EventHandler::onMobConversion)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
@@ -72,7 +80,6 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onKey)
             forgeBus.addListener(ClientOnly::onMouseButton)
             forgeBus.addListener(ClientOnly::onMouseScroll)
-            forgeBus.addListener(ClientOnly::onInteraction)
             forgeBus.addListener(ClientOnly::onClientTickPre)
             forgeBus.addListener(ClientOnly::onClientTickPost)
             forgeBus.addListener(ClientOnly::onRenderGUI)
@@ -126,10 +133,20 @@ object EventHandler {
                     }
                 }
 
+                AllRegisters.KeyMapping.forceDisplayKey.key.value -> when (Config.Client.forceDisplayModeSwitchType.get()) {
+                    SwitchMode.BY_PRESS -> if (isDownAction) {
+                        HologramManager.isUnderForceDisplay = true
+                    } else if (isRelease) {
+                        HologramManager.isUnderForceDisplay = false
+                    }
+
+                    SwitchMode.BY_CYCLE -> while (AllRegisters.KeyMapping.forceDisplayKey.consumeClick()) {
+                        HologramManager.isUnderForceDisplay = !HologramManager.isUnderForceDisplay
+                    }
+                }
+
                 else if isDownAction -> when (event.key) {
                     AllRegisters.KeyMapping.collapseKey.key.value -> HologramManager.trySwitchWidgetCollapse()
-                    AllRegisters.KeyMapping.pingScreenKey.key.value -> HologramManager.tryPingInteractScreen()
-                    AllRegisters.KeyMapping.pingVectorKey.key.value -> HologramManager.tryPingInteractVector()
                 }
             }
 
@@ -140,44 +157,69 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-            val modifier = if (shiftDown) 0.05 else 0.2
-            val changeValue = event.scrollDelta * modifier
+            val window = Minecraft.getInstance().window.window
+            val shiftDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
 
             run {
-                val modifyTarget = PanelOperatorManager.modifyTarget ?: return@run
+                val modifyTarget = PanelOperatorManager.selectedTarget ?: return@run
                 val player = Minecraft.getInstance().player ?: return@run
-                val window = Minecraft.getInstance().window.window
-                val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
+                val locate = modifyTarget.locate as? LocateInWorld? ?: return@run
 
-                val axisMode = PanelOperatorManager.axisMode
-                val vector = when (GLFW.GLFW_PRESS) {
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.extractX(player, locate)
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> axisMode.extractY(player, locate)
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.extractZ(player, locate)
+                val orientation = PanelOperatorManager.transformOrientation
+                when (PanelOperatorManager.modifyLocation) {
+                    AdjustType.LOCATION -> {
+                        val modifier = if (shiftDown) 0.05 else 0.2
+                        val changeValue = event.scrollDelta * modifier
+                        val vector = when (GLFW.GLFW_PRESS) {
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> orientation.extractX(player, locate)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> orientation.extractY(player, locate)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> orientation.extractZ(player, locate)
+                            else -> return@run
+                        } ?: return@run
+                        locate.offset.add(vector.mul(changeValue.toFloat()))
+                    }
+
+                    AdjustType.ROTATION if locate is LocateFreelyInWorld -> {
+                        val modifier = if (shiftDown) 1 else 5
+                        val changeValue = Math.toRadians((event.scrollDelta * modifier)).toFloat()
+                        val rotation = Quaternionf(locate.getRotation())
+                        val cameraRotation = Minecraft.getInstance().gameRenderer.mainCamera.rotation()
+                        val applyRotation = when (GLFW.GLFW_PRESS) {
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> orientation.rotateX(rotation, cameraRotation, changeValue)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> orientation.rotateY(rotation, cameraRotation, changeValue)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> orientation.rotateZ(rotation, cameraRotation, changeValue)
+                            else -> return@run
+                        }
+                        locate.setRotation(applyRotation)
+                    }
+
                     else -> return@run
                 }
-                locate.offset.add(vector.mul(changeValue.toFloat()))
-                event.isCanceled = true
-                return
-            }
-
-            HologramManager.getInteractHologram()?.also { state ->
-                val locate = state.locate as? LocateType.World.FacingVector ?: return@also
-
-                locate.scale = max(min(max(locate.scale + changeValue.toFloat(), 0.01f), 2.5f), 0.2f)
-                Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust hologram scale to %.2f".format(locate.scale)), false)
-
                 event.isCanceled = true
                 return
             }
 
             if (AllRegisters.KeyMapping.scaleKey.isDown) {
-                val scale = Config.Client.globalHologramScale
-                scale.setAndSave(min(max(scale.get() + changeValue, 0.01), 2.5))
-                Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
-                event.isCanceled = true
-                return
+                val modifier = if (shiftDown) 0.05 else 0.2
+                val changeValue = event.scrollDelta * modifier
+
+                (PanelOperatorManager.selectedTarget ?: HologramManager.getInteractHologram())?.also { state ->
+                    val locate = state.locate as? LocateFreelyInWorld ?: return@also
+
+                    locate.scale = max(min(max(locate.scale + changeValue.toFloat(), 0.01f), 2.5f), 0.2f)
+                    Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust hologram scale to %.2f".format(locate.scale)), false)
+
+                    event.isCanceled = true
+                    return
+                }
+
+                run {
+                    val scale = Config.Client.globalHologramScale
+                    scale.setAndSave(min(max(scale.get() + changeValue, 0.01), 2.5))
+                    Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
+                    event.isCanceled = true
+                    return
+                }
             }
 
             if (HologramInteractionManager.onMouseScroll(event)) {
@@ -194,6 +236,7 @@ object EventHandler {
                 if (event.action == GLFW.GLFW_PRESS) {
                     CycleSelector.onClick()
                 }
+                event.isCanceled = true
                 return
             }
 
@@ -212,10 +255,6 @@ object EventHandler {
             }
         }
 
-        private fun onInteraction(event: InputEvent.InteractionKeyMappingTriggered) {
-//            event.isCanceled = true
-        }
-
         private fun registerLayer(event: RegisterGuiOverlaysEvent) {
             event.registerBelow(
                 VanillaGuiOverlay.CROSSHAIR.id(), "interaction_mode_layer", InteractionLayer.getLayer()
@@ -226,6 +265,8 @@ object EventHandler {
                 }
             })
             event.registerAboveAll("debug_layer", DebugHelper.Client.getLayer())
+            event.registerAboveAll("drag_entries", InteractionLayer.getDraggingLayer())
+            event.registerBelowAll("transform_orientation", TransformOrientation.getTransformOrientationLayer())
         }
 
         private fun onPlayerLogIn(event: ClientPlayerNetworkEvent.LoggingIn) {
@@ -394,6 +435,14 @@ object EventHandler {
                         }
                     }
                 }
+                "style" {
+                    "tooltip_type"(EnumArgument.enumArgument(TooltipType::class.java)) {
+                        execute {
+                            val type = getArgument("tooltip_type", TooltipType::class.java)
+                            Config.Style.itemTooltipType.setAndSave(type)
+                        }
+                    }
+                }
             }
         }
     }
@@ -436,6 +485,7 @@ object EventHandler {
     private fun levelUnload(event: LevelEvent.Unload) {
         if (event.level.isClientSide) {
             HologramManager.clearAllHologram()
+            ProjectorManager.clear()
         }
     }
 
@@ -486,5 +536,9 @@ object EventHandler {
         val new = event.outcome
         val payload = EntityConversationPayload(old.id, new.id, new.level().dimension())
         payload.sendToTraceEntityWithSelf(old)
+    }
+
+    private fun registerCapability(event: RegisterCapabilitiesEvent) {
+        event.register(IHologramStorage::class.java)
     }
 }

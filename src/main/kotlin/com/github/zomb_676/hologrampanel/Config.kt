@@ -1,14 +1,29 @@
 package com.github.zomb_676.hologrampanel
 
+import com.github.zomb_676.hologrampanel.compat.ModInstalled
 import com.github.zomb_676.hologrampanel.util.SearchBackend
+import com.github.zomb_676.hologrampanel.util.SwitchMode
 import com.github.zomb_676.hologrampanel.util.TooltipType
+import com.github.zomb_676.hologrampanel.util.setAndSave
+import net.minecraft.client.Minecraft
+import net.minecraft.core.HolderLookup
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.core.registries.Registries
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.level.block.Block
 import net.minecraftforge.api.distmarker.Dist
-import net.minecraftforge.client.ConfigScreenHandler
 import net.minecraftforge.common.ForgeConfigSpec
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.event.TagsUpdatedEvent
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
 import net.minecraftforge.fml.event.config.ModConfigEvent
+import net.minecraftforge.fml.loading.FMLLoader
+import kotlin.jvm.optionals.getOrNull
+import kotlin.streams.asSequence
 
 object Config {
     fun registerConfig(modBus: IEventBus) {
@@ -16,6 +31,14 @@ object Config {
         context.registerConfig(ModConfig.Type.SERVER, Server.space, modFolderConfig("server"))
         context.registerConfig(ModConfig.Type.CLIENT, Client.space, modFolderConfig("client"))
         context.registerConfig(ModConfig.Type.CLIENT, Style.space, modFolderConfig("style"))
+
+        MinecraftForge.EVENT_BUS.addListener(::onTagUpdate)
+    }
+
+    fun onTagUpdate(event: TagsUpdatedEvent) {
+        if (FMLLoader.getDist() == Dist.CLIENT) {
+            Client.onTagUpdate(event.registryAccess)
+        }
     }
 
     fun modFolderConfig(fileName: String): String = "HologramPanel/$fileName.toml"
@@ -121,10 +144,90 @@ object Config {
         val searchBackend: ForgeConfigSpec.EnumValue<SearchBackend.Type> = builder
             .defineEnum("search_backend", SearchBackend.Type.AUTO)
 
+        val forceDisplayModeSwitchType: ForgeConfigSpec.EnumValue<SwitchMode> = builder
+            .defineEnum("force_display_mode_switch_type", SwitchMode.BY_PRESS)
+
+        val tooltipLimitHeight: ForgeConfigSpec.IntValue = builder
+            .comment("0 for no limit")
+            .defineInRange("tooltip_limit_height", 50, 0, Int.MAX_VALUE)
+
+        val pinScreenDistanceFactor: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("pin_screen_distance_factor", 5.0, 1.0, 100.0)
+
+        val hideEntityTypes: ForgeConfigSpec.ConfigValue<MutableList<String>> = builder
+            .define("hide_entity_types", mutableListOf())
+
+        val hideBlocks: ForgeConfigSpec.ConfigValue<MutableList<String>> = builder
+            .define("hide_blocks", mutableListOf())
+
+        internal val hideEntityTypesList: MutableSet<EntityType<*>> = mutableSetOf()
+        internal val hideBlocksList: MutableSet<Block> = mutableSetOf()
+
+        fun onTagUpdate(provider: HolderLookup.Provider) {
+            run {
+                val entityTypeData = provider.lookup(Registries.ENTITY_TYPE).getOrNull() ?: return@run
+                val tags = entityTypeData.listTags().asSequence()
+                    .associateBy { set -> set.key().location }
+                for (typeString in this.hideEntityTypes.get()) {
+                    val location = ResourceLocation.tryParse(typeString) ?: continue
+                    if (tags.containsKey(location)) {
+                        tags.getValue(location).forEach { type ->
+                            hideEntityTypesList += type.value()
+                        }
+                        continue
+                    }
+
+                    val type = BuiltInRegistries.ENTITY_TYPE.getOptional(location).getOrNull()
+                    if (type != null) {
+                        hideEntityTypesList += type
+                        continue
+                    }
+
+                    HologramPanel.LOGGER.error("EntityType(s) $type not found")
+                }
+            }
+            run {
+                val blockTypeData = provider.lookup(Registries.BLOCK).getOrNull() ?: return@run
+                val tags = blockTypeData.listTags().asSequence()
+                    .associateBy { set -> set.key().location }
+                for (blockString in this.hideBlocks.get()) {
+                    val location = ResourceLocation.tryParse(blockString) ?: continue
+                    if (tags.containsKey(location)) {
+                        tags.getValue(location).forEach { type ->
+                            hideBlocksList += type.value()
+                        }
+                        continue
+                    }
+
+                    val type = BuiltInRegistries.BLOCK.getOptional(location).getOrNull()
+                    if (type != null) {
+                        hideBlocksList += type
+                        continue
+                    }
+
+                    HologramPanel.LOGGER.error("Block(s) $type not found")
+                }
+            }
+        }
+
         fun tryValidate() {
             if (renderMaxDistance.get() <= renderMinDistance.get()) {
                 renderMinDistance.set(1.0)
                 renderMinDistance.set(8.0)
+            }
+            when (searchBackend.get()) {
+                SearchBackend.Type.REI -> if (ModInstalled.reiInstalled) return
+                SearchBackend.Type.JEI -> if (ModInstalled.jeiInstalled) return
+                else -> return
+            }
+            searchBackend.setAndSave(SearchBackend.Type.AUTO)
+            Minecraft.getInstance().gui.chat.addMessage(
+                Component.literal(
+                    "search backend switch to auto for fallback"
+                )
+            )
+            Minecraft.getInstance().level?.registryAccess()?.also { access ->
+                onTagUpdate(access)
             }
         }
 
@@ -146,8 +249,41 @@ object Config {
         val interactIndicatorPercent: ForgeConfigSpec.DoubleValue = builder
             .defineInRange("interact_indicator_percent", 0.2, 0.001, 0.999)
 
+        val renderSelectedIndicator: ForgeConfigSpec.BooleanValue = builder
+            .define("render_selected_indicator", true)
+
+        val selectedIndicatorDistance: ForgeConfigSpec.IntValue = builder
+            .defineInRange("selected_indicator_distance", 12, 1, 20)
+
+        val selectedIndicatorPercent: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("selected_indicator_percent", 0.2, 0.001, 0.999)
+
         val widgetBackgroundAlpha: ForgeConfigSpec.IntValue = builder
             .defineInRange("widget_background_alpha", 0x7f, 0x00, 0xff)
+
+        val pinPaddingLeft: ForgeConfigSpec.IntValue = builder
+            .defineInRange("pin_padding_left", 0, 10, Int.MAX_VALUE)
+
+        val pinPaddingUp: ForgeConfigSpec.IntValue = builder
+            .defineInRange("pin_padding_up", 0, 10, Int.MAX_VALUE)
+
+        val pinPromptLineWidth: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("pin_prompt_line_width", 0.8, 0.001, 10.0)
+
+        val pinPromptRadius: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("pin_prompt_radius", 10.0, 1.0, 100.0)
+
+        val pinPromptTerminalStraightLineLength: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("pin_prompt_terminal_straight_line_length", 20.0, 0.1, 100.0)
+
+        val dragPromptXOffset: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("drag_prompt_x_offset", 3.0, -1000.0, 1000.0)
+
+        val dragPromptYOffset: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("drag_prompt_y_offset", 3.0, -1000.0, 1000.0)
+
+        val dragPromptAlpha: ForgeConfigSpec.DoubleValue = builder
+            .defineInRange("drag_prompt_alpha", 0.8, 0.01, 1.0)
 
         val space: ForgeConfigSpec = builder.build()
     }

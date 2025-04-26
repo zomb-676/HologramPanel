@@ -211,24 +211,28 @@ internal class PluginManager private constructor(val plugins: List<IHologramPlug
         this.hideEntityCallback.addAll(flatten(clientRegistration, HologramClientRegistration::hideEntityCallback))
     }
 
-    fun hideBlock(block: Block) = this.hideBlocks.contains(block)
+    fun hideBlock(block: Block) = this.hideBlocks.contains(block) || Config.Client.hideBlocksList.contains(block)
     fun hideEntity(entity: Entity) =
-        this.hideEntityTypes.contains(entity.type) || this.hideEntityCallback.any { it.test(entity) }
+        this.hideEntityTypes.contains(entity.type) || this.hideEntityCallback.any { it.test(entity) } ||
+                Config.Client.hideEntityTypesList.contains(entity.type)
 
     fun popUpBlock(pos: BlockPos, level: Level): List<HologramTicket<BlockHologramContext>> {
+        val block = level.getBlockState(pos)
+        if (hideBlock(block.block)) return emptyList()
         if (this.block.isEmpty() && Config.Client.popupAllNearByBlock.get()) {
             if (level.getBlockState(pos).hasBlockEntity()) {
                 return listOf(HologramTicket.byPopUpDistance())
             }
         }
         for (popupCallback in this.block) {
-            val list = popupCallback.popup(pos, level)
+            val list = popupCallback.popup(pos, block, level)
             if (list.isNotEmpty()) return list
         }
         return listOf()
     }
 
     fun popUpEntity(entity: Entity): List<HologramTicket<EntityHologramContext>> {
+        if (hideEntity(entity)) return emptyList()
         if (this.entity.isEmpty() && Config.Client.popupAllNearbyEntity.get()) {
             return listOf(HologramTicket.byPopUpDistance())
         }

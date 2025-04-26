@@ -20,10 +20,11 @@ open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipTyp
     var tooltips: List<ClientTooltipComponent> = listOf()
     override fun measureContentSize(style: HologramStyle): Size {
         val window = Minecraft.getInstance().window
-        @Suppress("UnstableApiUsage")
+        val textElements = Screen.getTooltipFromItem(Minecraft.getInstance(), item)
+            .filter { Minecraft.getInstance().font.width(it) > 0 }
         tooltips = ForgeHooksClient.gatherTooltipComponents(
             item,
-            Screen.getTooltipFromItem(Minecraft.getInstance(), item),
+            textElements,
             item.tooltipImage,
             window.guiScaledWidth / 2,
             window.guiScaledWidth,

@@ -9,7 +9,7 @@ import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.stack
-import com.github.zomb_676.hologrampanel.util.stackIf
+import com.github.zomb_676.hologrampanel.util.timeInterpolation
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.google.common.collect.ImmutableBiMap
 import kotlin.math.max
@@ -29,11 +29,14 @@ class VerticalBox(val elements: ImmutableBiMap<IRenderElement, String>, val cont
             val offset = it.getPositionOffset()
             if (it.hasCalculateSize()) {
                 calculatedSizeElement++
+                val elementHeight = if (it.isLimitHeight()) {
+                    it.getLimitHeight()
+                } else it.contentSize.height
                 if (offset == AlignedScreenPosition.Companion.ZERO) {
                     width = max(it.contentSize.width, width)
-                    height += it.contentSize.height
+                    height += elementHeight
                 } else {
-                    height += it.contentSize.height + offset.y
+                    height += elementHeight + offset.y
                     if (offset.x < 0) {
                         baseX = max(baseX, -offset.x)
                     }
@@ -59,25 +62,28 @@ class VerticalBox(val elements: ImmutableBiMap<IRenderElement, String>, val cont
         this.elements.keys.forEach { element ->
             val offset = element.getPositionOffset()
             val size = element.contentSize
-            style.stackIf(offset != AlignedScreenPosition.Companion.ZERO, { style.move(offset) }) {
-                style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
-                    if (inMouse && style.checkMouseInSize(size)) {
-                        DebugHelper.Client.recordHoverElement(element)
-                        if (Config.Client.renderWidgetDebugInfo.get()) {
-                            style.stack {
-                                style.translate(0f, 0f, 100f)
-                                style.outline(size, 0xff0000ff.toInt())
-                            }
-                        }
-                        if (element is HologramInteractive) {
-                            HologramManager.submitInteractive(this, element, context, size, style)
+            style.stack {
+                if (offset == AlignedScreenPosition.Companion.ZERO) style.move(element.getPositionOffset())
+                if (element.getScale() != 1.0) style.scale(element.getScale())
+                if (element.hasAdditionLayer()) style.translate(0.0,0.0,element.additionLayer().toDouble())
+                if (element.isLimitHeight(size.height)) {
+                    style.guiGraphics.enableScissor(0,0,size.width, element.getLimitHeight())
+                    style.translate(0f, timeInterpolation(size.height - element.getLimitHeight()).toFloat())
+                }
+                if (inMouse && style.checkMouseInSize(size)) {
+                    DebugHelper.Client.recordHoverElement(element)
+                    if (Config.Client.renderWidgetDebugInfo.get()) {
+                        style.stack {
+                            style.translate(0f, 0f, 100f)
+                            style.outline(size, 0xff0000ff.toInt())
                         }
                     }
-                    val addLayer = element.additionLayer()
-                    style.stackIf(addLayer != 0, { style.translate(0.0, 0.0, addLayer.toDouble()) }) {
-                        element.render(style, partialTicks)
+                    if (element is HologramInteractive) {
+                        HologramManager.submitInteractive(this, element, context, size, style)
                     }
                 }
+                element.render(style, partialTicks)
+                if (element.isLimitHeight(size.height)) style.guiGraphics.disableScissor()
             }
             if (element.hasCalculateSize()) {
                 style.move(0, size.height + padding + offset.y)

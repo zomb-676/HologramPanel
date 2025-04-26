@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.util
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexConsumer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
@@ -10,11 +11,19 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
 import net.minecraft.util.profiling.ProfilerFiller
 import net.minecraftforge.common.ForgeConfigSpec
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.eventbus.api.Event
+import net.minecraftforge.eventbus.api.IEventBus
+import org.joml.Matrix4f
+import org.joml.Vector3f
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL46
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.StampedLock
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sin
 
 @Suppress("UNCHECKED_CAST")
 fun <T> Any.unsafeCast(): T = this as T
@@ -42,17 +51,6 @@ inline fun GuiGraphics.stack(crossinline code: () -> Unit) {
 
 inline fun HologramStyle.stack(crossinline code: () -> Unit) {
     this.guiGraphics.stack(code)
-}
-
-inline fun HologramStyle.stackIf(check: Boolean, crossinline addition: () -> Unit, crossinline code: () -> Unit) {
-    if (check) {
-        this.stack {
-            addition.invoke()
-            code.invoke()
-        }
-    } else {
-        code.invoke()
-    }
 }
 
 fun mainCamera(): Camera = Minecraft.getInstance().gameRenderer.mainCamera
@@ -97,6 +95,8 @@ inline fun glDebugStack(debugLabelName: String, id: Int = 0, crossinline code: (
         GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, id, debugLabelName)
         code.invoke()
         GL46.glPopDebugGroup()
+    } else {
+        code.invoke()
     }
 }
 
@@ -173,4 +173,31 @@ private object ConfigSaveHelper {
 fun <T : Any> ForgeConfigSpec.ConfigValue<T>.setAndSave(value: T) {
     this.set(value)
     ConfigSaveHelper.save(this)
+}
+
+inline fun <T : Any> ForgeConfigSpec.ConfigValue<T>.modifyAndSave(code: (T) -> Unit) {
+    code.invoke(this.get())
+    this.setAndSave(this.get())
+}
+
+fun timeInterpolation(value: Int): Double {
+    val currentTime = System.currentTimeMillis() / 1000.0 * 3
+    val period = max(value * 0.5, 3.0)
+    val wave = sin((Math.PI / 2) * cos(2 * Math.PI * currentTime / period)).let { it / 2 + 0.5 }
+    return JomlMath.lerp(wave, 0.0, value.toDouble())
+}
+
+fun <T : Event> T.dispatch(bus: IEventBus): T {
+    bus.post(this)
+    return this
+}
+
+fun <T : Event> T.dispatchForge() = dispatch(MinecraftForge.EVENT_BUS)
+
+fun addClientMessage(message: Component) = Minecraft.getInstance().gui.chat.addMessage(message)
+
+fun addClientMessage(message: String) = addClientMessage(Component.literal(message))
+
+fun setOverlayMessage(messages: Component) {
+    Minecraft.getInstance().gui.setOverlayMessage(messages, false)
 }

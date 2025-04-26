@@ -4,15 +4,13 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
-import net.minecraft.world.item.ItemStack
-import net.minecraftforge.client.model.ForgeItemModelShaper
-import net.minecraftforge.common.capabilities.ForgeCapabilities
 
 data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendServerData(
@@ -20,8 +18,7 @@ data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramCo
         targetData: CompoundTag,
         context: EntityHologramContext
     ): Boolean {
-        val entity = context.getEntity<ItemEntity>() ?: return false
-        val cap = entity.item.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null) ?: return false
+        val cap = TransHandle.ItemItemTransHandle.getHandleNullable(context.getEntity<ItemEntity>()?.item) ?: return false
         val buffer = context.createFriendlyByteBuf()
         var writeItemCount = 0
         repeat(cap.slots) { index ->
@@ -63,10 +60,6 @@ data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramCo
     override fun replaceProvider(target: ResourceLocation): Boolean =
         target == UniversalContainerEntityProvider.location()
 
-    override fun appliesTo(
-        context: EntityHologramContext,
-        check: ItemEntity
-    ): Boolean {
-        return check.item.getCapability(ForgeCapabilities.ITEM_HANDLER).isPresent
-    }
+    override fun appliesTo(context: EntityHologramContext, check: ItemEntity): Boolean =
+        TransHandle.ItemItemTransHandle.hasHandle(check.item)
 }

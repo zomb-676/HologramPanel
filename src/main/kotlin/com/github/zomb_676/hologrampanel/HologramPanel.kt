@@ -45,5 +45,6 @@ class HologramPanel() {
         AllRegisters.initEvents(dist, modBus)
         Config.initEvents(dist, modBus)
         NetworkHandle.registerPackets()
+        BuildInHologramEventHandle.initEvents(dist, modBus)
     }
 }

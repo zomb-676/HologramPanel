@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.FluidDataSyncEntry
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.extractArray
@@ -20,7 +21,7 @@ data object UniversalFluidItemProvider : ServerDataProvider<EntityHologramContex
         context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity<ItemEntity>() ?: return false
-        val cap = entity.item.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)?.orElse(null) ?: return false
+        val cap = TransHandle.ItemFluidTransHandle.getHandle(entity.item) ?: return false
         val buffer = context.createFriendlyByteBuf()
         var fluidCount = 0
         repeat(cap.tanks) { index ->
@@ -73,10 +74,6 @@ data object UniversalFluidItemProvider : ServerDataProvider<EntityHologramContex
     override fun replaceProvider(target: ResourceLocation): Boolean =
         target == UniversalFluidEntityProvider.location()
 
-    override fun appliesTo(
-        context: EntityHologramContext,
-        check: ItemEntity
-    ): Boolean {
-        return check.item.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent
-    }
+    override fun appliesTo(context: EntityHologramContext, check: ItemEntity): Boolean =
+        TransHandle.ItemFluidTransHandle.hasHandle(check.item)
 }

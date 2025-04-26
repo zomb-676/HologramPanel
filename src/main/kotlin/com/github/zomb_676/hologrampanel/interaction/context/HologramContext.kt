@@ -73,12 +73,6 @@ sealed interface HologramContext {
     fun getIdentityObject(): Any
 
     /**
-     * not null if created from ray trace
-     */
-    @EfficientConst
-    fun getHitContext(): HitResult?
-
-    /**
      * @see Remember
      * @return notice that the [HologramContext] in generic must be the context it supports
      */

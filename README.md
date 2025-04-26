@@ -4,6 +4,14 @@
 Hologram Panel is a mod that is intended to provide a hover panel that displays useful information and supports some direct interaction  
 Also, it is designed to be easily extensible with built-in support for some profile and debug options
 
+[![curseforge](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/curseforge_vector.svg)](https://www.curseforge.com/minecraft/mc-mods/hologram-panel)
+[![modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/mod/hologram-panel)
+
+You can report an issue or make a feature request here. Remember GitHub is more recommended  
+
+[![discord-plural](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/social/discord-plural_vector.svg)](https://discord.gg/sYEVkf9gJm)
+[![github-plural](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/social/github-plural_vector.svg)](https://github.com/zomb-676/HologramPanel/issues)
+
 You can trigger this by manually looking at it
 ![trig](https://github.com/user-attachments/assets/7d20be48-b01b-4e9f-9002-d5828912e4de)
 
@@ -52,3 +60,6 @@ Press your mouse button with `x`, `y` or `z`, then it will move along that axis
 Drag is supported through all three kinds of display types
 ![cross_three_drag](https://github.com/user-attachments/assets/23ea764e-18a7-4d9d-af25-b7d52afd9401)
 
+## License
+Code is under `GPL-3.0 license`  
+Assets file is under `All rights reserved`

@@ -6,6 +6,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.payload.DebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.payload.QueryDebugStatisticsPayload
 import com.github.zomb_676.hologrampanel.polyfill.IPayloadContext
+import com.github.zomb_676.hologrampanel.projector.ProjectorManager
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.FontBufferSource
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
@@ -57,12 +58,12 @@ object DebugHelper {
         private const val POPUP_TIME = 30
         private const val REMOVE_TIME = 30
 
-        private const val UPDATE_BEGIN_COLOR : Int = 0xffffffff.toInt()
-        private const val UPDATE_END_COLOR : Int = 0x00ffffff
-        private const val POP_UP_BEGIN_COLOR : Int = 0xff0000ff.toInt()
-        private const val POP_UP_END_COLOR : Int = 0x000000ff
-        private const val REMOVE_BEGIN_COLOR : Int = 0xffff0000.toInt()
-        private const val REMOVE_END_COLOR : Int = 0x00ff0000
+        private const val UPDATE_BEGIN_COLOR: Int = 0xffffffff.toInt()
+        private const val UPDATE_END_COLOR: Int = 0x00ffffff
+        private const val POP_UP_BEGIN_COLOR: Int = 0xff0000ff.toInt()
+        private const val POP_UP_END_COLOR: Int = 0x000000ff
+        private const val REMOVE_BEGIN_COLOR: Int = 0xffff0000.toInt()
+        private const val REMOVE_END_COLOR: Int = 0x00ff0000
 
         private const val OFFSET = 0.2
 
@@ -237,6 +238,7 @@ object DebugHelper {
                         ).nextLine()
                     }
                 }
+                drawHelper.drawString("projectorCount:${ProjectorManager.getListeners().size}").nextLine()
             }
         }
 

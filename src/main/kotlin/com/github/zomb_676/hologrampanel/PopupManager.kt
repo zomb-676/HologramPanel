@@ -40,7 +40,7 @@ data object PopupManager {
                 if (HologramManager.checkIdentityExist(pos)) continue
                 val ticket = manager.popUpBlock(pos, level)
                 if (ticket.isEmpty()) continue
-                val context = BlockHologramContext(pos.immutable(), player, null)
+                val context = BlockHologramContext(pos.immutable(), player)
                 val state = tryAdd(context, DisplayType.NORMAL, ticket.unsafeCast()) ?: continue
                 DebugHelper.Client.recordPopup(state)
             }
@@ -49,7 +49,7 @@ data object PopupManager {
                 if (HologramManager.checkIdentityExist(entity.uuid)) continue
                 val ticket = manager.popUpEntity(entity)
                 if (ticket.isEmpty()) continue
-                val context = EntityHologramContext(entity, player, null)
+                val context = EntityHologramContext(entity, player)
                 val state = tryAdd(context, DisplayType.NORMAL, ticket.unsafeCast()) ?: continue
                 DebugHelper.Client.recordPopup(state)
             }

@@ -17,7 +17,6 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
-import net.minecraftforge.common.capabilities.ForgeCapabilities
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.util.*
 
@@ -26,8 +25,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
-        val be = context.getBlockEntity() ?: return false
-        val cap = be.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null) ?: return false
+        val cap = TransHandle.BlockItemTransHandle.getHandleNullable(context.getBlockEntity()) ?: return false
 
         val container: Object2IntOpenCustomHashMap<ItemStack> = Object2IntOpenCustomHashMap(ItemStackWithComponentStrategy)
         repeat(cap.slots) { index ->
@@ -92,7 +90,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         val items = MutableList(count) {
             ByteBufCodecs.ITEM_STACK.decode(buffer)
         }
-        if (items.isNotEmpty()) {
+        if (items.isNotEmpty() || builder.onForceDisplay) {
             items.sortWith(Comparator.comparingInt { BuiltInRegistries.ITEM.getId(it.item) })
             builder.single("items") {
                 itemsInteractive("container_items", items, TransSource.create(context.getBlockEntity()!!), TransHandle.BlockItemTransHandle)
@@ -104,10 +102,10 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_container_block")
 
-    override fun appliesTo(
-        context: BlockHologramContext, check: BlockEntity
-    ): Boolean {
-        val cap = check.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null)
+    override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean {
+        val cap = TransHandle.BlockItemTransHandle.getHandle(check)
         return cap != null && cap.slots < 128
     }
+
+    override fun requireRebuildOnForceDisplay(context: BlockHologramContext): Boolean = true
 }

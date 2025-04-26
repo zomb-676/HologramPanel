@@ -19,8 +19,10 @@ import net.minecraftforge.items.IItemHandler
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 sealed interface TransHandle<in S : Any, out H : Any> {
     fun getHandle(source: S): H?
+    fun getHandleNullable(source: S?): H? = if (source != null) getHandle(source) else null
 
     fun hasHandle(source: S): Boolean = getHandle(source) != null
+    fun hasHandleNullable(source: S?): Boolean = source != null && hasHandle(source)
 
     fun <R : Any> queryActual(source: S, path: TransPath<H, R>): R? = getHandle(source)?.run(path::extractActual)
     fun <R : Any> queryTest(source: S, path: TransPath<H, R>): R? = getHandle(source)?.run(path::extractTest)

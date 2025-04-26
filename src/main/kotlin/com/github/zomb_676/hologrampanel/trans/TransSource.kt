@@ -24,7 +24,7 @@ sealed interface TransSource<out T : Any> {
 
         companion object {
             val STREAM_CODEC: StreamCodec<FriendlyByteBuf, BlockEntitySource> = StreamCodec.composite(
-                ByteBufCodecs.BLOCK_POS, BlockEntitySource::pos, AllRegisters.Codecs.LEVEL_STREAM_CODE, BlockEntitySource::level, ::BlockEntitySource
+                ByteBufCodecs.BLOCK_POS, BlockEntitySource::pos, AllRegisters.StreamCodecs.LEVEL_STREAM_CODE, BlockEntitySource::level, ::BlockEntitySource
             )
         }
     }
@@ -34,7 +34,7 @@ sealed interface TransSource<out T : Any> {
 
         companion object {
             val STREAM_CODEC: StreamCodec<FriendlyByteBuf, EntitySource> = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, EntitySource::id, AllRegisters.Codecs.LEVEL_STREAM_CODE, EntitySource::level, ::EntitySource
+                ByteBufCodecs.VAR_INT, EntitySource::id, AllRegisters.StreamCodecs.LEVEL_STREAM_CODE, EntitySource::level, ::EntitySource
             )
         }
     }

@@ -25,9 +25,19 @@ data object EmptyElement : IRenderElement {
     override fun setReplacedBy(newCurrent: IRenderElement) {}
     override fun setNoNewReplace() {}
 
+    override fun setLimitHeight(limitHeight: Int) {}
+    override fun getLimitHeight(): Int = 0
+    override fun isLimitHeight(): Boolean = false
+
     override var contentSize: Size
         get() = Size.Companion.ZERO
         set(value) {}
 
     override fun getCurrent(): EmptyElement = this
+
+    override fun toString(): String {
+        return "EmptyRenderElement"
+    }
+
+
 }

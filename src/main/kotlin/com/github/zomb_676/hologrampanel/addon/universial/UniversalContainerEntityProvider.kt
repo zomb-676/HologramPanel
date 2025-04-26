@@ -4,14 +4,13 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.polyfill.ByteBufCodecs
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.item.ItemStack
-import net.minecraftforge.common.capabilities.ForgeCapabilities
 
 data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
     override fun appendServerData(
@@ -19,8 +18,7 @@ data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologram
         targetData: CompoundTag,
         context: EntityHologramContext
     ): Boolean {
-        val entity = context.getEntity()
-        val cap = entity.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null) ?: return false
+        val cap = TransHandle.EntityItemTransHandle.getHandleNullable(context.getEntity()) ?: return false
         val buffer = context.createFriendlyByteBuf()
         var writeItemCount = 0
         repeat(cap.slots) { index ->
@@ -59,10 +57,6 @@ data object UniversalContainerEntityProvider : ServerDataProvider<EntityHologram
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_container_entity")
 
-    override fun appliesTo(
-        context: EntityHologramContext,
-        check: Entity
-    ): Boolean {
-        return check.getCapability(ForgeCapabilities.ITEM_HANDLER).isPresent
-    }
+    override fun appliesTo(context: EntityHologramContext, check: Entity): Boolean =
+        TransHandle.EntityItemTransHandle.hasHandle(check)
 }

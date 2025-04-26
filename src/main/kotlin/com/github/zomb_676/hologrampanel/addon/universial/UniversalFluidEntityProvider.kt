@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.FluidDataSyncEntry
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.extractArray
@@ -11,15 +12,13 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import net.minecraftforge.common.capabilities.ForgeCapabilities
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramContext, Entity> {
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
-        val entity = context.getEntity()
-        val cap = entity.getCapability(ForgeCapabilities.FLUID_HANDLER).orElse(null) ?: return false
+        val cap = TransHandle.EntityFluidTransHandle.getHandle(context.getEntity()) ?: return false
         val buffer = context.createFriendlyByteBuf()
         var fluidCount = 0
         repeat(cap.tanks) { index ->
@@ -68,9 +67,6 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_entity")
 
-    override fun appliesTo(
-        context: EntityHologramContext, check: Entity
-    ): Boolean {
-        return check.getCapability(ForgeCapabilities.FLUID_HANDLER).isPresent
-    }
+    override fun appliesTo(context: EntityHologramContext, check: Entity): Boolean =
+        TransHandle.EntityFluidTransHandle.hasHandle(check)
 }

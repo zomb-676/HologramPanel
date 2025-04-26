@@ -3,25 +3,51 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.polyfill.RegistryFriendlyByteBuf
 import com.github.zomb_676.hologrampanel.polyfill.StreamCodec
+import com.github.zomb_676.hologrampanel.projector.ProjectorBlock
+import com.github.zomb_676.hologrampanel.projector.ProjectorBlockEntity
 import com.mojang.blaze3d.platform.InputConstants
+import com.mojang.serialization.Codec
+import com.mojang.serialization.codecs.RecordCodecBuilder
+import io.netty.buffer.ByteBuf
 import net.minecraft.client.KeyMapping
 import net.minecraft.core.Registry
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.resources.ResourceKey
+import net.minecraft.world.item.BlockItem
+import net.minecraft.world.item.CreativeModeTab
+import net.minecraft.world.item.CreativeModeTabs
+import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.Block
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent
 import net.minecraftforge.client.settings.KeyConflictContext
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fluids.FluidType
 import net.minecraftforge.registries.*
+import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.state.BlockBehaviour
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent
+import org.joml.Vector2f
+import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
 import java.util.function.Supplier
 
 object AllRegisters {
     fun initEvents(dist: Dist, modBus: IEventBus) {
         modBus.addListener(::addNewRegistry)
+        Items.ITEMS.register(modBus)
+        Blocks.BLOCKS.register(modBus)
+        BlockEntities.BLOCK_ENTITIES.register(modBus)
+        modBus.addListener(::addToCreativeTab)
+    }
+
+    private fun addToCreativeTab(event: BuildCreativeModeTabContentsEvent) {
+        if (event.tabKey != CreativeModeTabs.FUNCTIONAL_BLOCKS) return
+        event.accept(Items.projectItem)
     }
 
     private fun addNewRegistry(event: NewRegistryEvent) {
@@ -33,7 +59,7 @@ object AllRegisters {
         val location = HologramPanel.rl("component_hologram_provider")
         val RESOURCE_KEY: ResourceKey<Registry<ComponentProvider<*, *>>> = ResourceKey
             .createRegistryKey(location)
-        val registryBuilder = RegistryBuilder<ComponentProvider<*, *>>()
+        val registryBuilder: RegistryBuilder<ComponentProvider<*, *>> = RegistryBuilder<ComponentProvider<*, *>>()
             .setName(location)
 
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, ComponentProvider<*, *>> =
@@ -60,7 +86,33 @@ object AllRegisters {
 
     }
 
-    object Codecs {
+    object Items {
+        internal val ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, HologramPanel.MOD_ID)
+
+        val projectItem = ITEMS.register("projector") {
+            BlockItem(Blocks.projector.get(), Item.Properties())
+        }
+    }
+
+    object Blocks {
+        internal val BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS,HologramPanel.MOD_ID)
+
+        val projector = BLOCKS.register("projector") {
+            ProjectorBlock(BlockBehaviour.Properties.of())
+        }
+    }
+
+    object BlockEntities {
+        internal val BLOCK_ENTITIES: DeferredRegister<BlockEntityType<*>> =
+            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, HologramPanel.MOD_ID)
+
+        val projectorType: RegistryObject<BlockEntityType<ProjectorBlockEntity>> =
+            BLOCK_ENTITIES.register("projector", Supplier {
+                BlockEntityType(::ProjectorBlockEntity, setOf(Blocks.projector.get()), null)
+            })
+    }
+
+    object StreamCodecs {
         val LEVEL_STREAM_CODE: StreamCodec<FriendlyByteBuf, ResourceKey<Level>> = object : StreamCodec<FriendlyByteBuf, ResourceKey<Level>> {
             override fun decode(buffer: FriendlyByteBuf): ResourceKey<Level> {
                 return buffer.readResourceKey(Registries.DIMENSION)
@@ -95,9 +147,8 @@ object AllRegisters {
             event.register(panelKey)
             event.register(scaleKey)
             event.register(collapseKey)
-            event.register(pingScreenKey)
-            event.register(pingVectorKey)
             event.register(freeMouseMoveKey)
+            event.register(forceDisplayKey)
         }
 
         val panelKey = KeyMapping(
@@ -124,22 +175,6 @@ object AllRegisters {
             KEY_CATEGORY
         )
 
-        val pingScreenKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.ping_screen_key",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_I,
-            KEY_CATEGORY
-        )
-
-        val pingVectorKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.ping_vector_key",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_O,
-            KEY_CATEGORY
-        )
-
         val freeMouseMoveKey = KeyMapping(
             "key.${HologramPanel.MOD_ID}.free_mouse_move_key",
             KeyConflictContext.IN_GAME,
@@ -147,5 +182,29 @@ object AllRegisters {
             GLFW.GLFW_KEY_G,
             KEY_CATEGORY
         )
+
+        val forceDisplayKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.force_display_key",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_LEFT_CONTROL,
+            KEY_CATEGORY
+        )
+    }
+
+    object Codecs {
+        val VEC2F: Codec<Vector2f> = RecordCodecBuilder.create { ins ->
+            ins.group(
+                Codec.FLOAT.fieldOf("x").forGetter { it.x },
+                Codec.FLOAT.fieldOf("y").forGetter { it.y },
+            ).apply(ins, ::Vector2f)
+        }
+        val VEC3F: Codec<Vector3f> = RecordCodecBuilder.create { ins ->
+            ins.group(
+                Codec.FLOAT.fieldOf("x").forGetter { it.x },
+                Codec.FLOAT.fieldOf("y").forGetter { it.y },
+                Codec.FLOAT.fieldOf("z").forGetter { it.z },
+            ).apply(ins, ::Vector3f)
+        }
     }
 }
