@@ -2,8 +2,8 @@ package com.github.zomb_676.hologrampanel.widget.element
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.TooltipType
+import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.stack
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
@@ -21,15 +21,20 @@ open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipTyp
     var tooltips: List<ClientTooltipComponent> = listOf()
     override fun measureContentSize(style: HologramStyle): Size {
         val window = Minecraft.getInstance().window
-        tooltips = ClientHooks.gatherTooltipComponents(
-            item,
-            Screen.getTooltipFromItem(Minecraft.getInstance(), item),
-            item.tooltipImage,
-            window.guiScaledWidth / 2,
-            window.guiScaledWidth,
-            window.guiScaledHeight,
-            style.font
-        )
+        val textElements = Screen.getTooltipFromItem(Minecraft.getInstance(), item)
+            .filter { Minecraft.getInstance().font.width(it) > 0 }
+        this.tooltips = when (tooltipType ?: Config.Style.itemTooltipType.get()) {
+            TooltipType.TEXT -> textElements.map { ClientTooltipComponent.create(it.visualOrderText) }
+            else -> ClientHooks.gatherTooltipComponents(
+                item,
+                textElements,
+                item.tooltipImage,
+                window.guiScaledWidth / 2,
+                window.guiScaledWidth,
+                window.guiScaledHeight,
+                style.font
+            )
+        }
         var width = 0
         var height = if (tooltips.size == 1) -1 else 0
         tooltips.forEach { tooltip ->

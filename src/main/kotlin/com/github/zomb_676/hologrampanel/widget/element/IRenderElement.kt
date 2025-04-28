@@ -26,9 +26,15 @@ interface IRenderElement : RebuildValue<IRenderElement?> {
 
     fun additionLayer(): Int
     fun setAdditionLayer(layer: Int): IRenderElement
+    fun hasAdditionLayer(): Boolean = additionLayer() != 0
 
     fun setReplacedBy(newCurrent: IRenderElement)
     fun setNoNewReplace()
+
+    fun setLimitHeight(limitHeight: Int)
+    fun getLimitHeight() : Int
+    fun isLimitHeight() : Boolean
+    fun isLimitHeight(value : Int) = isLimitHeight() && getLimitHeight() < value
 
     var contentSize: Size
 

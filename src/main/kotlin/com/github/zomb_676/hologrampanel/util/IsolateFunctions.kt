@@ -20,6 +20,9 @@ import org.lwjgl.opengl.GL46
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.StampedLock
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sin
 
 @Suppress("UNCHECKED_CAST")
 fun <T> Any.unsafeCast(): T = this as T
@@ -192,4 +195,11 @@ fun <T : Any> ModConfigSpec.ConfigValue<T>.setAndSave(value: T) {
 context(container: Vector3f) fun VertexConsumer.vertex(matrix4f: Matrix4f, x: Float, y: Float, z: Float): VertexConsumer {
     matrix4f.transformPosition(x, y, z, container)
     return this.addVertex(container.x, container.y, container.z)
+}
+
+fun timeInterpolation(value: Int): Double {
+    val currentTime = System.currentTimeMillis() / 1000.0 * 3
+    val period = max(value * 0.5, 3.0)
+    val wave = sin((Math.PI / 2) * cos(2 * Math.PI * currentTime / period)).let { it / 2 + 0.5 }
+    return JomlMath.lerp(wave, 0.0, value.toDouble())
 }

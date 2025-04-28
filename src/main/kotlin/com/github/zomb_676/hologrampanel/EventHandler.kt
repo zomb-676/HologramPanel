@@ -422,6 +422,14 @@ object EventHandler {
                         }
                     }
                 }
+                "style" {
+                    "tooltip_type"(EnumArgument.enumArgument(TooltipType::class.java)) {
+                        execute {
+                            val type = getArgument("tooltip_type", TooltipType::class.java)
+                            Config.Style.itemTooltipType.setAndSave(type)
+                        }
+                    }
+                }
             }
         }
     }

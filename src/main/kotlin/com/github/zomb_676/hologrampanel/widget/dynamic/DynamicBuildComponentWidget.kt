@@ -57,15 +57,18 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 val offset = it.getPositionOffset()
                 if (it.hasCalculateSize()) {
                     calculatedSizeElement++
+                    val elementHeight = if (it.isLimitHeight()) {
+                        it.getLimitHeight()
+                    } else it.contentSize.height
                     if (offset == AlignedScreenPosition.ZERO) {
                         width += it.contentSize.width
-                        height = max(height, it.contentSize.height)
+                        height = max(height, elementHeight)
                     } else {
                         width += it.contentSize.width + offset.x
                         if (offset.y < 0) {
                             baseY = max(baseY, -offset.y)
                         }
-                        height = max(height, it.contentSize.height + offset.y)
+                        height = max(height, elementHeight + offset.y)
                     }
                 }
             }
@@ -81,25 +84,28 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
             this.elements.keys.forEach { element ->
                 val offset = element.getPositionOffset()
                 val size = element.contentSize
-                style.stackIf(offset != AlignedScreenPosition.ZERO, { style.move(offset) }) {
-                    style.stackIf(element.getScale() != 1.0, { style.scale(element.getScale()) }) {
-                        if (inMouse && style.checkMouseInSize(size)) {
-                            DebugHelper.Client.recordHoverElement(element)
-                            if (Config.Client.renderWidgetDebugInfo.get()) {
-                                style.stack {
-                                    style.translate(0f, 0f, 100f)
-                                    style.outline(size, 0xff0000ff.toInt())
-                                }
-                            }
-                            if (element is HologramInteractive) {
-                                HologramManager.submitInteractive(this, element, target, size, style)
+                style.stack {
+                    if (offset != AlignedScreenPosition.ZERO) style.move(offset)
+                    if (element.getScale() != 1.0) style.scale(element.getScale())
+                    if (element.hasAdditionLayer()) style.translate(0.0, 0.0, element.additionLayer().toDouble())
+                    if (element.isLimitHeight(size.height)) {
+                        style.guiGraphics.enableScissor(0, 0, size.width, element.getLimitHeight())
+                        style.translate(0f, timeInterpolation(size.height - element.getLimitHeight()).toFloat())
+                    }
+                    if (inMouse && style.checkMouseInSize(size)) {
+                        DebugHelper.Client.recordHoverElement(element)
+                        if (Config.Client.renderWidgetDebugInfo.get()) {
+                            style.stack {
+                                style.translate(0f, 0f, 100f)
+                                style.outline(size, 0xff0000ff.toInt())
                             }
                         }
-                        val addLayer = element.additionLayer()
-                        style.stackIf(addLayer != 0, { style.translate(0.0, 0.0, addLayer.toDouble()) }) {
-                            element.render(style, partialTicks)
+                        if (element is HologramInteractive) {
+                            HologramManager.submitInteractive(this, element, target, size, style)
                         }
                     }
+                    element.render(style, partialTicks)
+                    if (element.isLimitHeight(size.height)) style.guiGraphics.disableScissor()
                 }
                 if (element.hasCalculateSize()) {
                     style.move(size.width + padding + offset.x, 0)

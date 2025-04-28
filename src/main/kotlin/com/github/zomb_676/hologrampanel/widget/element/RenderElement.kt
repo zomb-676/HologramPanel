@@ -22,6 +22,8 @@ abstract class RenderElement : IRenderElement {
     @JvmField
     protected var current: RenderElement? = this
 
+    private var limitHeight: Int = 0
+
     protected fun Size.scale(): Size {
         if (scale == 1.0) {
             return this
@@ -60,6 +62,8 @@ abstract class RenderElement : IRenderElement {
         return this
     }
 
+    final override fun hasAdditionLayer(): Boolean = super.hasAdditionLayer()
+
     final override fun getCurrent(): RenderElement? {
         var current: RenderElement = current ?: return null
         while (current != current.current) {
@@ -79,4 +83,13 @@ abstract class RenderElement : IRenderElement {
     override fun setNoNewReplace() {
         this.current = null
     }
+
+    final override fun setLimitHeight(limitHeight: Int) {
+        require(limitHeight >= 0)
+        this.limitHeight = limitHeight
+    }
+
+    final override fun getLimitHeight(): Int = this.limitHeight
+    final override fun isLimitHeight(): Boolean = this.limitHeight > 0
+    final override fun isLimitHeight(value: Int): Boolean = super.isLimitHeight(value)
 }
