@@ -1,13 +1,10 @@
 package com.github.zomb_676.hologrampanel.addon.universial
 
-import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
-import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import net.minecraft.client.Minecraft
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.Item
@@ -25,20 +22,8 @@ data object ItemEntityTooltipProvider : ComponentProvider<EntityHologramContext,
             item.getTooltipLines(Item.TooltipContext.of(context.getLevel()), context.getPlayer(), TooltipFlag.ADVANCED)
         }
 
-        when (Config.Style.itemTooltipType.get()) {
-            TooltipType.TEXT -> {
-                builder.group("screenTooltip", "screenTooltip") {
-                    tooltips.forEachIndexed { index, tooltip ->
-                        if (Minecraft.getInstance().font.width(tooltip) > 0) {
-                            builder.single("tooltip_$index") { component("item_tooltip", tooltip) }
-                        }
-                    }
-                }
-            }
-
-            else -> builder.single("tool") {
-                screenTooltip("item_tooltip", item)
-            }
+        builder.single("tool") {
+            screenTooltip("item_tooltip", item).setLimitHeight(30)
         }
     }
 
