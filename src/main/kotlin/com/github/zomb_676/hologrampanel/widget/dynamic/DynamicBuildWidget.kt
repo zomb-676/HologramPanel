@@ -25,11 +25,13 @@ class DynamicBuildWidget<T : HologramContext>(
             this.container.children.filter { it.getProvider() == prov }
         }
 
-    fun updateComponent(displayType: DisplayType) {
+    fun updateComponent(displayType: DisplayType, trigByForceDisplay: Boolean) {
         val remember = target.getRememberDataUnsafe<T>()
         val builder = HologramWidgetBuilder(target)
+        var change = false
         maps = maps.mapValues { (provider, old) ->
-            if (remember.consumerRebuild(provider) || provider.requireRebuildOnForceDisplay(target)) {
+            if (remember.consumerRebuild(provider) || (trigByForceDisplay && provider.requireRebuildOnForceDisplay(target))) {
+                change = true
                 builder.rebuildScope(provider) {
                     remember.providerScope(provider) {
                         provider.appendComponent(builder, displayType)
@@ -39,6 +41,7 @@ class DynamicBuildWidget<T : HologramContext>(
                 old
             }
         }
+        if (!change) return
         val oldChildren = this.container.children
         val res = maps.flatMap { (_, v) -> v }
         this.container.children = if (res.isNotEmpty()) res else listOf(DynamicBuildComponentWidget.onNoActiveProvider(target))

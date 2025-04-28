@@ -73,7 +73,7 @@ class HologramRenderState(
             if (value != field) {
                 field = value
                 if (widget is DynamicBuildWidget<*>) {
-                    widget.updateComponent(value)
+                    widget.updateComponent(value, false)
                 }
             }
         }
