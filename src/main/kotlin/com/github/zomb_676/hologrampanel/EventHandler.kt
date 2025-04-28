@@ -129,6 +129,18 @@ object EventHandler {
                     }
                 }
 
+                AllRegisters.KeyMapping.forceDisplayKey.key.value -> when (Config.Client.forceDisplayModeSwitchType.get()) {
+                    SwitchMode.BY_PRESS -> if (isDownAction) {
+                        HologramManager.isUnderForceDisplay = true
+                    } else if (isRelease) {
+                        HologramManager.isUnderForceDisplay = false
+                    }
+
+                    SwitchMode.BY_CYCLE -> while (AllRegisters.KeyMapping.forceDisplayKey.consumeClick()) {
+                        HologramManager.isUnderForceDisplay = !HologramManager.isUnderForceDisplay
+                    }
+                }
+
                 else if isDownAction -> when (event.key) {
                     AllRegisters.KeyMapping.collapseKey.key.value -> HologramManager.trySwitchWidgetCollapse()
                     AllRegisters.KeyMapping.pingScreenKey.key.value -> HologramManager.tryPingInteractScreen()

@@ -87,7 +87,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         val items = MutableList(count) {
             ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer)
         }
-        if (items.isNotEmpty()) {
+        if (items.isNotEmpty() || builder.onForceDisplay) {
             items.sortWith(Comparator.comparingInt { BuiltInRegistries.ITEM.getId(it.item) })
             builder.single("items") {
                 itemsInteractive("container_items", items, TransSource.create(context.getBlockEntity()!!), TransHandle.BlockItemTransHandle)
@@ -108,4 +108,6 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         )
         return cap != null && cap.slots < 128
     }
+
+    override fun requireRebuildOnForceDisplay(context: BlockHologramContext): Boolean = true
 }

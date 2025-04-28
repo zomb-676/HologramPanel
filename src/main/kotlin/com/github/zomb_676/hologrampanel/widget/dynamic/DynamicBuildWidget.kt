@@ -29,7 +29,7 @@ class DynamicBuildWidget<T : HologramContext>(
         val remember = target.getRememberDataUnsafe<T>()
         val builder = HologramWidgetBuilder(target)
         maps = maps.mapValues { (provider, old) ->
-            if (remember.consumerRebuild(provider)) {
+            if (remember.consumerRebuild(provider) || provider.requireRebuildOnForceDisplay(target)) {
                 builder.rebuildScope(provider) {
                     remember.providerScope(provider) {
                         provider.appendComponent(builder, displayType)

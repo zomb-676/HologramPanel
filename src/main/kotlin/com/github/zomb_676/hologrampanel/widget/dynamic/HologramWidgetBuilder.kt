@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.dynamic
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.trans.TransSource
@@ -32,6 +33,11 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
     private val helper = this.Helper()
     private var currentInSingle = false
     internal var currentProvider: ComponentProvider<T, *>? = null
+
+    /**
+     * cache it and not check it, so users can get a consistent state during building
+     */
+    val onForceDisplay: Boolean = HologramManager.isUnderForceDisplay
 
     init {
         stack.add(mutableListOf())
