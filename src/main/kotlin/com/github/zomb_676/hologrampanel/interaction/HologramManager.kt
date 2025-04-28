@@ -66,6 +66,18 @@ object HologramManager {
 
     private var screenPingHolograms: MutableList<HologramRenderState> = mutableListOf()
 
+    var isUnderForceDisplay: Boolean = false
+        internal set(value) {
+            if (field != value) {
+                field = value
+                this.states.forEach { (widget, state) ->
+                    if (widget is DynamicBuildWidget<*>) {
+                        widget.updateComponent(state.displayType)
+                    }
+                }
+            }
+        }
+
     /**
      * remove all hologram
      */
@@ -131,7 +143,7 @@ object HologramManager {
         DebugHelper.Client.clearRenderRelatedInfo()
         val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
         states.forEach { (widget, state) ->
-            if (Config.Client.skipHologramIfEmpty.get() && !AllRegisters.KeyMapping.detailStateKey.isDown && !widget.hasNoneOrdinaryContent()) {
+            if (Config.Client.skipHologramIfEmpty.get() && !AllRegisters.KeyMapping.forceDisplayKey.isDown && !widget.hasNoneOrdinaryContent()) {
                 state.displayed = false
                 return@forEach
             }

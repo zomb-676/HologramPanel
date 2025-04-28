@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.compat.ModInstalled
 import com.github.zomb_676.hologrampanel.util.SearchBackend
+import com.github.zomb_676.hologrampanel.util.SwitchMode
 import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.util.setAndSave
 import net.minecraft.client.Minecraft
@@ -132,6 +133,9 @@ object Config {
 
         val searchBackend: ModConfigSpec.EnumValue<SearchBackend.Type> = builder
             .defineEnum("search_backend", SearchBackend.Type.AUTO)
+
+        val forceDisplayModeSwitchType: ModConfigSpec.EnumValue<SwitchMode> = builder
+            .defineEnum("force_display_mode_switch_type", SwitchMode.BY_PRESS)
 
         fun tryValidate() {
             if (renderMaxDistance.get() <= renderMinDistance.get()) {

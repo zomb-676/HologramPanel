@@ -57,7 +57,7 @@ object AllRegisters {
             event.register(pingScreenKey)
             event.register(pingVectorKey)
             event.register(freeMouseMoveKey)
-            event.register(detailStateKey)
+            event.register(forceDisplayKey)
         }
 
         val panelKey = KeyMapping(
@@ -108,8 +108,8 @@ object AllRegisters {
             KEY_CATEGORY
         )
 
-        val detailStateKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.detail_state_key",
+        val forceDisplayKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.force_display_key",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_LEFT_CONTROL,

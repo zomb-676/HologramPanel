@@ -56,4 +56,9 @@ interface ComponentProvider<T : HologramContext, V> {
     fun appliesTo(context: T, check: V): Boolean = true
 
     fun attachTicket(context: T, tick: TicketAdder<T>) {}
+
+    /**
+     * if return true is possible, check [HologramWidgetBuilder.onForceDisplay]
+     */
+    fun requireRebuildOnForceDisplay(context: T): Boolean = false
 }
