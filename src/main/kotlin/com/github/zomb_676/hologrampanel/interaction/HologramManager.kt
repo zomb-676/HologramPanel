@@ -72,7 +72,7 @@ object HologramManager {
                 field = value
                 this.states.forEach { (widget, state) ->
                     if (widget is DynamicBuildWidget<*>) {
-                        widget.updateComponent(state.displayType)
+                        widget.updateComponent(state.displayType, true)
                     }
                 }
             }
@@ -413,7 +413,7 @@ object HologramManager {
                 remember.tickClientValueUpdate()
                 if (remember.needUpdate()) {
                     if (widget is DynamicBuildWidget<*>) {
-                        widget.updateComponent(state.displayType)
+                        widget.updateComponent(state.displayType, false)
                     }
                 }
             } else {

@@ -65,7 +65,7 @@ object DataQueryManager {
             if (context.getRememberData().needUpdate()) {
                 profilerStack("rebuild_hologram_component") {
                     val state = HologramManager.queryHologramState(widget) ?: return@profilerStack
-                    widget.updateComponent(state.displayType)
+                    widget.updateComponent(state.displayType, false)
                 }
             }
             DebugHelper.Client.onDataReceived(widget, sizeInBytes)
