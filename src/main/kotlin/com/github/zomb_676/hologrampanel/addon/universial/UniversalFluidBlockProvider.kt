@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.FluidDataSyncEntry
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.extractArray
@@ -18,9 +19,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
-        val be = context.getBlockEntity() ?: return false
-        val cap = be.level?.getCapability(Capabilities.FluidHandler.BLOCK, be.blockPos, be.blockState, be, null)
-            ?: return false
+        val cap = TransHandle.BlockFluidTransHandle.getHandleNullable(context.getBlockEntity()) ?: return false
         val buffer = context.createRegistryFriendlyByteBuf()
         var fluidCount = 0
         repeat(cap.tanks) { index ->
@@ -69,12 +68,6 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_block")
 
-    override fun appliesTo(
-        context: BlockHologramContext, check: BlockEntity
-    ): Boolean {
-        val level = context.getLevel()
-        return level.getCapability(
-            Capabilities.FluidHandler.BLOCK, check.blockPos, check.blockState, check, null
-        ) != null
-    }
+    override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean =
+        TransHandle.BlockFluidTransHandle.hasHandle(check)
 }

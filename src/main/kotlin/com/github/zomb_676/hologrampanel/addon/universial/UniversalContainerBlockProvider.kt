@@ -30,9 +30,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
-        val be = context.getBlockEntity() ?: return false
-        val cap = be.level?.getCapability(Capabilities.ItemHandler.BLOCK, be.blockPos, be.blockState, be, null)
-            ?: return false
+        val cap = TransHandle.BlockItemTransHandle.getHandleNullable(context.getBlockEntity()) ?: return false
 
         val container: Object2IntOpenCustomHashMap<ItemStack> = Object2IntOpenCustomHashMap(ItemStackWithComponentStrategy)
         repeat(cap.slots) { index ->
@@ -99,13 +97,8 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
 
     override fun location(): ResourceLocation = HologramPanel.rl("universal_container_block")
 
-    override fun appliesTo(
-        context: BlockHologramContext, check: BlockEntity
-    ): Boolean {
-        val level = context.getLevel()
-        val cap = level.getCapability(
-            Capabilities.ItemHandler.BLOCK, check.blockPos, check.blockState, check, null
-        )
+    override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean {
+        val cap = TransHandle.BlockItemTransHandle.getHandle(check)
         return cap != null && cap.slots < 128
     }
 
