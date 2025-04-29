@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.addon.universial
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
+import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
@@ -16,7 +17,7 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
         additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
         val entity = context.getEntity<ItemEntity>() ?: return false
-        val cap = entity.item.getCapability(Capabilities.EnergyStorage.ITEM) ?: return false
+        val cap = TransHandle.ItemEnergyTransHandle.getHandle(entity.item) ?: return false
         targetData.putInt("energy_stored", cap.energyStored)
         targetData.putInt("energy_max", cap.maxEnergyStored)
         return true
@@ -43,9 +44,6 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
 
     override fun replaceProvider(target: ResourceLocation): Boolean = target == UniversalEnergyEntityProvider.location()
 
-    override fun appliesTo(
-        context: EntityHologramContext, check: ItemEntity
-    ): Boolean {
-        return check.item.getCapability(Capabilities.EnergyStorage.ITEM) != null
-    }
+    override fun appliesTo(context: EntityHologramContext, check: ItemEntity): Boolean =
+        TransHandle.ItemEnergyTransHandle.hasHandle(check.item)
 }
