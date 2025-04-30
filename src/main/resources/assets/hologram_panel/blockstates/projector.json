@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "hologram_panel:block/projector"
+    },
+    "facing=down": {
+      "model": "hologram_panel:block/projector",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "hologram_panel:block/projector",
+      "x": 90
+    },
+    "facing=west": {
+      "model": "hologram_panel:block/projector",
+      "x": 90,
+      "y": 270
+    },
+    "facing=south": {
+      "model": "hologram_panel:block/projector",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hologram_panel:block/projector",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

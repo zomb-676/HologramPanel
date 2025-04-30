@@ -60,3 +60,6 @@ Press your mouse button with `x`, `y` or `z`, then it will move along that axis
 Drag is supported through all three kinds of display types
 ![cross_three_drag](https://github.com/user-attachments/assets/23ea764e-18a7-4d9d-af25-b7d52afd9401)
 
+## License
+Code is under `GPL-3.0 license`  
+Assets file is under `All rights reserved`

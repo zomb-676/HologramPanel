@@ -1,0 +1,18 @@
+{
+  "loader": "neoforge:composite",
+  "textures": {
+    "particle": "hologram_panel:block/projector_node"
+  },
+  "children": {
+    "node_base": {
+      "parent": "hologram_panel:block/node_base"
+    },
+    "node_light": {
+      "parent": "hologram_panel:block/node_light"
+    }
+  },
+  "visibility": {
+    "node_base": true,
+    "node_light": true
+  }
+}

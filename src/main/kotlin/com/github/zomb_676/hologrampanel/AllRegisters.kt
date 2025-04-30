@@ -1,27 +1,34 @@
 package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
+import com.github.zomb_676.hologrampanel.projector.ProjectorBlock
+import com.github.zomb_676.hologrampanel.projector.ProjectorType
+import com.google.common.base.Supplier
 import com.mojang.blaze3d.platform.InputConstants
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.KeyMapping
 import net.minecraft.core.Registry
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceKey
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.entity.BlockEntityType
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent
 import net.neoforged.neoforge.client.settings.KeyConflictContext
-import net.neoforged.neoforge.registries.NewRegistryEvent
-import net.neoforged.neoforge.registries.RegistryBuilder
+import net.neoforged.neoforge.registries.*
 import org.lwjgl.glfw.GLFW
 
 object AllRegisters {
     fun initEvents(dist: Dist, modBus: IEventBus) {
         modBus.addListener(::addNewRegistry)
+        Items.ITEMS.register(modBus)
+        Blocks.BLOCKS.register(modBus)
+        BlockEntities.BLOCK_ENTITIES.register(modBus)
     }
 
     private fun addNewRegistry(event: NewRegistryEvent) {
@@ -40,6 +47,27 @@ object AllRegisters {
 
         fun getId(provider: ComponentProvider<*, *>) = REGISTRY.getId(provider)
         fun byId(id: Int) = REGISTRY.byId(id)
+    }
+
+    object Items {
+        internal val ITEMS = DeferredRegister.createItems(HologramPanel.MOD_ID)
+
+        val projectItem = ITEMS.registerSimpleBlockItem("projector", Blocks.projector)
+    }
+
+    object Blocks {
+        internal val BLOCKS: DeferredRegister.Blocks = DeferredRegister.createBlocks(HologramPanel.MOD_ID)
+
+        val projector: DeferredBlock<ProjectorBlock> = BLOCKS.registerBlock("projector", ::ProjectorBlock)
+    }
+
+    object BlockEntities {
+        internal val BLOCK_ENTITIES: DeferredRegister<BlockEntityType<*>> =
+            DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, HologramPanel.MOD_ID)
+
+        val projectorType: DeferredHolder<BlockEntityType<*>, BlockEntityType<ProjectorType>> = BLOCK_ENTITIES.register("projector", Supplier {
+            BlockEntityType(::ProjectorType, Blocks.projector.get())
+        })
     }
 
     object Codecs {
