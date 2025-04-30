@@ -12,8 +12,11 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
 import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
+import net.neoforged.bus.api.Event
+import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.client.GlStateBackup
 import net.neoforged.neoforge.common.ModConfigSpec
+import net.neoforged.neoforge.common.NeoForge
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL
@@ -206,3 +209,10 @@ fun timeInterpolation(value: Int): Double {
     val wave = sin((Math.PI / 2) * cos(2 * Math.PI * currentTime / period)).let { it / 2 + 0.5 }
     return JomlMath.lerp(wave, 0.0, value.toDouble())
 }
+
+fun <T : Event> T.dispatch(bus: IEventBus): T {
+    bus.post(this)
+    return this
+}
+
+fun <T : Event> T.dispatchForge() = dispatch(NeoForge.EVENT_BUS)

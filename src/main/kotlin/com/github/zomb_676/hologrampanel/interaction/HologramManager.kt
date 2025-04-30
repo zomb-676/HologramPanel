@@ -6,6 +6,7 @@ import com.github.zomb_676.hologrampanel.DebugHelper
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
+import com.github.zomb_676.hologrampanel.api.event.HologramEvent
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactHologram
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
@@ -107,8 +108,10 @@ object HologramManager {
         ticket: List<HologramTicket<*>>,
     ): HologramRenderState? {
         if (!widgets.containsKey(context.getIdentityObject())) {
-            widgets[context.getIdentityObject()] = widget
             val state = HologramRenderState(widget, context, displayType, ticket)
+            if (!HologramEvent.Add<HologramContext>(state).dispatchForge().allowAdd()) return null
+
+            widgets[context.getIdentityObject()] = widget
             states[widget] = state
 
             widget.onAdd(state)
@@ -384,6 +387,12 @@ object HologramManager {
     internal fun remove(widget: HologramWidget) {
         val state = this.states.remove(widget)
         if (state != null) {
+            val event = HologramEvent.Remove<HologramContext>(state).dispatchForge()
+            if (!event.allowRemove()) {
+                state.hologramTicks.addAll(event.getTicketAdder().list)
+                return
+            }
+
             state.removed = true
             val context = state.context
             this.widgets.remove(context.getIdentityObject())
