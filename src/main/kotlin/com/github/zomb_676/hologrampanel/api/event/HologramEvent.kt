@@ -16,6 +16,9 @@ abstract class HologramEvent<T : HologramContext>(private val state: HologramRen
 
     fun getContext(): T = state.context.unsafeCast()
 
+    /**
+     * this is called before truly add a hologram
+     */
     class Add<T : HologramContext>(state: HologramRenderState) : HologramEvent<T>(state) {
         private var allowAdd: Boolean = true
 
@@ -25,6 +28,10 @@ abstract class HologramEvent<T : HologramContext>(private val state: HologramRen
         }
     }
 
+    /**
+     * this is called when a hologram is about to be removed
+     * call [getTicketAdder] and add ticket to renew it
+     */
     class Remove<T : HologramContext>(state: HologramRenderState) : HologramEvent<T>(state) {
         private var ticketAdder = TicketAdder<T>(mutableListOf())
         fun allowRemove(): Boolean = this.ticketAdder.isEmpty()
@@ -32,6 +39,9 @@ abstract class HologramEvent<T : HologramContext>(private val state: HologramRen
         fun getTicketAdder(): TicketAdder<T> = ticketAdder
     }
 
+    /**
+     * this is called to check if interact should happen
+     */
     sealed class Interact<T : HologramContext>(state: HologramRenderState) : HologramEvent<T>(state) {
         protected var interactMessage: Component? = null
             private set
