@@ -185,11 +185,11 @@ object Config {
         val pinPromptLineWidth: ModConfigSpec.DoubleValue = builder
             .defineInRange("pin_prompt_line_width", 0.8, 0.001, 10.0)
 
-        val pingPromptRadius : ModConfigSpec.DoubleValue = builder
+        val pinPromptRadius : ModConfigSpec.DoubleValue = builder
             .defineInRange("pin_prompt_radius", 10.0, 1.0, 100.0)
 
-        val pingPromptTerminalStraightLineLength : ModConfigSpec.DoubleValue = builder
-            .defineInRange("ping_prompt_terminal_straight_line_length", 20.0, 0.1, 100.0)
+        val pinPromptTerminalStraightLineLength : ModConfigSpec.DoubleValue = builder
+            .defineInRange("pin_prompt_terminal_straight_line_length", 20.0, 0.1, 100.0)
 
         val dragPromptXOffset : ModConfigSpec.DoubleValue = builder
             .defineInRange("drag_prompt_x_offset", 3.0, -1000.0, 1000.0)

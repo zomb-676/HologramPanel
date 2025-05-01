@@ -66,7 +66,7 @@ object HologramManager {
      */
     private var collapseTarget: HologramWidgetComponent.Group<*>? = null
 
-    private var screenPingHolograms: MutableList<HologramRenderState> = mutableListOf()
+    private var screenPinHolograms: MutableList<HologramRenderState> = mutableListOf()
 
     var isUnderForceDisplay: Boolean = false
         internal set(value) {
@@ -223,20 +223,18 @@ object HologramManager {
         style.guiGraphics.flush()
 
         this.renderFacingVectors(style, partialTicks)
-        this.arrangeScreenPingWidget(partialTicks)
+        this.arrangeScreenPinWidget(partialTicks)
         this.updateInteractHologram()
         this.renderFacingVectorForInteract(style, partialTicks)
         if (Config.Client.renderDebugTransientTarget.get()) {
             TransitRenderTargetManager.blitAllTransientTargetToMain(style)
         }
-        this.renderPingScreenPrompt(style, partialTicks)
+        this.renderPinScreenPrompt(style, partialTicks)
 
         if (Config.Style.renderInteractIndicator.get()) {
-            val distance = Config.Style.interactIndicatorDistance.get()
-            val percent = Config.Style.interactIndicatorPercent.get()
             val target = getInteractHologram()
             if (target?.locate !is LocateType.World.FacingVector) {
-                this.renderHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
+                this.renderHologramStateTips(target, style)
             }
         }
 
@@ -249,6 +247,13 @@ object HologramManager {
         distance <= start -> 1.0
         distance >= end -> 0.0
         else -> JomlMath.clamp(0.0, 1.0, 1.0 - (distance - start) / (end - start))
+    }
+
+    private fun renderHologramStateTips(target: HologramRenderState?, style : HologramStyle) {
+        val target = target ?: return
+        val distance = Config.Style.interactIndicatorDistance.get()
+        val percent = Config.Style.interactIndicatorPercent.get()
+        this.renderHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
     }
 
     /**
@@ -397,7 +402,7 @@ object HologramManager {
             state.removed = true
             val context = state.context
             this.widgets.remove(context.getIdentityObject())
-            this.screenPingHolograms.remove(state)
+            this.screenPinHolograms.remove(state)
             if (this.interactHologram?.widget == widget) {
                 this.interactHologram = null
             }
@@ -471,25 +476,25 @@ object HologramManager {
         this.collapseTarget?.switchCollapse()
     }
 
-    fun tryPingInteractScreen() {
+    fun tryPinInteractScreen() {
         val interact = getInteractHologram() ?: return
         if (interact.locate !is LocateType.Screen) {
             interact.locate = LocateType.Screen(Vector2f(30f, 30f))
-            this.screenPingHolograms.add(interact)
+            this.screenPinHolograms.add(interact)
         }
     }
 
     /**
-     * sort screen ping hologram by their y of screen position
+     * sort screen pin hologram by their y of screen position
      */
-    private fun arrangeScreenPingWidget(partialTicks: Float) {
+    private fun arrangeScreenPinWidget(partialTicks: Float) {
         val initial = AlignedScreenPosition.of(Config.Style.pinPaddingLeft.get(), Config.Style.pinPaddingUp.get())
         var pos = initial.toNotAligned()
         var size = Size.ZERO
-        screenPingHolograms.sortBy {
+        screenPinHolograms.sortBy {
             it.getSourceScreenPosition(partialTicks).y
         }
-        screenPingHolograms.forEach { state ->
+        screenPinHolograms.forEach { state ->
             if (!state.displayed) return@forEach
             val locate = state.locate as LocateType.Screen? ?: return@forEach
             locate.setPosition(pos.x, pos.y + size.height + 5)
@@ -501,12 +506,12 @@ object HologramManager {
     /**
      * render the link line between world source position and the screen ping hologram
      */
-    private fun renderPingScreenPrompt(style: HologramStyle, partialTicks: Float) {
+    private fun renderPinScreenPrompt(style: HologramStyle, partialTicks: Float) {
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR)
         RenderSystem.disableCull()
 
-        this.screenPingHolograms.forEach { state ->
+        this.screenPinHolograms.forEach { state ->
             val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
 
             if (!state.displayed) return@forEach
@@ -520,8 +525,8 @@ object HologramManager {
                 LinkLineRender.fillThreeSegmentConnectionLine(
                     Vector2d(widgetX, widgetY),
                     Vector2d(worldX.toDouble(), worldY.toDouble()),
-                    radius = Config.Style.pingPromptRadius.get(),
-                    lineLength = Config.Style.pingPromptTerminalStraightLineLength.get(),
+                    radius = Config.Style.pinPromptRadius.get(),
+                    lineLength = Config.Style.pinPromptTerminalStraightLineLength.get(),
                     builder,
                     style.poseMatrix(),
                     halfLineWidth = Config.Style.pinPromptLineWidth.get().toFloat() / 2.0f
@@ -532,7 +537,7 @@ object HologramManager {
         }
     }
 
-    fun tryPingInteractVector() {
+    fun tryPinInteractVector() {
         val interact = getInteractHologram() ?: return
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
         when (val locate = interact.locate) {
@@ -609,11 +614,7 @@ object HologramManager {
             }
             glDebugStack("indicator") {
                 if (Config.Style.renderInteractIndicator.get()) {
-                    val distance = Config.Style.interactIndicatorDistance.get()
-                    val percent = Config.Style.interactIndicatorPercent.get()
-                    this.renderHologramStateTip(
-                        style, target, 0xff_00a2e8.toInt(), distance, percent
-                    )
+                    this.renderHologramStateTips(target, style)
                     style.guiGraphics.flush()
                 }
             }

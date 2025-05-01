@@ -54,8 +54,8 @@ object AllRegisters {
             event.register(panelKey)
             event.register(scaleKey)
             event.register(collapseKey)
-            event.register(pingScreenKey)
-            event.register(pingVectorKey)
+            event.register(pinScreenKey)
+            event.register(pinVectorKey)
             event.register(freeMouseMoveKey)
             event.register(forceDisplayKey)
         }
@@ -84,16 +84,16 @@ object AllRegisters {
             KEY_CATEGORY
         )
 
-        val pingScreenKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.ping_screen_key",
+        val pinScreenKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.pin_screen_key",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_I,
             KEY_CATEGORY
         )
 
-        val pingVectorKey = KeyMapping(
-            "key.${HologramPanel.MOD_ID}.ping_vector_key",
+        val pinVectorKey = KeyMapping(
+            "key.${HologramPanel.MOD_ID}.pin_vector_key",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_O,
