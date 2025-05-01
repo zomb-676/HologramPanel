@@ -7,6 +7,7 @@ import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
 import com.github.zomb_676.hologrampanel.api.event.HologramEvent
+import com.github.zomb_676.hologrampanel.api.event.StyleCreateEvent
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactHologram
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
@@ -144,7 +145,7 @@ object HologramManager {
             window.guiScale / window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode)
         }
         DebugHelper.Client.clearRenderRelatedInfo()
-        val style: HologramStyle = HologramStyle.DefaultStyle(guiGraphics)
+        val style: HologramStyle = StyleCreateEvent(guiGraphics).dispatchForge().getStyle()
         states.forEach { (widget, state) ->
             if (Config.Client.skipHologramIfEmpty.get() && !AllRegisters.KeyMapping.forceDisplayKey.isDown && !widget.hasNoneOrdinaryContent()) {
                 state.displayed = false
