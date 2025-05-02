@@ -1,7 +1,6 @@
 package com.github.zomb_676.hologrampanel.trans
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import net.minecraft.core.BlockPos
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
@@ -25,7 +24,7 @@ sealed interface TransSource<out T : Any> {
 
         companion object {
             val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, BlockEntitySource> = StreamCodec.composite(
-                BlockPos.STREAM_CODEC, BlockEntitySource::pos, AllRegisters.Codecs.LEVEL_STREAM_CODE, BlockEntitySource::level, ::BlockEntitySource
+                BlockPos.STREAM_CODEC, BlockEntitySource::pos, AllRegisters.StreamCodecs.LEVEL_STREAM_CODE, BlockEntitySource::level, ::BlockEntitySource
             )
         }
     }
@@ -35,7 +34,7 @@ sealed interface TransSource<out T : Any> {
 
         companion object {
             val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, EntitySource> = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, EntitySource::id, AllRegisters.Codecs.LEVEL_STREAM_CODE, EntitySource::level, ::EntitySource
+                ByteBufCodecs.VAR_INT, EntitySource::id, AllRegisters.StreamCodecs.LEVEL_STREAM_CODE, EntitySource::level, ::EntitySource
             )
         }
     }

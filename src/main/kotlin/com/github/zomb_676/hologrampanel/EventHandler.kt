@@ -3,6 +3,8 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.payload.*
+import com.github.zomb_676.hologrampanel.projector.IHologramStorage
+import com.github.zomb_676.hologrampanel.projector.ProjectorManager
 import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
@@ -26,6 +28,7 @@ import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
 import net.neoforged.neoforge.client.event.*
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers
 import net.neoforged.neoforge.common.NeoForge
@@ -60,6 +63,7 @@ object EventHandler {
         modBus.addListener(EventHandler::onRegistryEvent)
         modBus.addListener(EventHandler::onClientSetup)
         modBus.addListener(EventHandler::onLoadComplete)
+        modBus.addListener(EventHandler::registerCapability)
         forgeBus.addListener(EventHandler::onMobConversion)
         if (dist == Dist.CLIENT) {
             ClientOnly.initEvents(modBus)
@@ -75,7 +79,6 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onKey)
             forgeBus.addListener(ClientOnly::onMouseButton)
             forgeBus.addListener(ClientOnly::onMouseScroll)
-            forgeBus.addListener(ClientOnly::onInteraction)
             forgeBus.addListener(ClientOnly::onClientTickPre)
             forgeBus.addListener(ClientOnly::onClientTickPost)
             forgeBus.addListener(ClientOnly::onRenderGUI)
@@ -158,7 +161,7 @@ object EventHandler {
             val changeValue = event.scrollDeltaY * modifier
 
             run {
-                val modifyTarget = PanelOperatorManager.modifyTarget ?: return@run
+                val modifyTarget = PanelOperatorManager.selectedTarget ?: return@run
                 val player = Minecraft.getInstance().player ?: return@run
                 val window = Minecraft.getInstance().window.window
                 val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
@@ -224,10 +227,6 @@ object EventHandler {
             if (HologramInteractionManager.onMouseClick(event)) {
                 event.isCanceled = true
             }
-        }
-
-        private fun onInteraction(event: InputEvent.InteractionKeyMappingTriggered) {
-//            event.isCanceled = true
         }
 
         private fun registerLayer(event: RegisterGuiLayersEvent) {
@@ -483,6 +482,7 @@ object EventHandler {
     private fun levelUnload(event: LevelEvent.Unload) {
         if (event.level.isClientSide) {
             HologramManager.clearAllHologram()
+            ProjectorManager.clear()
         }
     }
 
@@ -533,5 +533,11 @@ object EventHandler {
         val new = event.outcome
         val payload = EntityConversationPayload(old.id, new.id, new.level().dimension())
         PacketDistributor.sendToPlayersTrackingEntity(old, payload)
+    }
+
+    private fun registerCapability(event: RegisterCapabilitiesEvent) {
+        event.registerBlockEntity(IHologramStorage.CAPABILITY, AllRegisters.BlockEntities.projectorType.get()) { obj, _ ->
+            obj.cap
+        }
     }
 }

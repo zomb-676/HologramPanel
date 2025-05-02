@@ -2,9 +2,11 @@ package com.github.zomb_676.hologrampanel
 
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.projector.ProjectorBlock
-import com.github.zomb_676.hologrampanel.projector.ProjectorType
+import com.github.zomb_676.hologrampanel.projector.ProjectorBlockEntity
 import com.google.common.base.Supplier
 import com.mojang.blaze3d.platform.InputConstants
+import com.mojang.serialization.Codec
+import com.mojang.serialization.codecs.RecordCodecBuilder
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.KeyMapping
 import net.minecraft.core.Registry
@@ -14,13 +16,19 @@ import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceKey
+import net.minecraft.world.item.CreativeModeTab
+import net.minecraft.world.item.CreativeModeTabs
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent
 import net.neoforged.neoforge.client.settings.KeyConflictContext
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent
 import net.neoforged.neoforge.registries.*
+import org.joml.Vector2f
+import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
 
 object AllRegisters {
@@ -29,6 +37,16 @@ object AllRegisters {
         Items.ITEMS.register(modBus)
         Blocks.BLOCKS.register(modBus)
         BlockEntities.BLOCK_ENTITIES.register(modBus)
+        modBus.addListener(::addToCreativeTab)
+    }
+
+    private fun addToCreativeTab(event: BuildCreativeModeTabContentsEvent) {
+        if (event.tabKey != CreativeModeTabs.FUNCTIONAL_BLOCKS) return
+        event.insertAfter(
+            ItemStack(net.minecraft.world.item.Items.ENCHANTING_TABLE),
+            ItemStack(Items.projectItem.get()),
+            CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS
+        )
     }
 
     private fun addNewRegistry(event: NewRegistryEvent) {
@@ -65,12 +83,13 @@ object AllRegisters {
         internal val BLOCK_ENTITIES: DeferredRegister<BlockEntityType<*>> =
             DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, HologramPanel.MOD_ID)
 
-        val projectorType: DeferredHolder<BlockEntityType<*>, BlockEntityType<ProjectorType>> = BLOCK_ENTITIES.register("projector", Supplier {
-            BlockEntityType(::ProjectorType, Blocks.projector.get())
-        })
+        val projectorType: DeferredHolder<BlockEntityType<*>, BlockEntityType<ProjectorBlockEntity>> =
+            BLOCK_ENTITIES.register("projector", Supplier {
+                BlockEntityType(::ProjectorBlockEntity, Blocks.projector.get())
+            })
     }
 
-    object Codecs {
+    object StreamCodecs {
         val LEVEL_STREAM_CODE: StreamCodec<ByteBuf, ResourceKey<Level>> =
             ResourceKey.streamCodec(Registries.DIMENSION)
     }
@@ -125,5 +144,21 @@ object AllRegisters {
             GLFW.GLFW_KEY_LEFT_CONTROL,
             KEY_CATEGORY
         )
+    }
+
+    object Codecs {
+        val VEC2F: Codec<Vector2f> = RecordCodecBuilder.create { ins ->
+            ins.group(
+                Codec.FLOAT.fieldOf("x").forGetter { it.x },
+                Codec.FLOAT.fieldOf("y").forGetter { it.y },
+            ).apply(ins, ::Vector2f)
+        }
+        val VEC3F: Codec<Vector3f> = RecordCodecBuilder.create { ins ->
+            ins.group(
+                Codec.FLOAT.fieldOf("x").forGetter { it.x },
+                Codec.FLOAT.fieldOf("y").forGetter { it.y },
+                Codec.FLOAT.fieldOf("z").forGetter { it.z },
+            ).apply(ins, ::Vector3f)
+        }
     }
 }

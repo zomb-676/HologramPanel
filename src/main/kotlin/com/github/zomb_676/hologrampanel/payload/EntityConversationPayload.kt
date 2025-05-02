@@ -36,7 +36,7 @@ class EntityConversationPayload(val oldEntityID: Int, val newEntityID: Int, val 
         val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, EntityConversationPayload> = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, EntityConversationPayload::oldEntityID,
             ByteBufCodecs.VAR_INT, EntityConversationPayload::newEntityID,
-            AllRegisters.Codecs.LEVEL_STREAM_CODE, EntityConversationPayload::level,
+            AllRegisters.StreamCodecs.LEVEL_STREAM_CODE, EntityConversationPayload::level,
             ::EntityConversationPayload
         )
         val HANDLE = object : IPayloadHandler<EntityConversationPayload> {
