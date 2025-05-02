@@ -5,6 +5,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.dispatchForge
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
@@ -81,6 +82,20 @@ abstract class HologramEvent<T : HologramContext>(private val state: HologramRen
                 fun checkAllow(scroll: HologramInteractionManager.MouseScroll): Interact<HologramContext>? {
                     val target = HologramManager.getInteractHologram() ?: return null
                     return MouseScroll<HologramContext>(target, scroll).dispatchForge()
+                }
+            }
+        }
+
+        class MouseDrag<T : HologramContext>(
+            state: HologramRenderState,
+            val interactive: InteractiveEntry,
+            val dragContext: HologramInteractionManager.DragDataContext<*>
+        ) : Interact<T>(state) {
+            companion object {
+                fun checkAllow(interactive: InteractiveEntry, dragContext: HologramInteractionManager.DragDataContext<*>?): Interact<HologramContext>? {
+                    val target = HologramManager.getInteractHologram() ?: return null
+                    val dragContext = dragContext ?: return null
+                    return MouseDrag<HologramContext>(target, interactive, dragContext).dispatchForge()
                 }
             }
         }

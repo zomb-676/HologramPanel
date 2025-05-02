@@ -72,7 +72,12 @@ object HologramInteractionManager {
             if (dragData == null && mouseClicked && draggingSource == null) {
                 this.draggingSource = currentInteractive
                 val data = currentInteractive.trigDrag(player) ?: return
-                this.dragData = data
+                val event = HologramEvent.Interact.MouseDrag.checkAllow(currentInteractive, data) ?: return
+                if (event.allowInteract()) {
+                    this.dragData = data
+                } else {
+                    setOverlayMessage(event.interactMessage() ?: MISSING_PREVENT_COMPONENT)
+                }
             } else if (dragData != null && draggingSource != null && draggingSource!!.getLatestInteractiveEntry() !== currentInteractive.getLatestInteractiveEntry()) {
                 currentInteractive.onDragPass(dragData!!)
             }
