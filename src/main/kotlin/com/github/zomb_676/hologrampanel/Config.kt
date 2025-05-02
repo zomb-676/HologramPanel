@@ -7,16 +7,27 @@ import com.github.zomb_676.hologrampanel.util.TooltipType
 import com.github.zomb_676.hologrampanel.util.setAndSave
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.core.HolderLookup
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.level.block.Block
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.config.ModConfig
 import net.neoforged.fml.event.config.ModConfigEvent
 import net.neoforged.fml.javafmlmod.FMLModContainer
+import net.neoforged.fml.loading.FMLLoader
 import net.neoforged.neoforge.client.gui.ConfigurationScreen
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory
 import net.neoforged.neoforge.common.ModConfigSpec
+import net.neoforged.neoforge.common.NeoForge
+import net.neoforged.neoforge.event.TagsUpdatedEvent
+import kotlin.jvm.optionals.getOrNull
+import kotlin.streams.asSequence
 
 object Config {
     fun registerConfig(container: FMLModContainer, modBus: IEventBus) {
@@ -29,6 +40,14 @@ object Config {
             override fun createScreen(container: ModContainer, modListScreen: Screen): Screen =
                 ConfigurationScreen(container, modListScreen)
         })
+
+        NeoForge.EVENT_BUS.addListener(::onTagUpdate)
+    }
+
+    fun onTagUpdate(event: TagsUpdatedEvent) {
+        if (FMLLoader.getDist() == Dist.CLIENT) {
+            Client.onTagUpdate(event.registryAccess)
+        }
     }
 
     fun modFolderConfig(fileName: String): String = "HologramPanel/$fileName.toml"
@@ -137,6 +156,66 @@ object Config {
         val forceDisplayModeSwitchType: ModConfigSpec.EnumValue<SwitchMode> = builder
             .defineEnum("force_display_mode_switch_type", SwitchMode.BY_PRESS)
 
+        val tooltipLimitHeight: ModConfigSpec.IntValue = builder
+            .comment("0 for no limit")
+            .defineInRange("tooltip_limit_height", 50, 0, Int.MAX_VALUE)
+
+        val hideEntityTypes: ModConfigSpec.ConfigValue<MutableList<String>> = builder
+            .define("hide_entity_types", mutableListOf())
+
+        val hideBlocks: ModConfigSpec.ConfigValue<MutableList<String>> = builder
+            .define("hide_blocks", mutableListOf())
+
+        internal val hideEntityTypesList: MutableSet<EntityType<*>> = mutableSetOf()
+        internal val hideBlocksList: MutableSet<Block> = mutableSetOf()
+
+        fun onTagUpdate(provider: HolderLookup.Provider) {
+            run {
+                val entityTypeData = provider.lookup(Registries.ENTITY_TYPE).getOrNull() ?: return@run
+                val tags = entityTypeData.listTags().asSequence()
+                    .associateBy { set -> set.key().location }
+                for (typeString in this.hideEntityTypes.get()) {
+                    val location = ResourceLocation.tryParse(typeString) ?: continue
+                    if (tags.containsKey(location)) {
+                        tags.getValue(location).forEach { type ->
+                            hideEntityTypesList += type.value()
+                        }
+                        continue
+                    }
+
+                    val type = BuiltInRegistries.ENTITY_TYPE.getOptional(location).getOrNull()
+                    if (type != null) {
+                        hideEntityTypesList += type
+                        continue
+                    }
+
+                    HologramPanel.LOGGER.error("EntityType(s) $type not found")
+                }
+            }
+            run {
+                val blockTypeData = provider.lookup(Registries.BLOCK).getOrNull() ?: return@run
+                val tags = blockTypeData.listTags().asSequence()
+                    .associateBy { set -> set.key().location }
+                for (blockString in this.hideBlocks.get()) {
+                    val location = ResourceLocation.tryParse(blockString) ?: continue
+                    if (tags.containsKey(location)) {
+                        tags.getValue(location).forEach { type ->
+                            hideBlocksList += type.value()
+                        }
+                        continue
+                    }
+
+                    val type = BuiltInRegistries.BLOCK.getOptional(location).getOrNull()
+                    if (type != null) {
+                        hideBlocksList += type
+                        continue
+                    }
+
+                    HologramPanel.LOGGER.error("Block(s) $type not found")
+                }
+            }
+        }
+
         fun tryValidate() {
             if (renderMaxDistance.get() <= renderMinDistance.get()) {
                 renderMinDistance.set(1.0)
@@ -153,6 +232,9 @@ object Config {
                     "search backend switch to auto for fallback"
                 )
             )
+            Minecraft.getInstance().level?.registryAccess()?.also { access ->
+                onTagUpdate(access)
+            }
         }
 
         val space: ModConfigSpec = builder.build()
@@ -173,31 +255,40 @@ object Config {
         val interactIndicatorPercent: ModConfigSpec.DoubleValue = builder
             .defineInRange("interact_indicator_percent", 0.2, 0.001, 0.999)
 
+        val renderSelectedIndicator: ModConfigSpec.BooleanValue = builder
+            .define("render_selected_indicator", true)
+
+        val selectedIndicatorDistance: ModConfigSpec.IntValue = builder
+            .defineInRange("selected_indicator_distance", 12, 1, 20)
+
+        val selectedIndicatorPercent: ModConfigSpec.DoubleValue = builder
+            .defineInRange("selected_indicator_percent", 0.2, 0.001, 0.999)
+
         val widgetBackgroundAlpha: ModConfigSpec.IntValue = builder
             .defineInRange("widget_background_alpha", 0x7f, 0x00, 0xff)
 
-        val pinPaddingLeft : ModConfigSpec.IntValue = builder
+        val pinPaddingLeft: ModConfigSpec.IntValue = builder
             .defineInRange("pin_padding_left", 0, 10, Int.MAX_VALUE)
 
-        val pinPaddingUp : ModConfigSpec.IntValue = builder
+        val pinPaddingUp: ModConfigSpec.IntValue = builder
             .defineInRange("pin_padding_up", 0, 10, Int.MAX_VALUE)
 
         val pinPromptLineWidth: ModConfigSpec.DoubleValue = builder
             .defineInRange("pin_prompt_line_width", 0.8, 0.001, 10.0)
 
-        val pingPromptRadius : ModConfigSpec.DoubleValue = builder
+        val pinPromptRadius: ModConfigSpec.DoubleValue = builder
             .defineInRange("pin_prompt_radius", 10.0, 1.0, 100.0)
 
-        val pingPromptTerminalStraightLineLength : ModConfigSpec.DoubleValue = builder
-            .defineInRange("ping_prompt_terminal_straight_line_length", 20.0, 0.1, 100.0)
+        val pinPromptTerminalStraightLineLength: ModConfigSpec.DoubleValue = builder
+            .defineInRange("pin_prompt_terminal_straight_line_length", 20.0, 0.1, 100.0)
 
-        val dragPromptXOffset : ModConfigSpec.DoubleValue = builder
+        val dragPromptXOffset: ModConfigSpec.DoubleValue = builder
             .defineInRange("drag_prompt_x_offset", 3.0, -1000.0, 1000.0)
 
-        val dragPromptYOffset : ModConfigSpec.DoubleValue = builder
+        val dragPromptYOffset: ModConfigSpec.DoubleValue = builder
             .defineInRange("drag_prompt_y_offset", 3.0, -1000.0, 1000.0)
 
-        val dragPromptAlpha : ModConfigSpec.DoubleValue = builder
+        val dragPromptAlpha: ModConfigSpec.DoubleValue = builder
             .defineInRange("drag_prompt_alpha", 0.8, 0.01, 1.0)
 
         val space: ModConfigSpec = builder.build()

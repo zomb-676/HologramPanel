@@ -1,12 +1,15 @@
 package com.github.zomb_676.hologrampanel.interaction
 
 import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.api.event.HologramEvent
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager.dragData
 import com.github.zomb_676.hologrampanel.trans.TransHandle
 import com.github.zomb_676.hologrampanel.trans.TransPath
 import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
+import com.github.zomb_676.hologrampanel.util.setOverlayMessage
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
@@ -17,6 +20,7 @@ import org.lwjgl.glfw.GLFW
 
 object HologramInteractionManager {
     private val FORBIDDEN_COMPONENT = Component.literal("Interactive Is Disabled On This Server")
+    private val MISSING_PREVENT_COMPONENT = Component.literal("Interactive Prevent Message missing")
 
     val mouseClicked get() = GLFW.glfwGetMouseButton(Minecraft.getInstance().window.window, GLFW.GLFW_MOUSE_BUTTON_LEFT) != 0
 
@@ -62,13 +66,19 @@ object HologramInteractionManager {
     fun renderTick() {
         if (!MouseInputModeUtil.overlayMouseMove() && !ViewChecker.checkChange()) return
         if (!Config.Server.allowHologramInteractive.get()) return
+        if (CycleSelector.instanceExist()) return
         val player = Minecraft.getInstance().player ?: return
         val currentInteractive = HologramManager.getInteractiveTarget()
         if (currentInteractive != null) {
             if (dragData == null && mouseClicked && draggingSource == null) {
                 this.draggingSource = currentInteractive
                 val data = currentInteractive.trigDrag(player) ?: return
-                this.dragData = data
+                val event = HologramEvent.Interact.MouseDrag.checkAllow(currentInteractive, data) ?: return
+                if (event.allowInteract()) {
+                    this.dragData = data
+                } else {
+                    setOverlayMessage(event.interactMessage() ?: MISSING_PREVENT_COMPONENT)
+                }
             } else if (dragData != null && draggingSource != null && draggingSource!!.getLatestInteractiveEntry() !== currentInteractive.getLatestInteractiveEntry()) {
                 currentInteractive.onDragPass(dragData!!)
             }
@@ -88,7 +98,13 @@ object HologramInteractionManager {
             dragData = null
             return false
         }
-        if (Config.Server.allowHologramInteractive.get()) {
+        if (!Config.Server.allowHologramInteractive.get()) {
+            setOverlayMessage(FORBIDDEN_COMPONENT)
+            return true
+        }
+        val mouseClicked = MouseButton.create(event)
+        val checkEvent = HologramEvent.Interact.MouseClicked.checkAllow(mouseClicked) ?: return false
+        if (checkEvent.allowInteract()) {
             if (event.action == GLFW.GLFW_RELEASE) {
                 if (draggingSource != null && dragData != null && event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                     if (draggingSource!!.getLatestInteractiveEntry() !== interactiveTarget.interactive) {
@@ -100,37 +116,46 @@ object HologramInteractionManager {
                     dragData = null
                     draggingSource = null
                 }
-                val player = Minecraft.getInstance().player ?: return false
-                val data = MouseButton.create(event)
-                val res = interactiveTarget.onMouseClick(data, player)
+                val player = Minecraft.getInstance().player ?: return true
+                val res = interactiveTarget.onMouseClick(mouseClicked, player)
                 return res
             } else return true
         } else {
-            Minecraft.getInstance().gui.setOverlayMessage(FORBIDDEN_COMPONENT, false)
+            setOverlayMessage(checkEvent.interactMessage() ?: MISSING_PREVENT_COMPONENT)
             return true
         }
     }
 
     fun onMouseScroll(event: InputEvent.MouseScrollingEvent): Boolean {
         val interactiveTarget = HologramManager.getInteractiveTarget() ?: return false
-        if (Config.Server.allowHologramInteractive.get()) {
-            val player = Minecraft.getInstance().player ?: return false
-            val mouseScroll = MouseScroll.create(event)
+        if (!Config.Server.allowHologramInteractive.get()) {
+            setOverlayMessage(FORBIDDEN_COMPONENT)
+            return true
+        }
+        val player = Minecraft.getInstance().player ?: return true
+        val mouseScroll = MouseScroll.create(event)
+        val event = HologramEvent.Interact.MouseScroll.checkAllow(mouseScroll) ?: return true
+        if (event.allowInteract()) {
             return interactiveTarget.onMouseScroll(mouseScroll, player)
         } else {
-            Minecraft.getInstance().gui.setOverlayMessage(FORBIDDEN_COMPONENT, false)
+            setOverlayMessage(event.interactMessage() ?: MISSING_PREVENT_COMPONENT)
             return true
         }
     }
 
     fun onKey(event: InputEvent.Key): Boolean {
         val interactiveTarget = HologramManager.getInteractiveTarget() ?: return false
-        if (Config.Server.allowHologramInteractive.get()) {
-            val player = Minecraft.getInstance().player ?: return false
-            val key = Key.create(event)
+        if (!Config.Server.allowHologramInteractive.get()) {
+            setOverlayMessage(FORBIDDEN_COMPONENT)
+            return true
+        }
+        val player = Minecraft.getInstance().player ?: return true
+        val key = Key.create(event)
+        val event = HologramEvent.Interact.Key.checkAllow(key) ?: return true
+        if (event.allowInteract()) {
             return interactiveTarget.onKey(key, player)
         } else {
-            Minecraft.getInstance().gui.setOverlayMessage(FORBIDDEN_COMPONENT, false)
+            setOverlayMessage(event.interactMessage() ?: MISSING_PREVENT_COMPONENT)
             return true
         }
     }

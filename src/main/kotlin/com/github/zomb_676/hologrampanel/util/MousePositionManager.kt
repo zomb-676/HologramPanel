@@ -3,7 +3,7 @@ package com.github.zomb_676.hologrampanel.util
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
-import com.github.zomb_676.hologrampanel.widget.LocateType
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.MouseHandler
@@ -24,7 +24,7 @@ import kotlin.math.abs
  */
 object MousePositionManager {
     /**
-     * resolve the `Homography Matrix` that used to remapping mouse position in for [LocateType.World.FacingVector]
+     * resolve the `Homography Matrix` that used to remapping mouse position in for [LocateFreelyInWorld]
      */
     private object HomographyMatrixResolver {
         /**
@@ -175,7 +175,7 @@ object MousePositionManager {
          * @return the coordiante in anchored in left-up as original point
          * can be converted to minecraft screen space via a simple plus/minus transformation
          */
-        fun solvePosition(mouseX: Float, mouseY: Float, size: Size, locate: LocateType.World.FacingVector): ScreenPosition {
+        fun solvePosition(mouseX: Float, mouseY: Float, size: Size, locate: LocateFreelyInWorld): ScreenPosition {
             val matrix = computeHomography(
                 locate.getLeftUp(), locate.getLeftDown(), locate.getRightDown(), locate.getRightUp(),
                 size.width.toFloat(), size.height.toFloat()
@@ -239,7 +239,7 @@ object MousePositionManager {
      * current coordinate should be based on the left-up corner as its orign point
      */
     fun remappingMouseForInteract(state: HologramRenderState, code: () -> Unit) {
-        val locate = state.locate as? LocateType.World.FacingVector ?: return
+        val locate = state.locate as? LocateFreelyInWorld ?: return
         val (mouseX, mouseY) = HomographyMatrixResolver.solvePosition(mouseX, mouseY, state.displaySize, locate)
         remappingMousePositionScope(mouseX, mouseY, code)
     }

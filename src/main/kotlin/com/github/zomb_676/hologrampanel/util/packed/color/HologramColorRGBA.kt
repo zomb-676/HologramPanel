@@ -23,10 +23,10 @@ value class HologramColorRGBA private constructor(val color: Int) {
     inline val blue get(): Int = (color ushr BLUE_SHIFT) and 0xff
     inline val alpha get(): Int = (color ushr ALPHA_SHIFT) and 0xff
 
-    fun red(r: Int) = HologramColorRGBA(color or (0xff shl RED_SHIFT) and (r shl RED_SHIFT))
-    fun green(g: Int) = HologramColorRGBA(color or (0xff shl GREEN_SHIFT) and (g shl GREEN_SHIFT))
-    fun blue(b: Int) = HologramColorRGBA(color or (0xff shl BLUE_SHIFT) and (b shl BLUE_SHIFT))
-    fun alpha(a: Int) = HologramColorRGBA(color or (0xff shl ALPHA_SHIFT) and (a shl ALPHA_SHIFT))
+    fun red(r: Int) = HologramColorRGBA(color and (0xff shl RED_SHIFT).inv() or (r shl RED_SHIFT))
+    fun green(g: Int) = HologramColorRGBA(color and (0xff shl GREEN_SHIFT).inv() or (g shl GREEN_SHIFT))
+    fun blue(b: Int) = HologramColorRGBA(color and (0xff shl BLUE_SHIFT).inv() or (b shl BLUE_SHIFT))
+    fun alpha(a: Int) = HologramColorRGBA(color and (0xff shl ALPHA_SHIFT).inv() or (a shl ALPHA_SHIFT))
 
     inline val r get() = red / HologramColor.CHANNEL_MAX_VALUE_FLOAT
     inline val g get() = green / HologramColor.CHANNEL_MAX_VALUE_FLOAT

@@ -9,11 +9,14 @@ import com.github.zomb_676.hologrampanel.util.packed.Size
  * not implementation this in mose case
  */
 sealed interface CycleEntry {
-    fun onClick(callback: SelectorCallback)
-    fun onClose() {}
+    fun onClick(callback: SelectorCallback, trigType: TrigType)
+    fun onClose(callback: SelectorCallback) {}
     fun renderContent(style: HologramStyle, partialTick: Float, isHover: Boolean)
     fun size(style: HologramStyle): Size
-    fun scale() : Double
+    fun scale(): Double
+
+    fun tick() {}
+    fun isVisible(): Boolean = true
 
     interface Group : CycleEntry {
         fun children(): List<CycleEntry>
@@ -31,5 +34,10 @@ sealed interface CycleEntry {
         override fun openGroup(group: Group) {}
 
         override fun recoveryToParent() {}
+    }
+
+    enum class TrigType {
+        BY_CLICK,
+        BY_RELEASE
     }
 }

@@ -158,8 +158,6 @@
   "key.categories.hologram_panel" : "Hologram Panel",
   "key.hologram_panel.selector_panel_key": "selector panel",
   "key.hologram_panel.scale_key": "scale hologram",
-  "key.hologram_panel.collapse_key": "collapse hologram",
-  "key.hologram_panel.ping_screen_key": "ping widget to screen",
-  "key.hologram_panel.ping_vector_key": "ping widget to world"
+  "key.hologram_panel.collapse_key": "collapse hologram"
 
 }

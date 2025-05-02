@@ -34,4 +34,10 @@ data object EmptyElement : IRenderElement {
         set(value) {}
 
     override fun getCurrent(): EmptyElement = this
+
+    override fun toString(): String {
+        return "EmptyRenderElement"
+    }
+
+
 }

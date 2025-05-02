@@ -2,7 +2,6 @@ package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
 import io.netty.buffer.ByteBuf
@@ -11,8 +10,10 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
 import net.minecraft.util.profiling.ProfilerFiller
-import net.neoforged.neoforge.client.GlStateBackup
+import net.neoforged.bus.api.Event
+import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.common.ModConfigSpec
+import net.neoforged.neoforge.common.NeoForge
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL
@@ -52,17 +53,6 @@ inline fun HologramStyle.stack(crossinline code: () -> Unit) {
     this.guiGraphics.stack(code)
 }
 
-inline fun HologramStyle.stackIf(check: Boolean, crossinline addition: () -> Unit, crossinline code: () -> Unit) {
-    if (check) {
-        this.stack {
-            addition.invoke()
-            code.invoke()
-        }
-    } else {
-        code.invoke()
-    }
-}
-
 fun mainCamera(): Camera = Minecraft.getInstance().gameRenderer.mainCamera
 
 typealias JomlMath = org.joml.Math
@@ -76,12 +66,6 @@ inline fun <reified T> requireInstanceOf(claz: Class<*>): Class<out T> {
 
 inline fun <reified T> getClassOf(className: String): Class<out T> =
     requireInstanceOf<T>(Class.forName(className, false, Thread.currentThread().contextClassLoader))
-
-inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> Unit) {
-    RenderSystem.backupGlState(state)
-    code.invoke()
-    RenderSystem.restoreGlState(state)
-}
 
 inline val profiler: ProfilerFiller get() = Minecraft.getInstance().profiler
 
@@ -111,6 +95,8 @@ inline fun glDebugStack(debugLabelName: String, id: Int = 0, crossinline code: (
         GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, id, debugLabelName)
         code.invoke()
         GL46.glPopDebugGroup()
+    } else {
+        code.invoke()
     }
 }
 
@@ -189,6 +175,11 @@ fun <T : Any> ModConfigSpec.ConfigValue<T>.setAndSave(value: T) {
     ConfigSaveHelper.save(this)
 }
 
+inline fun <T : Any> ModConfigSpec.ConfigValue<T>.modifyAndSave(code: (T) -> Unit) {
+    code.invoke(this.get())
+    this.setAndSave(this.get())
+}
+
 /**
  * use the [container] to reduce object allocation during the context scope
  */
@@ -202,4 +193,19 @@ fun timeInterpolation(value: Int): Double {
     val period = max(value * 0.5, 3.0)
     val wave = sin((Math.PI / 2) * cos(2 * Math.PI * currentTime / period)).let { it / 2 + 0.5 }
     return JomlMath.lerp(wave, 0.0, value.toDouble())
+}
+
+fun <T : Event> T.dispatch(bus: IEventBus): T {
+    bus.post(this)
+    return this
+}
+
+fun <T : Event> T.dispatchForge() = dispatch(NeoForge.EVENT_BUS)
+
+fun addClientMessage(message: Component) = Minecraft.getInstance().gui.chat.addMessage(message)
+
+fun addClientMessage(message: String) = addClientMessage(Component.literal(message))
+
+fun setOverlayMessage(messages: Component) {
+    Minecraft.getInstance().gui.setOverlayMessage(messages, false)
 }

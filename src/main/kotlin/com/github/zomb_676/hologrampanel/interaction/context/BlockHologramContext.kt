@@ -5,7 +5,6 @@ import com.github.zomb_676.hologrampanel.util.DistType
 import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import net.minecraft.core.BlockPos
 import net.minecraft.core.UUIDUtil
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.entity.player.Player
@@ -15,11 +14,8 @@ import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.FluidState
 import net.minecraft.world.phys.BlockHitResult
 import net.neoforged.neoforge.server.ServerLifecycleHooks
-import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3f
 import org.joml.Vector3fc
-import java.util.*
-import kotlin.jvm.optionals.getOrNull
 
 /**
  * context object describing block-based target
@@ -27,7 +23,6 @@ import kotlin.jvm.optionals.getOrNull
 class BlockHologramContext(
     val pos: BlockPos,
     private val player: Player,
-    private val hitResult: BlockHitResult?
 ) : HologramContext {
 
     private val originalBlock: BlockState = player.level().getBlockState(pos)
@@ -50,8 +45,6 @@ class BlockHologramContext(
      * identity by the [BlockPos]
      */
     override fun getIdentityObject(): Any = pos
-
-    override fun getHitContext(): BlockHitResult? = hitResult
 
     override fun getRememberData(): Remember<BlockHologramContext> = remember
 
@@ -90,7 +83,7 @@ class BlockHologramContext(
     companion object {
         fun of(hit: BlockHitResult, player: Player): BlockHologramContext {
             val pos: BlockPos = hit.blockPos
-            return BlockHologramContext(pos, player, hit)
+            return BlockHologramContext(pos, player)
         }
 
         val STREAM_CODEC: StreamCodec<FriendlyByteBuf, BlockHologramContext> =
@@ -99,8 +92,7 @@ class BlockHologramContext(
                     val pos = BlockPos.STREAM_CODEC.decode(buffer)
                     val playerUUID = UUIDUtil.STREAM_CODEC.decode(buffer)
                     val player = ServerLifecycleHooks.getCurrentServer()!!.playerList.getPlayer(playerUUID)
-                    val hit = buffer.readOptional(FriendlyByteBuf::readBlockHitResult)
-                    return BlockHologramContext(pos, player!!, hit.getOrNull())
+                    return BlockHologramContext(pos, player!!)
                 }
 
                 override fun encode(
@@ -109,7 +101,6 @@ class BlockHologramContext(
                 ) {
                     BlockPos.STREAM_CODEC.encode(buffer, value.pos)
                     UUIDUtil.STREAM_CODEC.encode(buffer, value.player.uuid)
-                    buffer.writeOptional(Optional.ofNullable(value.hitResult), FriendlyByteBuf::writeBlockHitResult)
                 }
             }
     }

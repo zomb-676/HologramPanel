@@ -7,15 +7,15 @@ import net.minecraft.network.chat.Component
 /**
  * render [Component]
  */
-open class ComponentRenderElement(val component: Component) : RenderElement() {
-    constructor(string: String) : this(Component.literal(string))
+open class ComponentRenderElement(val component: Component, val color: Int = 0) : RenderElement() {
+    constructor(string: String, color: Int = 0) : this(Component.literal(string), color)
 
     override fun measureContentSize(style: HologramStyle): Size {
         return style.measureString(component).scale()
     }
 
     override fun render(style: HologramStyle, partialTicks: Float) {
-        style.drawString(component)
+        style.drawString(component, color = color)
     }
 
     override fun toString(): String {

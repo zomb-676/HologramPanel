@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.addon.universial
 
+import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
@@ -23,7 +24,11 @@ data object ItemEntityTooltipProvider : ComponentProvider<EntityHologramContext,
         }
 
         builder.single("tool") {
-            screenTooltip("item_tooltip", item).setLimitHeight(30)
+            val limit = Config.Client.tooltipLimitHeight.get()
+            val tooltip = screenTooltip("item_tooltip", item)
+            if (limit > 0) {
+                tooltip.setLimitHeight(limit)
+            }
         }
     }
 

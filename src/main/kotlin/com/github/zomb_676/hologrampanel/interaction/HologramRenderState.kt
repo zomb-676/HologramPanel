@@ -13,8 +13,10 @@ import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.LocateType
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateInWorld
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import org.joml.Vector3f
@@ -33,7 +35,7 @@ class HologramRenderState(
      */
     var displayed: Boolean = false
 
-    var locate: LocateType = LocateType.World.FacingPlayer
+    var locate: LocateType = LocateFacingPlayer()
 
     /**
      * the size of the [widget], not influenced by [com.mojang.blaze3d.vertex.PoseStack.scale]
@@ -132,7 +134,7 @@ class HologramRenderState(
     }
 
     fun getSourceScreenPosition(partialTick: Float): ScreenPosition {
-        if (this.locate is LocateType.World) return this.screenPos
+        if (this.locate is LocateInWorld) return this.screenPos
         return this.locate.getSourceScreenSpacePosition(context, partialTick)
     }
 
@@ -161,7 +163,7 @@ class HologramRenderState(
         val angleInRadius = JomlMath.acos(dot)
         val angel = JomlMath.toDegrees(angleInRadius.toDouble())
         this.inViewDegree = angel < Minecraft.getInstance().options.fov().get()
-        return if (this.locate is LocateType.World) this.inViewDegree else true
+        return if (this.locate is LocateInWorld) this.inViewDegree else true
     }
 
     /**
