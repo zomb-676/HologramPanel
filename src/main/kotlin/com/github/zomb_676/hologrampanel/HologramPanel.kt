@@ -38,5 +38,6 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
         EventHandler.initEvents(dist, modBus)
         AllRegisters.initEvents(dist, modBus)
         Config.initEvents(dist, modBus)
+        BuildInHologramEventHandle.initEvents(dist, modBus)
     }
 }
