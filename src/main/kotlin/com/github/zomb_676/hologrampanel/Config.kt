@@ -173,6 +173,15 @@ object Config {
         val interactIndicatorPercent: ModConfigSpec.DoubleValue = builder
             .defineInRange("interact_indicator_percent", 0.2, 0.001, 0.999)
 
+        val renderSelectedIndicator: ModConfigSpec.BooleanValue = builder
+            .define("render_selected_indicator", true)
+
+        val selectedIndicatorDistance: ModConfigSpec.IntValue = builder
+            .defineInRange("selected_indicator_distance", 12, 1, 20)
+
+        val selectedIndicatorPercent: ModConfigSpec.DoubleValue = builder
+            .defineInRange("selected_indicator_percent", 0.2, 0.001, 0.999)
+
         val widgetBackgroundAlpha: ModConfigSpec.IntValue = builder
             .defineInRange("widget_background_alpha", 0x7f, 0x00, 0xff)
 

@@ -264,9 +264,11 @@ object HologramManager {
 
     private fun renderSelectedHologramStateTips(target: HologramRenderState?, style: HologramStyle) {
         val target = target ?: return
-        val distance = 10
-        val percent = 0.2
-        this.renderHologramStateTip(style, target, 0xff_ffa500.toInt(), distance, percent)
+        if (Config.Style.renderSelectedIndicator.get()) {
+            val distance = Config.Style.selectedIndicatorDistance.get()
+            val percent = Config.Style.selectedIndicatorPercent.get()
+            this.renderHologramStateTip(style, target, 0xff_ffa500.toInt(), distance, percent)
+        }
     }
 
     /**
@@ -489,14 +491,6 @@ object HologramManager {
         this.collapseTarget?.switchCollapse()
     }
 
-    fun tryPinInteractScreen() {
-        val interact = getInteractHologram() ?: return
-        if (interact.locate !is LocateType.Screen) {
-            interact.locate = LocateType.Screen(Vector2f(30f, 30f))
-            this.screenPinHolograms.add(interact)
-        }
-    }
-
     /**
      * sort screen pin hologram by their y of screen position
      */
@@ -551,14 +545,12 @@ object HologramManager {
         }
     }
 
-    fun tryPinInteractVector() {
-        val interact = getInteractHologram() ?: return
-        val camera = Minecraft.getInstance().gameRenderer.mainCamera
-        when (val locate = interact.locate) {
-            is LocateType.World.FacingVector -> locate.byCamera(camera)
-            else -> interact.locate = LocateType.World.FacingVector().byCamera(camera).apply {
-                camera.lookVector.mul(-sqrt(3f) / 2f, offset)
-            }
+    fun notifyHologramLocateTypeChange(state: HologramRenderState, old: LocateType) {
+        if (old is LocateType.Screen) {
+            this.screenPinHolograms.remove(state)
+        }
+        if (state.locate is LocateType.Screen) {
+            this.screenPinHolograms.add(state)
         }
     }
 

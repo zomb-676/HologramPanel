@@ -143,8 +143,6 @@ object EventHandler {
 
                 else if isDownAction -> when (event.key) {
                     AllRegisters.KeyMapping.collapseKey.key.value -> HologramManager.trySwitchWidgetCollapse()
-                    AllRegisters.KeyMapping.pinScreenKey.key.value -> HologramManager.tryPinInteractScreen()
-                    AllRegisters.KeyMapping.pinVectorKey.key.value -> HologramManager.tryPinInteractVector()
                 }
             }
 
@@ -209,6 +207,7 @@ object EventHandler {
                 if (event.action == GLFW.GLFW_PRESS) {
                     CycleSelector.onClick()
                 }
+                event.isCanceled = true
                 return
             }
 

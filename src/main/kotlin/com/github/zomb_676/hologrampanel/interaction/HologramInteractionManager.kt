@@ -8,6 +8,7 @@ import com.github.zomb_676.hologrampanel.trans.TransPath
 import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
+import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
@@ -64,6 +65,7 @@ object HologramInteractionManager {
     fun renderTick() {
         if (!MouseInputModeUtil.overlayMouseMove() && !ViewChecker.checkChange()) return
         if (!Config.Server.allowHologramInteractive.get()) return
+        if (CycleSelector.instanceExist()) return
         val player = Minecraft.getInstance().player ?: return
         val currentInteractive = HologramManager.getInteractiveTarget()
         if (currentInteractive != null) {
