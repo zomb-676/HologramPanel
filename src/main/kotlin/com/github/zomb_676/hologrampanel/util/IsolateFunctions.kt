@@ -112,6 +112,8 @@ inline fun glDebugStack(debugLabelName: String, id: Int = 0, crossinline code: (
         GL46.glPushDebugGroup(GL46.GL_DEBUG_SOURCE_APPLICATION, id, debugLabelName)
         code.invoke()
         GL46.glPopDebugGroup()
+    } else {
+        code.invoke()
     }
 }
 
