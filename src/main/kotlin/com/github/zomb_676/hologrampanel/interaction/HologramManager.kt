@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.interaction
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.DebugHelper
+import com.github.zomb_676.hologrampanel.PanelOperatorManager
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
@@ -146,10 +147,10 @@ object HologramManager {
         }
         DebugHelper.Client.clearRenderRelatedInfo()
         val style: HologramStyle = StyleCreateEvent(guiGraphics).dispatchForge().getStyle()
-        states.forEach { (widget, state) ->
+        for ((widget, state) in states) {
             if (Config.Client.skipHologramIfEmpty.get() && !AllRegisters.KeyMapping.forceDisplayKey.isDown && !widget.hasNoneOrdinaryContent()) {
                 state.displayed = false
-                return@forEach
+                continue
             }
             val displayType = state.displayType
             //measure size
@@ -160,7 +161,7 @@ object HologramManager {
             //clip hologram at back
             if (!state.viewVectorDegreeCheckPass(partialTicks)) {
                 state.displayed = false
-                return@forEach
+                continue
             }
             val locate = state.locate
 
@@ -172,7 +173,7 @@ object HologramManager {
                     TransitRenderTargetManager.allocate(state.displaySize, locate, state)
                 }
                 state.displayed = true
-                return@forEach
+                continue
             }
 
             style.stack {
@@ -231,10 +232,13 @@ object HologramManager {
         }
         this.renderPinScreenPrompt(style, partialTicks)
 
-        if (Config.Style.renderInteractIndicator.get()) {
-            val target = getInteractHologram()
-            if (target?.locate !is LocateType.World.FacingVector) {
-                this.renderHologramStateTips(target, style)
+        val target = getInteractHologram()
+        if (target?.locate !is LocateType.World.FacingVector) {
+            this.renderInteractionHologramStateTips(target, style)
+        }
+        PanelOperatorManager.selectedTarget?.also { selected ->
+            if (selected.locate !is LocateType.World.FacingVector) {
+                this.renderSelectedHologramStateTips(selected, style)
             }
         }
 
@@ -249,11 +253,20 @@ object HologramManager {
         else -> JomlMath.clamp(0.0, 1.0, 1.0 - (distance - start) / (end - start))
     }
 
-    private fun renderHologramStateTips(target: HologramRenderState?, style : HologramStyle) {
+    private fun renderInteractionHologramStateTips(target: HologramRenderState?, style: HologramStyle) {
         val target = target ?: return
-        val distance = Config.Style.interactIndicatorDistance.get()
-        val percent = Config.Style.interactIndicatorPercent.get()
-        this.renderHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
+        if (Config.Style.renderInteractIndicator.get()) {
+            val distance = Config.Style.interactIndicatorDistance.get()
+            val percent = Config.Style.interactIndicatorPercent.get()
+            this.renderHologramStateTip(style, target, 0xff_00a2e8.toInt(), distance, percent)
+        }
+    }
+
+    private fun renderSelectedHologramStateTips(target: HologramRenderState?, style: HologramStyle) {
+        val target = target ?: return
+        val distance = 10
+        val percent = 0.2
+        this.renderHologramStateTip(style, target, 0xff_ffa500.toInt(), distance, percent)
     }
 
     /**
@@ -494,9 +507,10 @@ object HologramManager {
         screenPinHolograms.sortBy {
             it.getSourceScreenPosition(partialTicks).y
         }
-        screenPinHolograms.forEach { state ->
-            if (!state.displayed) return@forEach
-            val locate = state.locate as LocateType.Screen? ?: return@forEach
+        for (state in screenPinHolograms) {
+            if (!state.displayed) continue
+            val locate = state.locate as LocateType.Screen? ?: continue
+            if (!locate.arrange) continue
             locate.setPosition(pos.x, pos.y + size.height + 5)
             pos = state.screenPos
             size = state.displaySize
@@ -613,10 +627,11 @@ object HologramManager {
                 style.guiGraphics.flush()
             }
             glDebugStack("indicator") {
-                if (Config.Style.renderInteractIndicator.get()) {
-                    this.renderHologramStateTips(target, style)
-                    style.guiGraphics.flush()
+                this.renderInteractionHologramStateTips(target, style)
+                if (PanelOperatorManager.selectedTarget == target) {
+                    this.renderSelectedHologramStateTips(target, style)
                 }
+                style.guiGraphics.flush()
             }
         }
         Minecraft.getInstance().mainRenderTarget.bindWrite(true)
