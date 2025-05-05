@@ -5,50 +5,67 @@ import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelectorBuilder.Companion.invoke
 import com.github.zomb_676.hologrampanel.widget.element.EmptyElement
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * the builder for [CycleSelector], use [invoke]
  */
 class CycleSelectorBuilder {
-    class GroupEntryBuilder {
-        val children: MutableList<CycleEntry> = mutableListOf()
+    class SingleEntryBuilder {
+        private var frozen = false
+        private var renderElement: () -> IRenderElement = { EmptyElement }
+        private var onClick: () -> Unit = {}
+        private var clickOnClose = true
+        private var visible: () -> Boolean = { true }
 
-        fun add(element: IRenderElement, clickOnClose: Boolean = true, onClick: () -> Unit) {
-            val instance = object : CycleEntry.Single {
-                override fun onClick(callback: CycleEntry.SelectorCallback) = onClick.invoke()
-
-                override fun onClose() {
-                    if (clickOnClose) {
-                        onClick()
-                    }
-                }
-
-                override fun renderContent(style: HologramStyle, partialTick: Float, isHover: Boolean) {
-                    element.render(style, partialTick)
-                }
-
-                override fun size(style: HologramStyle): Size {
-                    element.contentSize = element.measureContentSize(style)
-                    return element.contentSize
-                }
-
-                override fun scale(): Double = element.getScale()
-
+        private inline fun onNotFrozen(handler: () -> Unit) {
+            if (!frozen) {
+                handler()
             }
-            children.add(instance)
         }
 
-        inline fun addGroup(element: IRenderElement, code: GroupEntryBuilder.() -> Unit) {
-            val groupBuilder = GroupEntryBuilder()
-            code.invoke(groupBuilder)
-            this.children.add(groupBuilder.build(element))
+        fun renderElement(element: IRenderElement) = onNotFrozen {
+            renderElement { element }
         }
 
-        fun build(element: IRenderElement): CycleEntry.Group {
-            return object : CycleEntry.Group {
-                override fun children(): List<CycleEntry> = children
-                override fun onClick(callback: CycleEntry.SelectorCallback) {
-                    callback.openGroup(this)
+        fun renderElement(element: () -> IRenderElement) = onNotFrozen {
+            this.renderElement = element
+        }
+
+        fun onClick(onClick: () -> Unit) = onNotFrozen {
+            this.onClick = onClick
+        }
+
+        fun notClickOnClose() = onNotFrozen {
+            this.clickOnClose = false
+        }
+
+        fun visible(visible: () -> Boolean) = onNotFrozen {
+            this.visible = visible
+        }
+
+        @ApiStatus.Internal
+        internal fun build(): CycleEntry.Single {
+            this.frozen = true
+            return object : CycleEntry.Single {
+                private var clicked = false
+                private var element: IRenderElement = EmptyElement
+
+                override fun isVisible(): Boolean = visible()
+
+                override fun tick() {
+                    this.element = renderElement()
+                }
+
+                override fun onClick(callback: CycleEntry.SelectorCallback, trigType: CycleEntry.TrigType) {
+                    onClick.invoke()
+                    clicked = true
+                }
+
+                override fun onClose(callback: CycleEntry.SelectorCallback) {
+                    if (clickOnClose && !clicked) {
+                        this.onClick(callback, CycleEntry.TrigType.BY_CLICK)
+                    }
                 }
 
                 override fun renderContent(style: HologramStyle, partialTick: Float, isHover: Boolean) {
@@ -65,11 +82,69 @@ class CycleSelectorBuilder {
         }
     }
 
+    class GroupEntryBuilder {
+        val children: MutableList<CycleEntry> = mutableListOf()
+        private var self : CycleEntry? = null
+
+        fun add(code: SingleEntryBuilder.() -> Unit) {
+            val builder = SingleEntryBuilder()
+            code.invoke(builder)
+            children.add(builder.build())
+        }
+
+        fun add(element: IRenderElement, onClick: () -> Unit) {
+            add {
+                renderElement(element)
+                onClick(onClick)
+            }
+        }
+
+        fun adjustGroup(code : (SingleEntryBuilder).() -> Unit) {
+            val builder = SingleEntryBuilder()
+            code.invoke(builder)
+            this.self = builder.build()
+        }
+
+        /**
+         * not call [adjustGroup], otherwise, behavior is undefined
+         */
+        fun addGroup(element: IRenderElement, code: GroupEntryBuilder.() -> Unit) {
+            val groupBuilder = GroupEntryBuilder()
+            code.invoke(groupBuilder)
+            groupBuilder.adjustGroup {
+                renderElement { element }
+            }
+            this.children.add(groupBuilder.build())
+        }
+
+        /**
+         * must call [adjustGroup]
+         */
+        fun addGroup(code: GroupEntryBuilder.() -> Unit) {
+            val groupBuilder = GroupEntryBuilder()
+            code.invoke(groupBuilder)
+            this.children.add(groupBuilder.build())
+        }
+
+        @ApiStatus.Internal
+        internal fun build(): CycleEntry.Group {
+            if (self == null) {
+                adjustGroup {}
+            }
+            return object : CycleEntry.Group , CycleEntry.Single by self {
+                override fun children(): List<CycleEntry> = children
+                override fun onClick(callback: CycleEntry.SelectorCallback, trigType: CycleEntry.TrigType) {
+                    callback.openGroup(this)
+                }
+            }
+        }
+    }
+
     companion object {
-        inline operator fun invoke(code: GroupEntryBuilder.() -> Unit): CycleSelector {
+        operator fun invoke(code: GroupEntryBuilder.() -> Unit): CycleSelector {
             val builder = GroupEntryBuilder()
             code.invoke(builder)
-            return CycleSelector(builder.build(EmptyElement))
+            return CycleSelector(builder.build())
         }
     }
 }

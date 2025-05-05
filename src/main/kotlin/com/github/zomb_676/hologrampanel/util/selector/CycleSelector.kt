@@ -86,9 +86,13 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         val sqrt = sqrt(x * x + y * y)
         val canSelect = sqrt > 20
 
+        val currentVisible = currentGroup.children()
+            .onEach(CycleEntry::tick)
+            .filter(CycleEntry::isVisible)
+
         val currentRadian = Math.toRadians(degree)
-        val degreeForEach = 360.0 / currentGroup.childrenCount()
-        currentGroup.children().forEachIndexed { index, entry ->
+        val degreeForEach = 360.0 / currentVisible.size
+        currentVisible.forEachIndexed { index, entry ->
             val from = Math.toRadians((degreeForEach * index) + 1)
             val to = Math.toRadians((degreeForEach * (index + 1)) - 1)
             val isHover = canSelect && currentRadian in from..to
@@ -165,11 +169,10 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         fun tryEnd() {
-            if (this.instance != null) {
-                instance?.current?.onClose()
-                this.instance = null
-                MouseInputModeUtil.exit()
-            }
+            val selector = this.instance ?: return
+            instance?.current?.onClose(selector)
+            this.instance = null
+            MouseInputModeUtil.exit()
         }
 
         fun onClick() {
@@ -178,7 +181,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
                 selector.recoveryToParent()
             } else {
                 val target = selector.current ?: return
-                target.onClick(selector)
+                target.onClick(selector, CycleEntry.TrigType.BY_CLICK)
             }
         }
 
