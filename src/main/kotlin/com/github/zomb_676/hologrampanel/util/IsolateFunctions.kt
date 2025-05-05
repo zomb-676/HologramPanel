@@ -195,6 +195,11 @@ fun <T : Any> ModConfigSpec.ConfigValue<T>.setAndSave(value: T) {
     ConfigSaveHelper.save(this)
 }
 
+inline fun <T : Any> ModConfigSpec.ConfigValue<T>.modifyAndSave(code: (T) -> Unit) {
+    code.invoke(this.get())
+    this.setAndSave(this.get())
+}
+
 /**
  * use the [container] to reduce object allocation during the context scope
  */

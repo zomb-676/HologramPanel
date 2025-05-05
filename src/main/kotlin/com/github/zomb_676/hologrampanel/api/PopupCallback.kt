@@ -5,13 +5,14 @@ import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramConte
 import net.minecraft.core.BlockPos
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.state.BlockState
 
 sealed interface PopupCallback {
     fun interface BlockPopupCallback {
         /**
          * @return none empty list will pop up the hologram
          */
-        fun popup(pos: BlockPos, level: Level): List<HologramTicket<BlockHologramContext>>
+        fun popup(pos: BlockPos,blockState: BlockState, level: Level): List<HologramTicket<BlockHologramContext>>
     }
 
     fun interface EntityPopupCallback {
