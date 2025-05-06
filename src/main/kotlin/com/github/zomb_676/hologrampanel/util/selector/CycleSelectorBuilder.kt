@@ -17,6 +17,7 @@ class CycleSelectorBuilder {
         private var onClick: () -> Unit = {}
         private var clickOnClose = true
         private var visible: () -> Boolean = { true }
+        private var tickFunction: () -> Unit = {}
 
         private inline fun onNotFrozen(handler: () -> Unit) {
             if (!frozen) {
@@ -44,6 +45,10 @@ class CycleSelectorBuilder {
             this.visible = visible
         }
 
+        fun tick(code: () -> Unit) = onNotFrozen {
+            this.tickFunction = code
+        }
+
         @ApiStatus.Internal
         internal fun build(): CycleEntry.Single {
             this.frozen = true
@@ -55,6 +60,7 @@ class CycleSelectorBuilder {
 
                 override fun tick() {
                     this.element = renderElement()
+                    tickFunction.invoke()
                 }
 
                 override fun onClick(callback: CycleEntry.SelectorCallback, trigType: CycleEntry.TrigType) {
@@ -78,13 +84,15 @@ class CycleSelectorBuilder {
                 }
 
                 override fun scale(): Double = element.getScale()
+
+                override fun toString(): String = "Single(element:$element, clicked:$clicked)"
             }
         }
     }
 
     class GroupEntryBuilder {
         val children: MutableList<CycleEntry> = mutableListOf()
-        private var self : CycleEntry? = null
+        private var self: CycleEntry? = null
 
         fun add(code: SingleEntryBuilder.() -> Unit) {
             val builder = SingleEntryBuilder()
@@ -99,7 +107,7 @@ class CycleSelectorBuilder {
             }
         }
 
-        fun adjustGroup(code : (SingleEntryBuilder).() -> Unit) {
+        fun adjustGroup(code: (SingleEntryBuilder).() -> Unit) {
             val builder = SingleEntryBuilder()
             code.invoke(builder)
             this.self = builder.build()
@@ -131,11 +139,13 @@ class CycleSelectorBuilder {
             if (self == null) {
                 adjustGroup {}
             }
-            return object : CycleEntry.Group , CycleEntry.Single by self {
+            return object : CycleEntry.Group, CycleEntry.Single by self {
                 override fun children(): List<CycleEntry> = children
                 override fun onClick(callback: CycleEntry.SelectorCallback, trigType: CycleEntry.TrigType) {
                     callback.openGroup(this)
                 }
+
+                override fun toString(): String = "group(childCount:${childrenCount()})"
             }
         }
     }

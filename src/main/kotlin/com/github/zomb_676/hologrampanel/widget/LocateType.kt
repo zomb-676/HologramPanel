@@ -2,6 +2,7 @@ package com.github.zomb_676.hologrampanel.widget
 
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.rect.PackedRect
@@ -13,10 +14,7 @@ import com.mojang.serialization.DataResult
 import com.mojang.serialization.DynamicOps
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.client.Camera
-import org.joml.Vector2f
-import org.joml.Vector2fc
-import org.joml.Vector3f
-import org.joml.Vector3fc
+import org.joml.*
 
 sealed interface LocateType {
 
@@ -44,6 +42,14 @@ sealed interface LocateType {
             private val view = Vector3f()
             private val left = Vector3f()
             private val up = Vector3f()
+
+            var xRot: Float = 0f
+                private set
+            var yRot: Float = 0f
+                private set
+            var roll: Float = 0f
+                private set
+
             fun getView(): Vector3fc = view
             fun getLeft(): Vector3fc = left
             fun getUp(): Vector3fc = up
@@ -96,10 +102,34 @@ sealed interface LocateType {
 
             fun byCamera(camera: Camera): FacingVector {
                 camera.lookVector.mul(-1f, view)
-                view.normalize()
-                left.set(camera.leftVector).normalize()
-                up.set(camera.upVector).normalize()
+                this.xRot = camera.xRot
+                this.yRot = -camera.yRot
+                this.roll = camera.roll
+                this.updateVectors()
                 //calculate scale here
+                return this
+            }
+
+            fun setRotation(xRot: Float = this.xRot, yRot: Float = this.yRot, roll: Float = this.roll): FacingVector {
+                this.xRot = xRot
+                this.yRot = yRot
+                this.roll = roll
+                this.updateVectors()
+                return this
+            }
+
+            /**
+             * [Camera.setRotation]
+             */
+            fun updateVectors(): FacingVector {
+                val rotation = Quaternionf().rotateYXZ(
+                    Math.PI.toFloat() - JomlMath.toRadians(-yRot),
+                    JomlMath.toRadians(-xRot),
+                    JomlMath.toRadians(-roll)
+                )
+                FORWARDS.rotate(rotation, this.view)
+                UP.rotate(rotation, this.up)
+                LEFT.rotate(rotation, this.left)
                 return this
             }
 
@@ -114,6 +144,10 @@ sealed interface LocateType {
                 super.getSourceWorldPosition(context, partialTick).add(offset, Vector3f())
 
             companion object {
+                private val FORWARDS: Vector3f = Vector3f(0.0f, 0.0f, -1.0f)
+                private val UP: Vector3f = Vector3f(0.0f, 1.0f, 0.0f)
+                private val LEFT: Vector3f = Vector3f(-1.0f, 0.0f, 0.0f)
+
                 val CODEC: Codec<FacingVector> = RecordCodecBuilder.create { ins ->
                     ins.group(
                         AllRegisters.Codecs.VEC3F.fieldOf("view").forGetter(FacingVector::view),

@@ -156,44 +156,63 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            val shiftDown = GLFW.glfwGetKey(Minecraft.getInstance().window.window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-            val modifier = if (shiftDown) 0.05 else 0.2
-            val changeValue = event.scrollDeltaY * modifier
+            val window = Minecraft.getInstance().window.window
+            val shiftDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
 
             run {
                 val modifyTarget = PanelOperatorManager.selectedTarget ?: return@run
                 val player = Minecraft.getInstance().player ?: return@run
-                val window = Minecraft.getInstance().window.window
                 val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
 
-                val axisMode = PanelOperatorManager.axisMode
-                val vector = when (GLFW.GLFW_PRESS) {
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.extractX(player, locate)
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> axisMode.extractY(player, locate)
-                    GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.extractZ(player, locate)
-                    else -> return@run
+                if (PanelOperatorManager.modifyLocation) {
+                    val axisMode = PanelOperatorManager.axisMode
+                    val modifier = if (shiftDown) 0.05 else 0.2
+                    val changeValue = event.scrollDeltaY * modifier
+                    val vector = when (GLFW.GLFW_PRESS) {
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.extractX(player, locate)
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> axisMode.extractY(player, locate)
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.extractZ(player, locate)
+                        else -> return@run
+                    }
+                    locate.offset.add(vector.mul(changeValue.toFloat()))
+                } else {
+                    val modifier = if (shiftDown) 1 else 5
+                    val changeValue = (event.scrollDeltaY * modifier).toFloat()
+                    var x = locate.xRot
+                    var y = locate.yRot
+                    var roll = locate.roll
+                    when (GLFW.GLFW_PRESS) {
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> x += changeValue
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> y += changeValue
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> roll += changeValue
+                        else -> return@run
+                    }
+                    locate.setRotation(x, y, roll)
                 }
-                locate.offset.add(vector.mul(changeValue.toFloat()))
                 event.isCanceled = true
                 return
             }
 
-            HologramManager.getInteractHologram()?.also { state ->
-                val locate = state.locate as? LocateType.World.FacingVector ?: return@also
+            run {
+                val modifier = if (shiftDown) 0.05 else 0.2
+                val changeValue = event.scrollDeltaY * modifier
+                (PanelOperatorManager.selectedTarget ?: HologramManager.getInteractHologram())?.also { state ->
+                    val locate = state.locate as? LocateType.World.FacingVector ?: return@also
 
-                locate.scale = max(min(max(locate.scale + changeValue.toFloat(), 0.01f), 2.5f), 0.2f)
-                Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust hologram scale to %.2f".format(locate.scale)), false)
+                    locate.scale = max(min(max(locate.scale + changeValue.toFloat(), 0.01f), 2.5f), 0.2f)
+                    Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust hologram scale to %.2f".format(locate.scale)), false)
 
-                event.isCanceled = true
-                return
-            }
+                    event.isCanceled = true
+                    return
+                }
 
-            if (AllRegisters.KeyMapping.scaleKey.isDown) {
-                val scale = Config.Client.globalHologramScale
-                scale.setAndSave(min(max(scale.get() + changeValue, 0.01), 2.5))
-                Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
-                event.isCanceled = true
-                return
+                if (AllRegisters.KeyMapping.scaleKey.isDown) {
+                    val scale = Config.Client.globalHologramScale
+                    scale.setAndSave(min(max(scale.get() + changeValue, 0.01), 2.5))
+                    Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
+                    event.isCanceled = true
+                    return
+                }
             }
 
             if (HologramInteractionManager.onMouseScroll(event)) {

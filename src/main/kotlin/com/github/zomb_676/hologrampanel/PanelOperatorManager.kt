@@ -34,6 +34,8 @@ object PanelOperatorManager {
 
     var axisMode = AxisMode.LOCAL
         private set
+    var modifyLocation : Boolean = false
+        private set
 
     fun createInstance(): CycleSelector? {
         return CycleSelectorBuilder {
@@ -73,8 +75,14 @@ object PanelOperatorManager {
                     axisMode = AxisMode.PLAYER
                     addMessage("switch Axis Mode to Player Axis")
                 }
+                add(ComponentRenderElement("position").setScale(0.8)) {
+                    modifyLocation = true
+                }
+                add(ComponentRenderElement("rotation").setScale(0.8)) {
+                    modifyLocation = false
+                }
             }
-            addGroup(ComponentRenderElement("LocateType").setScale(0.8)) {
+            addGroup(ComponentRenderElement("Modify Selected").setScale(0.8)) {
                 add(ComponentRenderElement("pin screen").setScale(0.8)) {
                     val target = findTarget(createTimeHologram) ?: return@add
                     if (target.locate !is LocateType.Screen) {
@@ -104,28 +112,78 @@ object PanelOperatorManager {
                         HologramManager.notifyHologramLocateTypeChange(target, old)
                     }
                 }
+
             }
             addGroup(ComponentRenderElement("hide").setScale(0.8)) {
-                val createTimeBlock = findBlock(null)
-                val createTimeEntity = findEntity(null)
-                add(ComponentRenderElement("Entity").setScale(0.8)) {
-                    val entityHit = findEntity(createTimeEntity) ?: return@add
-                    Config.Client.hideEntityTypes.modifyAndSave {
-                        val entry = entityHit.entity.type.location().toString()
-                        if (!it.contains(entry)) {
-                            it += entry
-                            addMessage("hide Entity $entry")
+                add {
+                    notClickOnClose()
+                    var entity: EntityType<*>? = null
+                    tick {
+                        entity = findEntity()?.entity?.type
+                    }
+                    renderElement {
+                        val entity = entity
+                        if (entity != null) {
+                            if (checkEntityContains(entity)) {
+                                ComponentRenderElement("not hide entity ${entity.location()}").setScale(0.8)
+                            } else {
+                                ComponentRenderElement("hide entity ${entity.location()}").setScale(0.8)
+                            }
+                        } else {
+                            ComponentRenderElement("see entity to hide").setScale(0.8)
+                        }
+                    }
+                    onClick {
+                        val entry = entity?.location()?.toString()
+                        if (entry == null) {
+                            addMessage("see entity to hide")
+                        } else if (!Config.Client.hideEntityTypes.get().contains(entry)) {
+                            Config.Client.hideEntityTypes.modifyAndSave {
+                                it += entry
+                            }
+                            addMessage("hide entity $entry")
+                            HologramManager.checkAllHologramByPrevent()
+                        } else {
+                            Config.Client.hideEntityTypes.modifyAndSave {
+                                it -= entry
+                            }
+                            addMessage("not hide entity $entry")
                         }
                     }
                 }
-                add(ComponentRenderElement("Block").setScale(0.8)) {
-                    val blockHit = findBlock(createTimeBlock) ?: return@add
-                    val block = Minecraft.getInstance().level?.getBlockState(blockHit.blockPos) ?: return@add
-                    Config.Client.hideBlocks.modifyAndSave {
-                        val entry = block.block.location().toString()
-                        if (!it.contains(entry)) {
-                            it += entry
+                add {
+                    notClickOnClose()
+                    var block: Block? = null
+                    tick {
+                        block = findBlock()?.run { Minecraft.getInstance().level?.getBlockState(blockPos)?.block }
+                    }
+                    renderElement {
+                        val block = block
+                        if (block != null) {
+                            if (checkBlockContains(block)) {
+                                ComponentRenderElement("not hide block ${block.location()}").setScale(0.8)
+                            } else {
+                                ComponentRenderElement("hide block ${block.location()}").setScale(0.8)
+                            }
+                        } else {
+                            ComponentRenderElement("see block to hide").setScale(0.8)
+                        }
+                    }
+                    onClick {
+                        val entry = block?.location()?.toString()
+                        if (entry == null) {
+                            addMessage("see block to hide")
+                        } else if (!Config.Client.hideBlocks.get().contains(entry)) {
+                            Config.Client.hideBlocks.modifyAndSave {
+                                it += entry
+                            }
                             addMessage("hide Block $entry")
+                            HologramManager.checkAllHologramByPrevent()
+                        } else {
+                            Config.Client.hideBlocks.modifyAndSave {
+                                it -= entry
+                            }
+                            addMessage("not hide Block $entry")
                         }
                     }
                 }
@@ -136,20 +194,22 @@ object PanelOperatorManager {
     private fun findTarget(createTime: HologramRenderState?): HologramRenderState? =
         this.selectedTarget ?: createTime?.takeIf { !it.removed } ?: HologramManager.getInteractHologram()
 
-    private fun findBlock(createTime: BlockHitResult?) =
-        RayTraceHelper.rayTraceBlock(32.0, 1f) ?: createTime
+    private fun findBlock() =
+        RayTraceHelper.rayTraceBlock(32.0, 1f)
 
-    private fun findEntity(createTime: EntityHitResult?) =
-        RayTraceHelper.rayTraceEntity(32.0, 1f) ?: createTime
+    private fun findEntity() =
+        RayTraceHelper.rayTraceEntity(32.0, 1f)
 
     private fun EntityType<*>.location() = BuiltInRegistries.ENTITY_TYPE.getKey(this)
     private fun Block.location() = BuiltInRegistries.BLOCK.getKey(this)
 
-    private fun addMessage(message : Component) {
-        Minecraft.getInstance().gui.chat.addMessage(message)
-    }
+    private fun addMessage(message: Component) = Minecraft.getInstance().gui.chat.addMessage(message)
 
-    private fun addMessage(message : String) {
-        addMessage(Component.literal(message))
-    }
+    private fun addMessage(message: String) = addMessage(Component.literal(message))
+
+    private fun checkBlockContains(block: Block) =
+        Config.Client.hideBlocks.get().contains(block.location().toString())
+
+    private fun checkEntityContains(entity: EntityType<*>) =
+        Config.Client.hideEntityTypes.get().contains(entity.location().toString())
 }

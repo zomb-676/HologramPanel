@@ -1,9 +1,6 @@
 package com.github.zomb_676.hologrampanel.interaction
 
-import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.Config
-import com.github.zomb_676.hologrampanel.DebugHelper
-import com.github.zomb_676.hologrampanel.PanelOperatorManager
+import com.github.zomb_676.hologrampanel.*
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
@@ -12,6 +9,7 @@ import com.github.zomb_676.hologrampanel.api.event.StyleCreateEvent
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.collapseTarget
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactHologram
 import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactiveTarget
+import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
@@ -37,9 +35,7 @@ import net.minecraft.client.renderer.CoreShaders
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import org.joml.Matrix4f
 import org.joml.Vector2d
-import org.joml.Vector2f
 import org.joml.Vector3f
-import kotlin.math.sqrt
 
 object HologramManager {
     /**
@@ -80,6 +76,18 @@ object HologramManager {
                 }
             }
         }
+
+    fun checkAllHologramByPrevent() {
+        states.values.filterNot {
+            val ins = PluginManager.getInstance()
+            when (val context = it.context) {
+                is BlockHologramContext -> ins.hideBlock(context.getBlockState().block)
+                is EntityHologramContext -> ins.hideEntity(context.getEntity())
+            }
+        }.forEach {
+            it.widget.closeWidget()
+        }
+    }
 
     /**
      * remove all hologram
