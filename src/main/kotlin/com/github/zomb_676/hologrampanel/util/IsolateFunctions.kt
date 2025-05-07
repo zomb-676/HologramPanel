@@ -56,17 +56,6 @@ inline fun HologramStyle.stack(crossinline code: () -> Unit) {
     this.guiGraphics.stack(code)
 }
 
-inline fun HologramStyle.stackIf(check: Boolean, crossinline addition: () -> Unit, crossinline code: () -> Unit) {
-    if (check) {
-        this.stack {
-            addition.invoke()
-            code.invoke()
-        }
-    } else {
-        code.invoke()
-    }
-}
-
 fun mainCamera(): Camera = Minecraft.getInstance().gameRenderer.mainCamera
 
 typealias JomlMath = org.joml.Math
@@ -80,12 +69,6 @@ inline fun <reified T> requireInstanceOf(claz: Class<*>): Class<out T> {
 
 inline fun <reified T> getClassOf(className: String): Class<out T> =
     requireInstanceOf<T>(Class.forName(className, false, Thread.currentThread().contextClassLoader))
-
-inline fun stackRenderState(state: GlStateBackup = GlStateBackup(), code: () -> Unit) {
-    RenderSystem.backupGlState(state)
-    code.invoke()
-    RenderSystem.restoreGlState(state)
-}
 
 inline val profiler: ProfilerFiller get() = Profiler.get()
 
