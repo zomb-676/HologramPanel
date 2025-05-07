@@ -105,7 +105,7 @@ sealed interface LocateType {
                 this.xRot = camera.xRot
                 this.yRot = -camera.yRot
                 this.roll = camera.roll
-                this.updateVectors()
+                this.updateVectors(getRotationQuaternion())
                 //calculate scale here
                 return this
             }
@@ -114,23 +114,50 @@ sealed interface LocateType {
                 this.xRot = xRot
                 this.yRot = yRot
                 this.roll = roll
-                this.updateVectors()
+                this.updateVectors(getRotationQuaternion())
                 return this
             }
 
             /**
              * [Camera.setRotation]
              */
-            fun updateVectors(): FacingVector {
-                val rotation = Quaternionf().rotateYXZ(
-                    Math.PI.toFloat() - JomlMath.toRadians(-yRot),
-                    JomlMath.toRadians(-xRot),
-                    JomlMath.toRadians(-roll)
-                )
+            fun updateVectors(rotation: Quaternionf): FacingVector {
                 FORWARDS.rotate(rotation, this.view)
                 UP.rotate(rotation, this.up)
                 LEFT.rotate(rotation, this.left)
                 return this
+            }
+
+            /**
+             * follow order and degree remapping in [getRotationQuaternion]
+             */
+            fun updateEulerDegrees(rotation: Quaternionf) {
+                Matrix4f().rotation(rotation).getEulerAnglesYXZ(Vector3f()).also { eulerAngles ->
+                    this.xRot = normalizeAngle(Math.toDegrees(-eulerAngles.x))
+                    this.yRot = normalizeAngle(Math.toDegrees((Math.PI + eulerAngles.y).toFloat()))
+                    this.roll = normalizeAngle(Math.toDegrees(-eulerAngles.z))
+                }
+            }
+
+            private fun normalizeAngle(degrees: Float): Float {
+                var degrees = degrees
+                degrees %= 360f
+                if (degrees > 180) {
+                    degrees -= 360f
+                } else if (degrees < -180) {
+                    degrees += 360f
+                }
+                return degrees
+            }
+
+            fun getRotationQuaternion(): Quaternionf = Quaternionf().rotateYXZ(
+                Math.PI.toFloat() - JomlMath.toRadians(-yRot),
+                JomlMath.toRadians(-xRot),
+                JomlMath.toRadians(-roll)
+            ).also {
+                if (it.w < 0) {
+                    it.set(-it.x, -it.y, -it.z, -it.w)
+                }
             }
 
             /**

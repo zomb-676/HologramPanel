@@ -164,8 +164,8 @@ object EventHandler {
                 val player = Minecraft.getInstance().player ?: return@run
                 val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
 
+                val axisMode = PanelOperatorManager.axisMode
                 if (PanelOperatorManager.modifyLocation) {
-                    val axisMode = PanelOperatorManager.axisMode
                     val modifier = if (shiftDown) 0.05 else 0.2
                     val changeValue = event.scrollDeltaY * modifier
                     val vector = when (GLFW.GLFW_PRESS) {
@@ -177,17 +177,17 @@ object EventHandler {
                     locate.offset.add(vector.mul(changeValue.toFloat()))
                 } else {
                     val modifier = if (shiftDown) 1 else 5
-                    val changeValue = (event.scrollDeltaY * modifier).toFloat()
-                    var x = locate.xRot
-                    var y = locate.yRot
-                    var roll = locate.roll
-                    when (GLFW.GLFW_PRESS) {
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> x += changeValue
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> y += changeValue
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> roll += changeValue
+                    val changeValue = Math.toRadians((event.scrollDeltaY * modifier)).toFloat()
+                    val rotation = locate.getRotationQuaternion()
+                    val cameraRotation = Minecraft.getInstance().gameRenderer.mainCamera.rotation()
+                    val applyRotation = when (GLFW.GLFW_PRESS) {
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.rotateX(rotation, cameraRotation, changeValue)
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> axisMode.rotateY(rotation, cameraRotation, changeValue)
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.rotateZ(rotation, cameraRotation, changeValue)
                         else -> return@run
                     }
-                    locate.setRotation(x, y, roll)
+                    locate.updateEulerDegrees(applyRotation)
+                    locate.updateVectors(applyRotation)
                 }
                 event.isCanceled = true
                 return
@@ -259,6 +259,7 @@ object EventHandler {
             })
             event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.Client.getLayer())
             event.registerAboveAll(HologramPanel.rl("drag_entries"), InteractionLayer.getDraggingLayer())
+            event.registerBelowAll(HologramPanel.rl("coordinate"), AxisMode.getCoordinateLayer())
         }
 
         private fun onPlayerLogIn(event: ClientPlayerNetworkEvent.LoggingIn) {
@@ -276,6 +277,9 @@ object EventHandler {
             }
             pose.stack {
                 HologramManager.renderWorldPart(event)
+            }
+            pose.stack {
+                AxisMode.drawAxisPrompt(event)
             }
         }
     }
