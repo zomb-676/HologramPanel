@@ -6,14 +6,12 @@ import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.rect.PackedRect
-import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.datafixers.util.Pair
 import com.mojang.serialization.Codec
-import com.mojang.serialization.DataResult
-import com.mojang.serialization.DynamicOps
+import com.mojang.serialization.MapCodec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.client.Camera
+import net.minecraft.util.StringRepresentable
 import org.joml.*
 
 sealed interface LocateType {
@@ -29,13 +27,17 @@ sealed interface LocateType {
     fun getSourceWorldPosition(context: HologramContext, partialTick: Float): Vector3fc =
         context.hologramCenterPosition(partialTick)
 
+    fun getLocateEnum(): LocateEnum
+
     sealed interface World : LocateType {
 
         override fun getScreenSpacePosition(context: HologramContext, partialTick: Float) =
             getSourceScreenSpacePosition(context, partialTick)
 
         data object FacingPlayer : World {
-            val CODEC: Codec<FacingPlayer> = Codec.unit(FacingPlayer)
+            val CODEC: MapCodec<FacingPlayer> = MapCodec.unit(FacingPlayer)
+
+            override fun getLocateEnum(): LocateEnum = LocateEnum.FACING_PLAYER
         }
 
         class FacingVector() : World {
@@ -111,6 +113,13 @@ sealed interface LocateType {
                 this.xRot = camera.xRot
                 this.yRot = -camera.yRot
                 this.roll = camera.roll
+                this.updateRotation()
+                this.updateVectors()
+                //calculate scale here
+                return this
+            }
+
+            private fun updateRotation() {
                 this.quaternion.rotateYXZ(
                     Math.PI.toFloat() - JomlMath.toRadians(-yRot),
                     JomlMath.toRadians(-xRot),
@@ -120,9 +129,6 @@ sealed interface LocateType {
                         it.set(-it.x, -it.y, -it.z, -it.w)
                     }
                 }
-                this.updateVectors()
-                //calculate scale here
-                return this
             }
 
             /**
@@ -170,26 +176,30 @@ sealed interface LocateType {
 
             var target: RenderTarget? = null
 
-            override fun getSourceWorldPosition(context: HologramContext, partialTick: Float): Vector3fc =
-                super.getSourceWorldPosition(context, partialTick).add(offset, Vector3f())
+            override fun getSourceWorldPosition(context: HologramContext, partialTick: Float): Vector3fc {
+                return super.getSourceWorldPosition(context, partialTick).add(offset, Vector3f())
+        }
+            override fun getLocateEnum(): LocateEnum = LocateEnum.FACING_VECTOR
 
             companion object {
                 private val FORWARDS: Vector3f = Vector3f(0.0f, 0.0f, -1.0f)
                 private val UP: Vector3f = Vector3f(0.0f, 1.0f, 0.0f)
                 private val LEFT: Vector3f = Vector3f(-1.0f, 0.0f, 0.0f)
 
-                val CODEC: Codec<FacingVector> = RecordCodecBuilder.create { ins ->
+                val CODEC: MapCodec<FacingVector> = RecordCodecBuilder.mapCodec { ins ->
                     ins.group(
-                        AllRegisters.Codecs.VEC3F.fieldOf("view").forGetter(FacingVector::view),
-                        AllRegisters.Codecs.VEC3F.fieldOf("left").forGetter(FacingVector::left),
-                        AllRegisters.Codecs.VEC3F.fieldOf("up").forGetter(FacingVector::up),
+                        Codec.FLOAT.fieldOf("xRot").forGetter(FacingVector::xRot),
+                        Codec.FLOAT.fieldOf("yRot").forGetter(FacingVector::yRot),
+                        Codec.FLOAT.fieldOf("roll").forGetter(FacingVector::roll),
                         Codec.FLOAT.fieldOf("scale").forGetter(FacingVector::scale),
                         AllRegisters.Codecs.VEC3F.fieldOf("offset").forGetter(FacingVector::offset),
-                    ).apply(ins) { view, left, up, scale, offset ->
+                    ).apply(ins) { xRot, yRot, roll, scale, offset ->
                         FacingVector().also { locate ->
-                            locate.view.set(view)
-                            locate.left.set(left)
-                            locate.up.set(up)
+                            locate.xRot = xRot
+                            locate.yRot = yRot
+                            locate.roll = roll
+                            locate.updateRotation()
+                            locate.updateVectors()
                             locate.scale = scale
                             locate.offset.set(offset)
                         }
@@ -210,8 +220,10 @@ sealed interface LocateType {
         override fun getScreenSpacePosition(context: HologramContext, partialTick: Float): ScreenPosition =
             ScreenPosition.of(position.x, position.y)
 
+        override fun getLocateEnum(): LocateEnum = LocateEnum.SCREEN
+
         companion object {
-            val CODEC: Codec<Screen> = RecordCodecBuilder.create { ins ->
+            val CODEC: MapCodec<Screen> = RecordCodecBuilder.mapCodec { ins ->
                 ins.group(
                     AllRegisters.Codecs.VEC2F.fieldOf("position").forGetter(Screen::position),
                     Codec.BOOL.fieldOf("arrange").forGetter(Screen::arrange)
@@ -220,54 +232,26 @@ sealed interface LocateType {
         }
     }
 
-    companion object {
-        val CODEC = object : Codec<LocateType> {
-            override fun <T : Any> encode(
-                input: LocateType,
-                ops: DynamicOps<T>,
-                prefix: T
-            ): DataResult<T> {
-                val typeInt: Int
-                val codec = when (input) {
-                    is Screen -> {
-                        typeInt = 1
-                        Screen.CODEC
-                    }
+    enum class LocateEnum : StringRepresentable {
+        FACING_PLAYER {
+            override val codec: MapCodec<World.FacingPlayer> = World.FacingPlayer.CODEC
+        },
+        FACING_VECTOR {
+            override val codec: MapCodec<World.FacingVector> = World.FacingVector.CODEC
+        },
+        SCREEN {
+            override val codec: MapCodec<Screen> = Screen.CODEC
+        };
 
-                    World.FacingPlayer -> {
-                        typeInt = 2
-                        World.FacingPlayer.CODEC
-                    }
+        abstract val codec: MapCodec<out LocateType>
+        override fun getSerializedName(): String = this.name
 
-                    is World.FacingVector -> {
-                        typeInt = 3
-                        World.FacingPlayer.CODEC
-                    }
-                }
-                val map = ops.emptyMap()
-                ops.set(map, "type", ops.createInt(typeInt))
-                val content = ops.withEncoder(codec).apply(input.unsafeCast())
-                if (content.isError) return DataResult.error { "error while encode content" }
-                ops.set(map, "content", content.orThrow)
-                return DataResult.success(map)
-            }
-
-            override fun <T : Any> decode(
-                ops: DynamicOps<T>,
-                input: T
-            ): DataResult<Pair<LocateType, T>> = ops.getMap(input).flatMap {
-                val numberValue = ops.getNumberValue(it.get("type"))
-                if (numberValue.isError) return@flatMap DataResult.error { "" }
-                val codec = when (numberValue.orThrow) {
-                    1 -> Screen.CODEC
-                    2 -> World.FacingPlayer.CODEC
-                    3 -> World.FacingPlayer.CODEC
-                    else -> throw RuntimeException()
-                }
-                val content = it.get("content")
-                codec.decode(ops, content)
-                TODO()
-            }
+        companion object {
+            val ENUM_CODEC: Codec<LocateEnum> = StringRepresentable.fromEnum(LocateEnum::values)
         }
+    }
+
+    companion object {
+        val CODEC: Codec<LocateType> = LocateEnum.ENUM_CODEC.dispatch(LocateType::getLocateEnum, LocateEnum::codec)
     }
 }
