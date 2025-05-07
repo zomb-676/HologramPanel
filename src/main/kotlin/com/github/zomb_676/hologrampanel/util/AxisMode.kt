@@ -5,24 +5,18 @@ import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.color.HologramColor
 import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.RenderStateShard
-import net.minecraft.client.renderer.RenderStateShard.LineStateShard
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.world.entity.player.Player
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
-import java.util.*
 
 enum class AxisMode {
     WORLD {
@@ -112,60 +106,9 @@ enum class AxisMode {
     abstract fun rotateZ(rotation: Quaternionf, cameraRotation: Quaternionf, modifyDegree: Float): Quaternionf
 
     companion object {
-        private val LINES = RenderType.create(
-            "lines",
-            DefaultVertexFormat.POSITION_COLOR_NORMAL,
-            VertexFormat.Mode.LINES,
-            1536,
-            RenderType.CompositeState.builder()
-                .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
-                .setLineState(LineStateShard(OptionalDouble.of(10.0)))
-                .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
-                .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
-                .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET)
-                .setWriteMaskState(RenderStateShard.COLOR_DEPTH_WRITE)
-                .setCullState(RenderStateShard.NO_CULL)
-                .createCompositeState(false)
-        )
-
-        fun drawAxisPrompt(event: RenderLevelStageEvent) {
-            if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
-            val selectedTarget = PanelOperatorManager.selectedTarget ?: return
-            val locate = selectedTarget.locate as? LocateType.World.FacingVector ?: return
-            val pose = event.poseStack
-            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
-            val camPos = event.camera.position
-//            pose.translate(-camPos.x, -camPos.y, -camPos.z)
-
-            val worldPosition = selectedTarget.sourcePosition(partialTick)
-            pose.translate(worldPosition.x(), worldPosition.y(), worldPosition.z())
-
-            val mode = PanelOperatorManager.axisMode
-
-            when (mode) {
-                WORLD -> {}
-                LOCAL -> {
-                    pose.mulPose(locate.getMutableRotation())
-                }
-
-                PLAYER -> {
-                    pose.mulPose(Minecraft.getInstance().gameRenderer.mainCamera.rotation())
-                }
-            }
-            pose.last().pose().run {
-                this.transformProject(0.5f, 0f, 0f, xVector)
-                this.transformProject(0f, 0.5f, 0f, yVector)
-                this.transformProject(0f, 0f, 0.5f, zVector)
-            }
-        }
-
-        const val X_COLOR = 0xffff0000.toInt()
-        const val Y_COLOR = 0xff00ff00.toInt()
-        const val Z_COLOR = 0xff0000ff.toInt()
-
-        val xVector = Vector3f()
-        val yVector = Vector3f()
-        val zVector = Vector3f()
+        private const val X_COLOR = 0xffff0000.toInt()
+        private const val Y_COLOR = 0xff00ff00.toInt()
+        private const val Z_COLOR = 0xff0000ff.toInt()
 
         fun getCoordinateLayer(): LayeredDraw.Layer = object : LayeredDraw.Layer {
             private fun addLine(
@@ -199,9 +142,18 @@ enum class AxisMode {
 
                 val worldPosition = target.sourcePosition(deltaTracker.getGameTimeDeltaPartialTick(false))
                 val center = MVPMatrixRecorder.transform(worldPosition).screenPosition
-                val x = MVPMatrixRecorder.transform(xVector).screenPosition
-                val y = MVPMatrixRecorder.transform(yVector).screenPosition
-                val z = MVPMatrixRecorder.transform(zVector).screenPosition
+
+                val transform = Matrix4f().translate(worldPosition.x(), worldPosition.y(), worldPosition.z()).apply {
+                    when (PanelOperatorManager.axisMode) {
+                        WORLD -> {}
+                        LOCAL -> rotate(locate.getMutableRotation())
+                        PLAYER -> rotate(Minecraft.getInstance().gameRenderer.mainCamera.rotation())
+                    }
+                }
+                val container = Vector3f()
+                val x = MVPMatrixRecorder.transform(transform.transformPosition(0.5f, 0f, 0f, container)).screenPosition
+                val y = MVPMatrixRecorder.transform(transform.transformPosition(0f, 0.5f, 0f, container)).screenPosition
+                val z = MVPMatrixRecorder.transform(transform.transformPosition(0f, 0f, 0.5f, container)).screenPosition
 
                 val buffer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
 

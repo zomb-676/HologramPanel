@@ -277,9 +277,6 @@ object EventHandler {
             pose.stack {
                 HologramManager.renderWorldPart(event)
             }
-            pose.stack {
-                AxisMode.drawAxisPrompt(event)
-            }
         }
     }
 
