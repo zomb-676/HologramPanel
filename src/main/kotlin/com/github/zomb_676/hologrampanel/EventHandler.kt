@@ -192,9 +192,10 @@ object EventHandler {
                 return
             }
 
-            run {
+            if (AllRegisters.KeyMapping.scaleKey.isDown) {
                 val modifier = if (shiftDown) 0.05 else 0.2
                 val changeValue = event.scrollDeltaY * modifier
+
                 (PanelOperatorManager.selectedTarget ?: HologramManager.getInteractHologram())?.also { state ->
                     val locate = state.locate as? LocateType.World.FacingVector ?: return@also
 
@@ -205,7 +206,7 @@ object EventHandler {
                     return
                 }
 
-                if (AllRegisters.KeyMapping.scaleKey.isDown) {
+                run {
                     val scale = Config.Client.globalHologramScale
                     scale.setAndSave(min(max(scale.get() + changeValue, 0.01), 2.5))
                     Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust global scale to %.2f".format(scale.get())), false)
