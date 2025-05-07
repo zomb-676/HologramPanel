@@ -7,6 +7,7 @@ import com.github.zomb_676.hologrampanel.util.AxisMode
 import com.github.zomb_676.hologrampanel.util.modifyAndSave
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelectorBuilder
+import com.github.zomb_676.hologrampanel.util.switchAndSave
 import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
 import net.minecraft.client.Minecraft
@@ -14,8 +15,7 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
-import net.minecraft.world.phys.BlockHitResult
-import net.minecraft.world.phys.EntityHitResult
+import net.neoforged.neoforge.common.ModConfigSpec
 import org.joml.Vector2f
 import kotlin.math.sqrt
 
@@ -34,7 +34,7 @@ object PanelOperatorManager {
 
     var axisMode = AxisMode.LOCAL
         private set
-    var modifyLocation : Boolean = false
+    var modifyLocation: Boolean = false
         private set
 
     fun createInstance(): CycleSelector? {
@@ -187,6 +187,34 @@ object PanelOperatorManager {
                         }
                     }
                 }
+            }
+            addGroup(ComponentRenderElement("debug options").setScale(0.8)) {
+                fun addOption(value: ModConfigSpec.BooleanValue, desc: String) {
+                    add {
+                        notClickOnClose()
+                        var state: Boolean = false
+                        tick {
+                            state = value.get()
+                        }
+                        renderElement {
+                            if (state) {
+                                ComponentRenderElement(desc, 0xffffffff.toInt()).setScale(0.6)
+                            } else {
+                                ComponentRenderElement(desc, 0xff000000.toInt()).setScale(0.6)
+                            }
+                        }
+                        onClick {
+                            value.switchAndSave()
+                            addMessage("switch $desc to ${value.get()}")
+                        }
+                    }
+                }
+                addOption(Config.Client.renderDebugLayer, "debugLayer")
+                addOption(Config.Client.renderDebugHologramLifeCycleBox, "hologramLifeCycle")
+                addOption(Config.Client.renderWidgetDebugInfo, "widgetDebugInfo")
+                addOption(Config.Client.renderNetworkDebugInfo, "networkDebugInfo")
+                addOption(Config.Client.renderDebugTransientTarget, "transientTarget")
+                addOption(Config.Client.renderInteractTransientReMappingIndicator, "remappingIndicator")
             }
         }
     }
