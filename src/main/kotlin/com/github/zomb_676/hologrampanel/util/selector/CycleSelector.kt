@@ -102,10 +102,12 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             } else {
                 0x7fffffff.toInt()
             }
+            RenderSystem.enableBlend()
             style.drawTorus(
                 20f, 70f, colorOut = color, colorIn = 0x7fffffff,
                 beginRadian = from, endRadian = to, isClockWise = false
             )
+            RenderSystem.disableBlend()
 
             val distance = 45f
             val centerDegree = (from + to) / 2
@@ -122,11 +124,13 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         this.canBackToParent = !canSelect && sqrt < 20 * 0.8 && this.openStack.isNotEmpty()
+        RenderSystem.enableBlend()
         if (this.canBackToParent) {
             style.drawCycle(16f, colorOut = 0xffffff00.toInt(), colorIn = 0x7fffffff.toInt())
         } else if (this.openStack.isNotEmpty()) {
             style.drawCycle(16f, colorOut = 0x7fffffff.toInt())
         }
+        RenderSystem.disableBlend()
 
         style.guiGraphics.flush()
         RenderSystem.disableBlend()
