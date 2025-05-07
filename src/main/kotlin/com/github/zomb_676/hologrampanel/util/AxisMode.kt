@@ -145,7 +145,7 @@ enum class AxisMode {
             when (mode) {
                 WORLD -> {}
                 LOCAL -> {
-                    pose.mulPose(locate.getRotationQuaternion())
+                    pose.mulPose(locate.getMutableRotation())
                 }
 
                 PLAYER -> {

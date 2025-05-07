@@ -178,7 +178,7 @@ object EventHandler {
                 } else {
                     val modifier = if (shiftDown) 1 else 5
                     val changeValue = Math.toRadians((event.scrollDeltaY * modifier)).toFloat()
-                    val rotation = locate.getRotationQuaternion()
+                    val rotation = locate.getMutableRotation()
                     val cameraRotation = Minecraft.getInstance().gameRenderer.mainCamera.rotation()
                     val applyRotation = when (GLFW.GLFW_PRESS) {
                         GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.rotateX(rotation, cameraRotation, changeValue)
@@ -186,8 +186,7 @@ object EventHandler {
                         GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.rotateZ(rotation, cameraRotation, changeValue)
                         else -> return@run
                     }
-                    locate.updateEulerDegrees(applyRotation)
-                    locate.updateVectors(applyRotation)
+                    locate.setQuaternion(applyRotation)
                 }
                 event.isCanceled = true
                 return

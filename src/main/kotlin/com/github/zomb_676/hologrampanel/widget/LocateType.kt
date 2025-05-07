@@ -43,6 +43,11 @@ sealed interface LocateType {
             private val left = Vector3f()
             private val up = Vector3f()
 
+            private val quaternion = Quaternionf()
+
+            fun getRotation(): Quaternionfc = this.quaternion
+            internal fun getMutableRotation(): Quaternionf = this.quaternion
+
             var xRot: Float = 0f
                 private set
             var yRot: Float = 0f
@@ -53,6 +58,7 @@ sealed interface LocateType {
             fun getView(): Vector3fc = view
             fun getLeft(): Vector3fc = left
             fun getUp(): Vector3fc = up
+
             var scale: Float = 1f
             inline val renderScale get() = 80f / scale
             val offset: Vector3f = Vector3f()
@@ -105,38 +111,45 @@ sealed interface LocateType {
                 this.xRot = camera.xRot
                 this.yRot = -camera.yRot
                 this.roll = camera.roll
-                this.updateVectors(getRotationQuaternion())
+                this.quaternion.rotateYXZ(
+                    Math.PI.toFloat() - JomlMath.toRadians(-yRot),
+                    JomlMath.toRadians(-xRot),
+                    JomlMath.toRadians(-roll)
+                ).also {
+                    if (it.w < 0) {
+                        it.set(-it.x, -it.y, -it.z, -it.w)
+                    }
+                }
+                this.updateVectors()
                 //calculate scale here
-                return this
-            }
-
-            fun setRotation(xRot: Float = this.xRot, yRot: Float = this.yRot, roll: Float = this.roll): FacingVector {
-                this.xRot = xRot
-                this.yRot = yRot
-                this.roll = roll
-                this.updateVectors(getRotationQuaternion())
                 return this
             }
 
             /**
              * [Camera.setRotation]
              */
-            fun updateVectors(rotation: Quaternionf): FacingVector {
-                FORWARDS.rotate(rotation, this.view)
-                UP.rotate(rotation, this.up)
-                LEFT.rotate(rotation, this.left)
+            fun updateVectors(): FacingVector {
+                FORWARDS.rotate(this.quaternion, this.view)
+                UP.rotate(this.quaternion, this.up)
+                LEFT.rotate(this.quaternion, this.left)
                 return this
             }
 
             /**
              * follow order and degree remapping in [getRotationQuaternion]
              */
-            fun updateEulerDegrees(rotation: Quaternionf) {
-                Matrix4f().rotation(rotation).getEulerAnglesYXZ(Vector3f()).also { eulerAngles ->
+            fun updateEulerDegrees() {
+                Matrix4f().rotation(this.quaternion).getEulerAnglesYXZ(Vector3f()).also { eulerAngles ->
                     this.xRot = normalizeAngle(Math.toDegrees(-eulerAngles.x))
                     this.yRot = normalizeAngle(Math.toDegrees((Math.PI + eulerAngles.y).toFloat()))
                     this.roll = normalizeAngle(Math.toDegrees(-eulerAngles.z))
                 }
+            }
+
+            fun setQuaternion(q: Quaternionf) {
+                this.quaternion.set(q)
+                this.updateVectors()
+                this.updateEulerDegrees()
             }
 
             private fun normalizeAngle(degrees: Float): Float {
@@ -148,16 +161,6 @@ sealed interface LocateType {
                     degrees += 360f
                 }
                 return degrees
-            }
-
-            fun getRotationQuaternion(): Quaternionf = Quaternionf().rotateYXZ(
-                Math.PI.toFloat() - JomlMath.toRadians(-yRot),
-                JomlMath.toRadians(-xRot),
-                JomlMath.toRadians(-roll)
-            ).also {
-                if (it.w < 0) {
-                    it.set(-it.x, -it.y, -it.z, -it.w)
-                }
             }
 
             /**
