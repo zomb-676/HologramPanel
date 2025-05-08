@@ -160,14 +160,6 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         fun tryBegin() {
             if (this.instance == null) {
                 MouseInputModeUtil.tryEnter()
-//                this.instance = CycleSelectorBuilder {
-//                    repeat(5) { index ->
-//                        add(ComponentRenderElement(index.toString())) {
-//                            Minecraft.getInstance().gui.chat.addMessage(Component.literal("$index"))
-//                        }
-//                    }
-//
-//                }
                 this.instance = PanelOperatorManager.createInstance()
             }
         }

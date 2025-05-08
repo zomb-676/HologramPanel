@@ -3,6 +3,9 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.RayTraceHelper
+import com.github.zomb_676.hologrampanel.interaction.context.HologramContextPrototype
+import com.github.zomb_676.hologrampanel.payload.SetProjectorSettingPayload
+import com.github.zomb_676.hologrampanel.projector.IHologramStorage
 import com.github.zomb_676.hologrampanel.util.addClientMessage
 import com.github.zomb_676.hologrampanel.util.modifyAndSave
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
@@ -11,6 +14,7 @@ import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
 import com.github.zomb_676.hologrampanel.widget.locateType.*
 import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
@@ -144,7 +148,20 @@ object PanelOperatorManager {
                         HologramManager.notifyHologramLocateTypeChange(target, old)
                     }
                 }
-
+                run {
+                    val block = findBlock() ?: return@run
+                    val level = Minecraft.getInstance().level ?: return@run
+                    val be = level.getBlockEntity(block.blockPos) ?: return@run
+                    val storage = level.getCapability(IHologramStorage.CAPABILITY, block.blockPos) ?: return@run
+                    add(ComponentRenderElement("bind to target").setScale(0.8)) {
+                        val target = findTarget(createTimeHologram) ?: return@add
+                        storage.setLocateType(target.locate)
+                        storage.storePrototype(HologramContextPrototype.extract(target.context))
+                        val tag = CompoundTag()
+                        storage.writeToNBT(tag)
+                        SetProjectorSettingPayload(tag, be.blockPos).sendToServer()
+                    }
+                }
             }
             addGroup(ComponentRenderElement("hide").setScale(0.8)) {
                 add {

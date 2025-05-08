@@ -13,23 +13,27 @@ import net.minecraft.world.level.block.state.BlockState
 class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     AllRegisters.BlockEntities.projectorType.get(), pos, blockState
 ) {
-    val cap = IHologramStorage.DefaultHologramStorage()
+    val cap = IHologramStorage()
 
     override fun loadAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
         super.loadAdditional(tag, registries)
-
+        cap.readFromNbt(tag)
     }
 
     override fun saveAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
         super.saveAdditional(tag, registries)
+        cap.writeToNBT(tag)
     }
 
     override fun getUpdateTag(registries: HolderLookup.Provider): CompoundTag {
-        return super.getUpdateTag(registries)
+        val tag = super.getUpdateTag(registries)
+        cap.writeToNBT(tag)
+        return tag
     }
 
     override fun handleUpdateTag(tag: CompoundTag, lookupProvider: HolderLookup.Provider) {
         super.handleUpdateTag(tag, lookupProvider)
+        cap.readFromNbt(tag)
     }
 
     //change dimension does not call this

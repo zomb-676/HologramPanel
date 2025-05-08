@@ -4,40 +4,64 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContextPrototype
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
+import com.mojang.serialization.Codec
+import com.mojang.serialization.codecs.RecordCodecBuilder
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtOps
 import net.neoforged.neoforge.capabilities.BlockCapability
+import java.util.*
 
-interface IHologramStorage {
+class IHologramStorage {
+    private var prototype: HologramContextPrototype? = null
+    private var locateType: LocateType = LocateFacingPlayer()
+
+    fun isInControl(): Boolean = this.prototype != null
+
+    fun getStoredPrototype(): HologramContextPrototype? = this.prototype
+
+    fun storePrototype(prototype: HologramContextPrototype) {
+        this.prototype = prototype
+    }
+
+    fun setLocateType(locateType: LocateType) {
+        this.locateType = locateType
+    }
+
+    fun getLocateType(): LocateType = this.locateType
+
+    fun writeToNBT(nbt: CompoundTag) {
+        CODEC.encode(this, NbtOps.INSTANCE, CompoundTag()).result().ifPresent {
+            nbt.put("hologram_storage", it)
+        }
+    }
+
+    fun readFromNbt(nbt: CompoundTag) {
+        if (nbt.contains("hologram_storage")) {
+            val storage = readFromNBT(nbt.getCompound("hologram_storage"))
+            this.prototype = storage.prototype
+            this.locateType = storage.locateType
+        }
+    }
+
     companion object {
         val CAPABILITY: BlockCapability<IHologramStorage, Void?> =
             BlockCapability.createVoid(HologramPanel.rl("hologram_store"), IHologramStorage::class.java)
-    }
 
-    fun isInControl() : Boolean
+        fun readFromNBT(nbt: CompoundTag) =
+            CODEC.decode(NbtOps.INSTANCE, nbt).result().map { it.first }.orElse(IHologramStorage())
 
-    fun getStoredPrototype(): HologramContextPrototype?
-
-    fun storePrototype(prototype: HologramContextPrototype)
-
-    fun setLocateType(locateType: LocateType)
-
-    fun getLocateType(): LocateType
-
-    class DefaultHologramStorage : IHologramStorage {
-        private var prototype: HologramContextPrototype? = null
-        private var locateType: LocateType = LocateFacingPlayer()
-
-        override fun isInControl(): Boolean = this.prototype != null
-
-        override fun getStoredPrototype(): HologramContextPrototype? = this.prototype
-
-        override fun storePrototype(prototype: HologramContextPrototype) {
-            this.prototype = prototype
+        val CODEC: Codec<IHologramStorage> = RecordCodecBuilder.create { ins ->
+            ins.group(
+                HologramContextPrototype.CODEC.optionalFieldOf("prototype").forGetter {
+                    Optional.ofNullable(it.prototype)
+                },
+                LocateType.CODEC.fieldOf("locateType").forGetter(IHologramStorage::locateType),
+            ).apply(ins) { prototype, locateType ->
+                IHologramStorage().also { storage ->
+                    prototype.ifPresent(storage::storePrototype)
+                    storage.locateType = locateType
+                }
+            }
         }
-
-        override fun setLocateType(locateType: LocateType) {
-            this.locateType = locateType
-        }
-
-        override fun getLocateType(): LocateType = this.locateType
     }
 }
