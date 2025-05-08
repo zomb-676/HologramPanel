@@ -25,7 +25,7 @@ import kotlin.jvm.optionals.getOrNull
  * context object describing entity-based target
  */
 class EntityHologramContext(
-    private val entity: Entity, private val player: Player, private val hitResult: EntityHitResult?
+    private val entity: Entity, private val player: Player
 ) : HologramContext {
     private var remember = Remember.create(this)
 
@@ -68,8 +68,6 @@ class EntityHologramContext(
      */
     override fun getIdentityObject(): Any = entity.uuid
 
-    override fun getHitContext(): HitResult? = hitResult
-
     override fun getRememberData(): Remember<EntityHologramContext> = remember
 
     /**
@@ -84,7 +82,7 @@ class EntityHologramContext(
     companion object {
         fun of(hit: EntityHitResult, player: Player): EntityHologramContext {
             val entity: Entity = hit.entity
-            return EntityHologramContext(entity, player, hit)
+            return EntityHologramContext(entity, player)
         }
 
         val STREAM_CODE: StreamCodec<FriendlyByteBuf, EntityHologramContext> =
@@ -97,10 +95,7 @@ class EntityHologramContext(
                         val entity = level.getEntity(buffer.readVarInt())!!
                         val player = server.playerList.getPlayer(UUIDUtil.STREAM_CODEC.decode(buffer))!!
                         val location = buffer.readOptional(Vec3.STREAM_CODEC).getOrNull()
-                        val hit = if (location != null) {
-                            EntityHitResult(entity, location)
-                        } else null
-                        return EntityHologramContext(entity, player, hit)
+                        return EntityHologramContext(entity, player)
                     } catch (e: Throwable) {
                         throw IgnorePacketException()
                     }
@@ -110,7 +105,6 @@ class EntityHologramContext(
                     AllRegisters.StreamCodecs.LEVEL_STREAM_CODE.encode(buffer, value.entity.level().dimension())
                     buffer.writeVarInt(value.entity.id)
                     UUIDUtil.STREAM_CODEC.encode(buffer, value.player.uuid)
-                    buffer.writeOptional(Optional.ofNullable(value.hitResult?.location), Vec3.STREAM_CODEC)
                 }
             }
     }
