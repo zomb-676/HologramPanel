@@ -445,7 +445,7 @@ object HologramManager {
         val forRemoved = ArrayList<HologramRenderState>(0)
         this.states.forEach { (widget, state) ->
             val context = state.context
-            if (state.stillValid()) {
+            if (state.stillValid() && !state.removed) {
                 val remember = context.getRememberData()
                 remember.tickMimicClientUpdate()
                 remember.tickClientValueUpdate()
