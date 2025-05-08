@@ -2,7 +2,6 @@ package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
 import io.netty.buffer.ByteBuf
@@ -14,7 +13,6 @@ import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
 import net.neoforged.bus.api.Event
 import net.neoforged.bus.api.IEventBus
-import net.neoforged.neoforge.client.GlStateBackup
 import net.neoforged.neoforge.common.ModConfigSpec
 import net.neoforged.neoforge.common.NeoForge
 import org.joml.Matrix4f
@@ -204,3 +202,11 @@ fun <T : Event> T.dispatch(bus: IEventBus): T {
 }
 
 fun <T : Event> T.dispatchForge() = dispatch(NeoForge.EVENT_BUS)
+
+fun addClientMessage(message: Component) = Minecraft.getInstance().gui.chat.addMessage(message)
+
+fun addClientMessage(message: String) = addClientMessage(Component.literal(message))
+
+fun setOverlayMessage(messages: Component) {
+    Minecraft.getInstance().gui.setOverlayMessage(messages, false)
+}

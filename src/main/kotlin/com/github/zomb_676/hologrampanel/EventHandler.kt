@@ -10,7 +10,10 @@ import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
+import com.github.zomb_676.hologrampanel.widget.locateType.AdjustType
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.TransformOrientation
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
@@ -43,6 +46,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.registries.RegisterEvent
 import net.neoforged.neoforge.server.ServerLifecycleHooks
 import net.neoforged.neoforge.server.command.EnumArgument
+import org.joml.Quaternionf
 import org.lwjgl.glfw.GLFW
 import kotlin.math.max
 import kotlin.math.min
@@ -162,31 +166,37 @@ object EventHandler {
             run {
                 val modifyTarget = PanelOperatorManager.selectedTarget ?: return@run
                 val player = Minecraft.getInstance().player ?: return@run
-                val locate = modifyTarget.locate as? LocateFreelyInWorld ?: return@run
+                val locate = modifyTarget.locate as? LocateInWorld? ?: return@run
 
-                val axisMode = PanelOperatorManager.axisMode
-                if (PanelOperatorManager.modifyLocation) {
-                    val modifier = if (shiftDown) 0.05 else 0.2
-                    val changeValue = event.scrollDeltaY * modifier
-                    val vector = when (GLFW.GLFW_PRESS) {
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.extractX(player, locate)
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> axisMode.extractY(player, locate)
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.extractZ(player, locate)
-                        else -> return@run
+                val orientation = PanelOperatorManager.transformOrientation
+                when (PanelOperatorManager.modifyLocation) {
+                    AdjustType.LOCATION -> {
+                        val modifier = if (shiftDown) 0.05 else 0.2
+                        val changeValue = event.scrollDeltaY * modifier
+                        val vector = when (GLFW.GLFW_PRESS) {
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> orientation.extractX(player, locate)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> orientation.extractY(player, locate)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> orientation.extractZ(player, locate)
+                            else -> return@run
+                        } ?: return@run
+                        locate.offset.add(vector.mul(changeValue.toFloat()))
                     }
-                    locate.offset.add(vector.mul(changeValue.toFloat()))
-                } else {
-                    val modifier = if (shiftDown) 1 else 5
-                    val changeValue = Math.toRadians((event.scrollDeltaY * modifier)).toFloat()
-                    val rotation = locate.getMutableRotation()
-                    val cameraRotation = Minecraft.getInstance().gameRenderer.mainCamera.rotation()
-                    val applyRotation = when (GLFW.GLFW_PRESS) {
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> axisMode.rotateX(rotation, cameraRotation, changeValue)
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> axisMode.rotateY(rotation, cameraRotation, changeValue)
-                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> axisMode.rotateZ(rotation, cameraRotation, changeValue)
-                        else -> return@run
+
+                    AdjustType.ROTATION if locate is LocateFreelyInWorld -> {
+                        val modifier = if (shiftDown) 1 else 5
+                        val changeValue = Math.toRadians((event.scrollDeltaY * modifier)).toFloat()
+                        val rotation = Quaternionf(locate.getRotation())
+                        val cameraRotation = Minecraft.getInstance().gameRenderer.mainCamera.rotation()
+                        val applyRotation = when (GLFW.GLFW_PRESS) {
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) -> orientation.rotateX(rotation, cameraRotation, changeValue)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Y) -> orientation.rotateY(rotation, cameraRotation, changeValue)
+                            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Z) -> orientation.rotateZ(rotation, cameraRotation, changeValue)
+                            else -> return@run
+                        }
+                        locate.setRotation(applyRotation)
                     }
-                    locate.setQuaternion(applyRotation)
+
+                    else -> return@run
                 }
                 event.isCanceled = true
                 return
@@ -259,7 +269,7 @@ object EventHandler {
             })
             event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.Client.getLayer())
             event.registerAboveAll(HologramPanel.rl("drag_entries"), InteractionLayer.getDraggingLayer())
-            event.registerBelowAll(HologramPanel.rl("coordinate"), AxisMode.getCoordinateLayer())
+            event.registerBelowAll(HologramPanel.rl("transform_orientation"), TransformOrientation.getTransformOrientationLayer())
         }
 
         private fun onPlayerLogIn(event: ClientPlayerNetworkEvent.LoggingIn) {

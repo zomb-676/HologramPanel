@@ -3,21 +3,17 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.RayTraceHelper
-import com.github.zomb_676.hologrampanel.util.AxisMode
+import com.github.zomb_676.hologrampanel.util.addClientMessage
 import com.github.zomb_676.hologrampanel.util.modifyAndSave
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelectorBuilder
-import com.github.zomb_676.hologrampanel.util.switchAndSave
 import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateOnScreen
+import com.github.zomb_676.hologrampanel.widget.locateType.*
 import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
-import net.neoforged.neoforge.common.ModConfigSpec
 import org.joml.Vector2f
 import kotlin.math.sqrt
 
@@ -34,9 +30,9 @@ object PanelOperatorManager {
             }
         }
 
-    var axisMode = AxisMode.LOCAL
+    var transformOrientation = TransformOrientation.LOCAL
         private set
-    var modifyLocation: Boolean = false
+    var modifyLocation: AdjustType = AdjustType.LOCATION
         private set
 
     fun createInstance(): CycleSelector? {
@@ -57,35 +53,69 @@ object PanelOperatorManager {
                             selectedTarget = hologram
                             Component.literal("success set")
                         } else Component.literal("failed to set")
-                        addMessage(message)
+                        addClientMessage(message)
                     } else {
                         selectedTarget = null
-                        addMessage(Component.literal("clear selected"))
+                        addClientMessage(Component.literal("clear selected"))
                     }
                 }
             }
-            addGroup(ComponentRenderElement("Set Axis Mode").setScale(0.8)) {
-                add(ComponentRenderElement("world axis").setScale(0.8)) {
-                    axisMode = AxisMode.WORLD
-                    addMessage("switch Axis Mode to World Axis")
+            addGroup {
+                adjustGroup {
+                    renderElement(ComponentRenderElement("TransformOrientation").setScale(0.8))
+                    visible { selectedTarget.run { this != null && this.locate is LocateInWorld } }
                 }
-                add(ComponentRenderElement("local axis").setScale(0.8)) {
-                    axisMode = AxisMode.LOCAL
-                    addMessage("switch Axis Mode to Local Axis")
+
+                add(ComponentRenderElement("world axis").setScale(0.8)) {
+                    transformOrientation = TransformOrientation.WORLD
+                    addClientMessage("switch Axis Mode to World Axis")
+                }
+                add {
+                    renderElement { ComponentRenderElement("local axis").setScale(0.8) }
+                    onClick {
+                        transformOrientation = TransformOrientation.LOCAL
+                        addClientMessage("switch Axis Mode to Local Axis")
+                    }
+                    visible { selectedTarget.run { this != null && this.locate !is LocateFacingPlayer } }
                 }
                 add(ComponentRenderElement("player axis").setScale(0.8)) {
-                    axisMode = AxisMode.PLAYER
-                    addMessage("switch Axis Mode to Player Axis")
+                    transformOrientation = TransformOrientation.PLAYER
+                    addClientMessage("switch Axis Mode to Player Axis")
                 }
-                add(ComponentRenderElement("position").setScale(0.8)) {
-                    modifyLocation = true
+                add {
+                    renderElement {
+                        if (modifyLocation == AdjustType.LOCATION) {
+                            ComponentRenderElement("location", 0xffffffff.toInt()).setScale(0.8)
+                        } else {
+                            ComponentRenderElement("location", 0xff000000.toInt()).setScale(0.8)
+                        }
+                    }
+                    onClick {
+                        modifyLocation = AdjustType.LOCATION
+                    }
                 }
-                add(ComponentRenderElement("rotation").setScale(0.8)) {
-                    modifyLocation = false
+                add {
+                    renderElement {
+                        if (modifyLocation == AdjustType.ROTATION) {
+                            ComponentRenderElement("rotation", 0xffffffff.toInt()).setScale(0.8)
+                        } else {
+                            ComponentRenderElement("rotation", 0xff000000.toInt()).setScale(0.8)
+                        }
+                    }
+                    onClick {
+                        modifyLocation = AdjustType.ROTATION
+                    }
+                    visible {
+                        selectedTarget.run { this != null && this.locate !is LocateFacingPlayer }
+                    }
                 }
             }
-            addGroup(ComponentRenderElement("Modify Selected").setScale(0.8)) {
-                add(ComponentRenderElement("pin screen").setScale(0.8)) {
+            addGroup {
+                adjustGroup {
+                    renderElement(ComponentRenderElement("Set LocateType").setScale(0.8))
+                    visible { selectedTarget != null }
+                }
+                add(ComponentRenderElement("LocateOnScreen").setScale(0.8)) {
                     val target = findTarget(createTimeHologram) ?: return@add
                     if (target.locate !is LocateOnScreen) {
                         val old = target.locate
@@ -93,7 +123,7 @@ object PanelOperatorManager {
                         HologramManager.notifyHologramLocateTypeChange(target, old)
                     }
                 }
-                add(ComponentRenderElement("pin world").setScale(0.8)) {
+                add(ComponentRenderElement("LocateFreelyInWorld").setScale(0.8)) {
                     val target = findTarget(createTimeHologram) ?: return@add
                     val camera = Minecraft.getInstance().gameRenderer.mainCamera
                     when (val locate = target.locate) {
@@ -106,7 +136,7 @@ object PanelOperatorManager {
                         }
                     }
                 }
-                add(ComponentRenderElement("face player").setScale(0.8)) {
+                add(ComponentRenderElement("LocateFacePlayer").setScale(0.8)) {
                     val target = findTarget(createTimeHologram) ?: return@add
                     if (target.locate !is LocateFacingPlayer) {
                         val old = target.locate
@@ -138,18 +168,18 @@ object PanelOperatorManager {
                     onClick {
                         val entry = entity?.location()?.toString()
                         if (entry == null) {
-                            addMessage("see entity to hide")
+                            addClientMessage("see entity to hide")
                         } else if (!Config.Client.hideEntityTypes.get().contains(entry)) {
                             Config.Client.hideEntityTypes.modifyAndSave {
                                 it += entry
                             }
-                            addMessage("hide entity $entry")
+                            addClientMessage("hide entity $entry")
                             HologramManager.checkAllHologramByPrevent()
                         } else {
                             Config.Client.hideEntityTypes.modifyAndSave {
                                 it -= entry
                             }
-                            addMessage("not hide entity $entry")
+                            addClientMessage("not hide entity $entry")
                         }
                     }
                 }
@@ -174,43 +204,23 @@ object PanelOperatorManager {
                     onClick {
                         val entry = block?.location()?.toString()
                         if (entry == null) {
-                            addMessage("see block to hide")
+                            addClientMessage("see block to hide")
                         } else if (!Config.Client.hideBlocks.get().contains(entry)) {
                             Config.Client.hideBlocks.modifyAndSave {
                                 it += entry
                             }
-                            addMessage("hide Block $entry")
+                            addClientMessage("hide Block $entry")
                             HologramManager.checkAllHologramByPrevent()
                         } else {
                             Config.Client.hideBlocks.modifyAndSave {
                                 it -= entry
                             }
-                            addMessage("not hide Block $entry")
+                            addClientMessage("not hide Block $entry")
                         }
                     }
                 }
             }
             addGroup(ComponentRenderElement("debug options").setScale(0.8)) {
-                fun addOption(value: ModConfigSpec.BooleanValue, desc: String) {
-                    add {
-                        notClickOnClose()
-                        var state: Boolean = false
-                        tick {
-                            state = value.get()
-                        }
-                        renderElement {
-                            if (state) {
-                                ComponentRenderElement(desc, 0xffffffff.toInt()).setScale(0.6)
-                            } else {
-                                ComponentRenderElement(desc, 0xff000000.toInt()).setScale(0.6)
-                            }
-                        }
-                        onClick {
-                            value.switchAndSave()
-                            addMessage("switch $desc to ${value.get()}")
-                        }
-                    }
-                }
                 addOption(Config.Client.renderDebugLayer, "debugLayer")
                 addOption(Config.Client.renderDebugHologramLifeCycleBox, "hologramLifeCycle")
                 addOption(Config.Client.renderWidgetDebugInfo, "widgetDebugInfo")
@@ -232,10 +242,6 @@ object PanelOperatorManager {
 
     private fun EntityType<*>.location() = BuiltInRegistries.ENTITY_TYPE.getKey(this)
     private fun Block.location() = BuiltInRegistries.BLOCK.getKey(this)
-
-    private fun addMessage(message: Component) = Minecraft.getInstance().gui.chat.addMessage(message)
-
-    private fun addMessage(message: String) = addMessage(Component.literal(message))
 
     private fun checkBlockContains(block: Block) =
         Config.Client.hideBlocks.get().contains(block.location().toString())

@@ -9,6 +9,7 @@ import com.github.zomb_676.hologrampanel.trans.TransSource
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
 import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
+import com.github.zomb_676.hologrampanel.util.setOverlayMessage
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.Minecraft
 import net.minecraft.network.chat.Component
@@ -162,10 +163,6 @@ object HologramInteractionManager {
     fun clearState() {
         this.draggingSource = null
         this.dragData = null
-    }
-
-    private fun setOverlayMessage(messages: Component) {
-        Minecraft.getInstance().gui.setOverlayMessage(messages, false)
     }
 
     /**

@@ -1,10 +1,14 @@
 package com.github.zomb_676.hologrampanel.util.selector
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.util.addClientMessage
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelectorBuilder.Companion.invoke
+import com.github.zomb_676.hologrampanel.util.switchAndSave
+import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
 import com.github.zomb_676.hologrampanel.widget.element.EmptyElement
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
+import net.neoforged.neoforge.common.ModConfigSpec
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -146,6 +150,27 @@ class CycleSelectorBuilder {
                 }
 
                 override fun toString(): String = "group(childCount:${childrenCount()})"
+            }
+        }
+
+        fun addOption(value: ModConfigSpec.BooleanValue, desc: String) {
+            add {
+                notClickOnClose()
+                var state: Boolean = false
+                tick {
+                    state = value.get()
+                }
+                renderElement {
+                    if (state) {
+                        ComponentRenderElement(desc, 0xffffffff.toInt()).setScale(0.6)
+                    } else {
+                        ComponentRenderElement(desc, 0xff000000.toInt()).setScale(0.6)
+                    }
+                }
+                onClick {
+                    value.switchAndSave()
+                    addClientMessage("switch $desc to ${value.get()}")
+                }
             }
         }
     }

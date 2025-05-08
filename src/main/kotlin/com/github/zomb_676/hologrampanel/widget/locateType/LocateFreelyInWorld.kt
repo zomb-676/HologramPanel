@@ -26,9 +26,6 @@ class LocateFreelyInWorld() : LocateInWorld {
 
     private val quaternion = Quaternionf()
 
-    fun getRotation(): Quaternionfc = this.quaternion
-    internal fun getMutableRotation(): Quaternionf = this.quaternion
-
     var xRot: Float = 0f
         private set
     var yRot: Float = 0f
@@ -75,7 +72,6 @@ class LocateFreelyInWorld() : LocateInWorld {
         fun crossProductZ(p1: Vector2f, p2: Vector2f, checkX: Float, checkY: Float): Float {
             return (p2.x - p1.x) * (checkY - p1.y) - (p2.y - p1.y) * (checkX - p1.x)
         }
-
 
         val cp1 = crossProductZ(leftUp, leftDown, mouseX, mouseY)
         val cp2 = crossProductZ(leftDown, rightDown, mouseX, mouseY)
@@ -132,12 +128,6 @@ class LocateFreelyInWorld() : LocateInWorld {
         }
     }
 
-    fun setQuaternion(q: Quaternionf) {
-        this.quaternion.set(q)
-        this.updateVectors()
-        this.updateEulerDegrees()
-    }
-
     private fun normalizeAngle(degrees: Float): Float {
         var degrees = degrees
         degrees %= 360f
@@ -156,11 +146,15 @@ class LocateFreelyInWorld() : LocateInWorld {
 
     var target: RenderTarget? = null
 
-    override fun getSourceWorldPosition(context: HologramContext, partialTick: Float): Vector3fc {
-        return super.getSourceWorldPosition(context, partialTick).add(offset, Vector3f())
-    }
-
     override fun getLocateEnum(): LocateEnum = LocateEnum.FREELY_IN_WORLD
+
+    fun getRotation(): Quaternionfc = this.quaternion
+    internal fun getMutableRotation(): Quaternionf = this.quaternion
+    fun setRotation(rotation: Quaternionfc) {
+        this.quaternion.set(rotation)
+        this.updateVectors()
+        this.updateEulerDegrees()
+    }
 
     companion object {
         private val FORWARDS: Vector3f = Vector3f(0.0f, 0.0f, -1.0f)
