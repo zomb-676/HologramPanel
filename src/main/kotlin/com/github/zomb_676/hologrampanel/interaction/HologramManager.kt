@@ -22,11 +22,15 @@ import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.LocateType
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateOnScreen
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
@@ -173,7 +177,7 @@ object HologramManager {
             }
             val locate = state.locate
 
-            if (locate is LocateType.World.FacingVector) {
+            if (locate is LocateFreelyInWorld) {
                 state.setDisplayScale(scaleValue)
                 style.stack {
                     style.scale(scaleValue)
@@ -189,7 +193,7 @@ object HologramManager {
                 val screenPos = state.updateRenderScreenPosition(partialTicks).equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
                 //change scale according to distance
-                val scale: Double = scaleValue * if (locate is LocateType.World.FacingPlayer) {
+                val scale: Double = scaleValue * if (locate is LocateFacingPlayer) {
                     val distance = state.distanceToCamera(partialTicks)
                     calculateScale(
                         distance, Config.Client.renderMinDistance.get(),
@@ -206,7 +210,7 @@ object HologramManager {
                 style.scale(scale, scale)
 
                 //anchored by hologram's left-up
-                if (locate is LocateType.World) {
+                if (locate is LocateInWorld) {
                     style.translate(-widgetSize.width / 2.0, -widgetSize.height / 2.0)
                 }
 
@@ -241,11 +245,11 @@ object HologramManager {
         this.renderPinScreenPrompt(style, partialTicks)
 
         val target = getInteractHologram()
-        if (target?.locate !is LocateType.World.FacingVector) {
+        if (target?.locate !is LocateFreelyInWorld) {
             this.renderInteractionHologramStateTips(target, style)
         }
         PanelOperatorManager.selectedTarget?.also { selected ->
-            if (selected.locate !is LocateType.World.FacingVector) {
+            if (selected.locate !is LocateFreelyInWorld) {
                 this.renderSelectedHologramStateTips(selected, style)
             }
         }
@@ -306,21 +310,21 @@ object HologramManager {
             val up: Double
             val down: Double
             when (target.locate) {
-                is LocateType.Screen -> {
+                is LocateOnScreen -> {
                     left = screenPos.x - scaledOffset
                     right = screenPos.x + displayWidth + scaledOffset
                     up = screenPos.y - scaledOffset
                     down = screenPos.y + displayHeight + scaledOffset
                 }
 
-                LocateType.World.FacingPlayer -> {
+                is LocateFacingPlayer -> {
                     left = (screenPos.x - displayWidth / 2.0) - scaledOffset
                     right = (screenPos.x + displayWidth / 2.0) + scaledOffset
                     up = (screenPos.y - displayHeight / 2.0) - scaledOffset
                     down = (screenPos.y + displayHeight / 2.0) + scaledOffset
                 }
 
-                is LocateType.World.FacingVector -> {
+                is LocateFreelyInWorld -> {
                     val window = Minecraft.getInstance().window
                     val centerX = window.guiScaledWidth / 2
                     val centerY = window.guiScaledHeight / 2
@@ -376,7 +380,7 @@ object HologramManager {
             .filter { it.displayed }
             .firstOrNull { state ->
                 when (val locate = state.locate) {
-                    LocateType.World.FacingPlayer -> {
+                    is LocateFacingPlayer -> {
                         val size = state.displaySize
                         val position = state.screenPos
                         val left = position.x - size.width / 2
@@ -389,7 +393,7 @@ object HologramManager {
                         return@firstOrNull down > checkY
                     }
 
-                    is LocateType.Screen -> {
+                    is LocateOnScreen -> {
                         val size = state.displaySize
                         val position = state.screenPos
                         if (checkX < position.x) return@firstOrNull false
@@ -399,7 +403,7 @@ object HologramManager {
                         return@firstOrNull true
                     }
 
-                    is LocateType.World.FacingVector -> locate.isMouseIn(checkX, checkY)
+                    is LocateFreelyInWorld -> locate.isMouseIn(checkX, checkY)
                 }
             }
     }
@@ -511,7 +515,7 @@ object HologramManager {
         }
         for (state in screenPinHolograms) {
             if (!state.displayed) continue
-            val locate = state.locate as LocateType.Screen? ?: continue
+            val locate = state.locate as? LocateOnScreen? ?: continue
             if (!locate.arrange) continue
             locate.setPosition(pos.x, pos.y + size.height + 5)
             pos = state.screenPos
@@ -532,7 +536,7 @@ object HologramManager {
 
             if (!state.displayed) return@forEach
             if (state.inViewDegree) {
-                val locate = state.locate as LocateType.Screen? ?: return@forEach
+                val locate = state.locate as? LocateOnScreen? ?: return@forEach
 
                 val widgetX = (locate.position.x + state.displaySize.width).toDouble()
                 val widgetY = (locate.position.y + state.displaySize.height / 2).toDouble()
@@ -554,10 +558,10 @@ object HologramManager {
     }
 
     fun notifyHologramLocateTypeChange(state: HologramRenderState, old: LocateType) {
-        if (old is LocateType.Screen) {
+        if (old is LocateOnScreen) {
             this.screenPinHolograms.remove(state)
         }
-        if (state.locate is LocateType.Screen) {
+        if (state.locate is LocateOnScreen) {
             this.screenPinHolograms.add(state)
         }
     }
@@ -569,7 +573,7 @@ object HologramManager {
                 target.bindWrite(true)
                 OpenGLStateManager.preventMainBindWrite {
                     for (state in states) {
-                        val locate = state.locate as? LocateType.World.FacingVector? ?: continue
+                        val locate = state.locate as? LocateFreelyInWorld? ?: continue
                         val rect = locate.allocatedSpace
                         style.stack {
                             style.move(rect.x, rect.y)
@@ -593,7 +597,7 @@ object HologramManager {
     fun renderFacingVectorForInteract(style: HologramStyle, partialTick: Float) = glDebugStack("facingVectorForInteract") {
         val target = this.getInteractHologram() ?: return@glDebugStack
         if (!target.displayed) return@glDebugStack
-        val locate = target.locate as? LocateType.World.FacingVector? ?: return@glDebugStack
+        val locate = target.locate as? LocateFreelyInWorld? ?: return@glDebugStack
         val renderTarget = TransitRenderTargetManager.getInteractTarget()
 
         val window = Minecraft.getInstance().window
@@ -656,7 +660,7 @@ object HologramManager {
                 RenderSystem.setShaderTexture(0, target.colorTextureId)
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
                 for (state in states) {
-                    val locate = state.locate as? LocateType.World.FacingVector? ?: continue
+                    val locate = state.locate as? LocateFreelyInWorld? ?: continue
                     val center = state.sourcePosition(partialTick)
                     val (width, height) = state.displaySize
                     val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
@@ -699,7 +703,7 @@ object HologramManager {
                 builder.build()?.apply(BufferUploader::drawWithShader)
             }
             getInteractHologram()?.also { state ->
-                val locate = state.locate as? LocateType.World.FacingVector? ?: return@also
+                val locate = state.locate as? LocateFreelyInWorld? ?: return@also
                 val center = state.sourcePosition(partialTick)
                 val window = Minecraft.getInstance().window
                 val width = window.guiScaledWidth

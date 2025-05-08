@@ -2,7 +2,8 @@ package com.github.zomb_676.hologrampanel.projector
 
 import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContextPrototype
-import com.github.zomb_676.hologrampanel.widget.LocateType
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import net.neoforged.neoforge.capabilities.BlockCapability
 
 interface IHologramStorage {
@@ -15,7 +16,7 @@ interface IHologramStorage {
 
     fun getStoredPrototype(): HologramContextPrototype?
 
-    fun storePrototype(context: HologramContextPrototype)
+    fun storePrototype(prototype: HologramContextPrototype)
 
     fun setLocateType(locateType: LocateType)
 
@@ -23,7 +24,7 @@ interface IHologramStorage {
 
     class DefaultHologramStorage : IHologramStorage {
         private var prototype: HologramContextPrototype? = null
-        private var locateType: LocateType = LocateType.World.FacingPlayer
+        private var locateType: LocateType = LocateFacingPlayer()
 
         override fun isInControl(): Boolean = this.prototype != null
 

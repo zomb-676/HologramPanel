@@ -4,7 +4,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.rect.PackedRect
 import com.github.zomb_676.hologrampanel.util.rect.RectAllocator
-import com.github.zomb_676.hologrampanel.widget.LocateType
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
@@ -18,7 +18,7 @@ import org.lwjgl.opengl.GL46
 import java.util.*
 
 /**
- * render all [LocateType.World.FacingVector] at [TransitRenderTarget] then, blit
+ * render all [LocateFreelyInWorld] at [TransitRenderTarget] then, blit
  */
 object TransitRenderTargetManager {
 
@@ -78,7 +78,7 @@ object TransitRenderTargetManager {
     /**
      * allocate [width] by [height] and record its result into [locate]
      */
-    fun allocate(width: Int, height: Int, locate: LocateType.World.FacingVector, state: HologramRenderState): RenderTarget {
+    fun allocate(width: Int, height: Int, locate: LocateFreelyInWorld, state: HologramRenderState): RenderTarget {
         for ((target, records) in entries) {
             val res = target.tryAllocate(width, height)
             if (res.assigned) {
@@ -98,7 +98,7 @@ object TransitRenderTargetManager {
         return new
     }
 
-    fun allocate(size: Size, locate: LocateType.World.FacingVector, state: HologramRenderState): RenderTarget =
+    fun allocate(size: Size, locate: LocateFreelyInWorld, state: HologramRenderState): RenderTarget =
         allocate(size.width, size.height, locate, state)
 
     fun refresh() {

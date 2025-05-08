@@ -9,8 +9,8 @@ import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.widget.InteractionLayer
-import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
@@ -162,7 +162,7 @@ object EventHandler {
             run {
                 val modifyTarget = PanelOperatorManager.selectedTarget ?: return@run
                 val player = Minecraft.getInstance().player ?: return@run
-                val locate = modifyTarget.locate as? LocateType.World.FacingVector ?: return@run
+                val locate = modifyTarget.locate as? LocateFreelyInWorld ?: return@run
 
                 val axisMode = PanelOperatorManager.axisMode
                 if (PanelOperatorManager.modifyLocation) {
@@ -197,7 +197,7 @@ object EventHandler {
                 val changeValue = event.scrollDeltaY * modifier
 
                 (PanelOperatorManager.selectedTarget ?: HologramManager.getInteractHologram())?.also { state ->
-                    val locate = state.locate as? LocateType.World.FacingVector ?: return@also
+                    val locate = state.locate as? LocateFreelyInWorld ?: return@also
 
                     locate.scale = max(min(max(locate.scale + changeValue.toFloat(), 0.01f), 2.5f), 0.2f)
                     Minecraft.getInstance().gui.setOverlayMessage(Component.literal("adjust hologram scale to %.2f".format(locate.scale)), false)

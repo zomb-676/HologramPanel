@@ -8,8 +8,10 @@ import com.github.zomb_676.hologrampanel.util.modifyAndSave
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelectorBuilder
 import com.github.zomb_676.hologrampanel.util.switchAndSave
-import com.github.zomb_676.hologrampanel.widget.LocateType
 import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateOnScreen
 import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
@@ -85,9 +87,9 @@ object PanelOperatorManager {
             addGroup(ComponentRenderElement("Modify Selected").setScale(0.8)) {
                 add(ComponentRenderElement("pin screen").setScale(0.8)) {
                     val target = findTarget(createTimeHologram) ?: return@add
-                    if (target.locate !is LocateType.Screen) {
+                    if (target.locate !is LocateOnScreen) {
                         val old = target.locate
-                        target.locate = LocateType.Screen(Vector2f())
+                        target.locate = LocateOnScreen(Vector2f())
                         HologramManager.notifyHologramLocateTypeChange(target, old)
                     }
                 }
@@ -95,9 +97,9 @@ object PanelOperatorManager {
                     val target = findTarget(createTimeHologram) ?: return@add
                     val camera = Minecraft.getInstance().gameRenderer.mainCamera
                     when (val locate = target.locate) {
-                        is LocateType.World.FacingVector -> locate.byCamera(camera)
+                        is LocateFreelyInWorld -> locate.byCamera(camera)
                         else -> {
-                            target.locate = LocateType.World.FacingVector().byCamera(camera).apply {
+                            target.locate = LocateFreelyInWorld().byCamera(camera).apply {
                                 camera.lookVector.mul(-sqrt(3f) / 2f, offset)
                             }
                             HologramManager.notifyHologramLocateTypeChange(target, locate)
@@ -106,9 +108,9 @@ object PanelOperatorManager {
                 }
                 add(ComponentRenderElement("face player").setScale(0.8)) {
                     val target = findTarget(createTimeHologram) ?: return@add
-                    if (target.locate !is LocateType.World.FacingPlayer) {
+                    if (target.locate !is LocateFacingPlayer) {
                         val old = target.locate
-                        target.locate = LocateType.World.FacingPlayer
+                        target.locate = LocateFacingPlayer()
                         HologramManager.notifyHologramLocateTypeChange(target, old)
                     }
                 }
