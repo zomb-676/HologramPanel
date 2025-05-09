@@ -14,7 +14,8 @@ object ProjectorManager {
     }
 
     fun checkProjectorSetting(state: HologramRenderState) {
-        projectorListeners.any { it.checkTransform(state) }
+        val blockEntity = projectorListeners.firstOrNull { it.checkTransform(state) } ?: return
+        blockEntity.setStateLocate(state)
     }
 
     fun getListeners(): List<ProjectorBlockEntity> = this.projectorListeners

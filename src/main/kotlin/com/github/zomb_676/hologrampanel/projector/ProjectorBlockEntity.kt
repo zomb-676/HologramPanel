@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.projector
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
+import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContextPrototype
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup
@@ -62,12 +63,24 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     }
 
     fun checkTransform(state: HologramRenderState): Boolean {
-        if (state.context !is BlockHologramContext) return false
         val prototype = cap.getStoredPrototype() ?: return false
-        if (prototype is HologramContextPrototype.BlockHologramPrototype && prototype.pos == state.context.pos) {
+        val context = state.context
+        val res = when (prototype) {
+            is HologramContextPrototype.BlockHologramPrototype if context is BlockHologramContext ->
+                context.pos == prototype.pos
 
-            return true
+            is HologramContextPrototype.EntityHologramPrototype if context is EntityHologramContext ->
+                context.getEntity().uuid == prototype.entityUUID
+
+            else -> false
         }
-        return false
+        if (res) {
+            cap.bindState = state
+        }
+        return res
+    }
+
+    fun setStateLocate(state: HologramRenderState) {
+        state.locate = this.cap.getLocateType()
     }
 }

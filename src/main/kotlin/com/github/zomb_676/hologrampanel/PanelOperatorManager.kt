@@ -3,8 +3,6 @@ package com.github.zomb_676.hologrampanel
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.RayTraceHelper
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContextPrototype
-import com.github.zomb_676.hologrampanel.payload.SetProjectorSettingPayload
 import com.github.zomb_676.hologrampanel.projector.IHologramStorage
 import com.github.zomb_676.hologrampanel.util.addClientMessage
 import com.github.zomb_676.hologrampanel.util.modifyAndSave
@@ -14,7 +12,6 @@ import com.github.zomb_676.hologrampanel.widget.element.ComponentRenderElement
 import com.github.zomb_676.hologrampanel.widget.locateType.*
 import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
@@ -23,7 +20,10 @@ import kotlin.math.sqrt
 
 object PanelOperatorManager {
     var selectedTarget: HologramRenderState? = null
-        private set
+        set(value) {
+            if (value == null || value.removed) return
+            field = value
+        }
         get() {
             val result = field
             if (result == null || result.removed) {
@@ -155,11 +155,7 @@ object PanelOperatorManager {
                     val storage = level.getCapability(IHologramStorage.CAPABILITY, block.blockPos) ?: return@run
                     add(ComponentRenderElement("bind to target").setScale(0.8)) {
                         val target = findTarget(createTimeHologram) ?: return@add
-                        storage.setLocateType(target.locate)
-                        storage.storePrototype(HologramContextPrototype.extract(target.context))
-                        val tag = CompoundTag()
-                        storage.writeToNBT(tag)
-                        SetProjectorSettingPayload(tag, be.blockPos).sendToServer()
+                        storage.setAndSyncToServer(target, be.blockPos)
                     }
                 }
             }
