@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.projector
 
 import com.github.zomb_676.hologrampanel.AllRegisters
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
@@ -81,6 +82,8 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     }
 
     fun setStateLocate(state: HologramRenderState) {
+        val old = state.locate
         state.locate = this.cap.getLocateType()
+        HologramManager.notifyHologramLocateTypeChange(state, old)
     }
 }

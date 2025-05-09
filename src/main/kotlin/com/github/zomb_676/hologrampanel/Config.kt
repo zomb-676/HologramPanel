@@ -160,6 +160,9 @@ object Config {
             .comment("0 for no limit")
             .defineInRange("tooltip_limit_height", 50, 0, Int.MAX_VALUE)
 
+        val pinScreenDistanceFactor: ModConfigSpec.DoubleValue = builder
+            .defineInRange("pin_screen_distance_factor", 5.0, 1.0, 100.0)
+
         val hideEntityTypes: ModConfigSpec.ConfigValue<MutableList<String>> = builder
             .define("hide_entity_types", mutableListOf())
 

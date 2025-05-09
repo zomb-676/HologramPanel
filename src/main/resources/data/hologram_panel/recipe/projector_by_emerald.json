@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "E": "minecraft:emerald",
+    "S": "minecraft:cobbled_deepslate",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "   ",
+    "IEI",
+    "SRS"
+  ],
+  "result": {
+    "count": 4,
+    "id": "hologram_panel:projector"
+  }
+}

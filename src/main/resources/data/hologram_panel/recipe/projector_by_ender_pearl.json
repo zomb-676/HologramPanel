@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "S": "minecraft:cobbled_deepslate",
+    "R": "minecraft:redstone",
+    "P": "minecraft:ender_pearl"
+  },
+  "pattern": [
+    "   ",
+    "IPI",
+    "SRS"
+  ],
+  "result": {
+    "count": 8,
+    "id": "hologram_panel:projector"
+  }
+}
