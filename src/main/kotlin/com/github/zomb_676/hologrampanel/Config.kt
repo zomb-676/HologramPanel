@@ -156,6 +156,10 @@ object Config {
         val forceDisplayModeSwitchType: ModConfigSpec.EnumValue<SwitchMode> = builder
             .defineEnum("force_display_mode_switch_type", SwitchMode.BY_PRESS)
 
+        val tooltipLimitHeight: ModConfigSpec.IntValue = builder
+            .comment("0 for no limit")
+            .defineInRange("tooltip_limit_height", 50, 0, Int.MAX_VALUE)
+
         val hideEntityTypes: ModConfigSpec.ConfigValue<MutableList<String>> = builder
             .define("hide_entity_types", mutableListOf())
 
