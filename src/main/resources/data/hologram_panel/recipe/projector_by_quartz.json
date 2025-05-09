@@ -1,6 +1,5 @@
 {
   "type": "minecraft:crafting_shaped",
-  "category": "",
   "key": {
     "G": "minecraft:green_dye",
     "S": "minecraft:cobbled_deepslate",
