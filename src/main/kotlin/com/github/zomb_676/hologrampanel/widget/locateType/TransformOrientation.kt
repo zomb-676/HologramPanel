@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.locateType
 
 import com.github.zomb_676.hologrampanel.PanelOperatorManager
+import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.color.HologramColor
@@ -16,6 +17,7 @@ import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector2f
 import org.joml.Vector3f
+import org.joml.Vector3fc
 import org.lwjgl.glfw.GLFW
 
 enum class TransformOrientation {
@@ -141,6 +143,8 @@ enum class TransformOrientation {
                 val matrix = guiGraphics.pose().last().pose()
 
                 val worldPosition = target.sourcePosition(deltaTracker.getGameTimeDeltaPartialTick(false))
+                if (!viewVectorDegreeCheckPass(deltaTracker.getGameTimeDeltaPartialTick(false), worldPosition)) return
+
                 val center = MVPMatrixRecorder.transform(worldPosition).screenPosition
 
                 val transform = Matrix4f().translate(worldPosition.x(), worldPosition.y(), worldPosition.z()).apply {
@@ -168,5 +172,20 @@ enum class TransformOrientation {
             }
         }
 
+        fun viewVectorDegreeCheckPass(partialTick: Float, sourcePosition: Vector3fc): Boolean {
+            val camera = Minecraft.getInstance().gameRenderer.mainCamera
+            val viewVector = camera.lookVector
+            val cameraPosition = camera.position
+            val sourceVector = Vector3f(
+                (sourcePosition.x() - cameraPosition.x).toFloat(),
+                (sourcePosition.y() - cameraPosition.y).toFloat(),
+                (sourcePosition.z() - cameraPosition.z).toFloat()
+            ).normalize()
+
+            val dot = viewVector.dot(sourceVector)
+            val angleInRadius = JomlMath.acos(dot)
+            val angel = JomlMath.toDegrees(angleInRadius)
+            return angel < Minecraft.getInstance().options.fov().get()
+        }
     }
 }
