@@ -1,6 +1,5 @@
 {
   "type": "minecraft:crafting_shaped",
-  "category": "",
   "key": {
     "I": {
       "item" : "minecraft:iron_ingot"

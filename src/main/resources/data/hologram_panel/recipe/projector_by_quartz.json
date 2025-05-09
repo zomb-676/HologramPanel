@@ -1,6 +1,5 @@
 {
   "type": "minecraft:crafting_shaped",
-  "category": "",
   "key": {
     "G": {
       "item": "minecraft:green_dye"
