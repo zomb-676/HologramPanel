@@ -3,6 +3,7 @@ package com.github.zomb_676.hologrampanel.api
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateOnScreen
 import net.minecraft.client.Minecraft
 
 @FunctionalInterface
@@ -26,6 +27,11 @@ interface HologramTicket<in T : HologramContext> {
 
     data class ByDistance(val distance: Double) : HologramTicket<HologramContext> {
         override fun stillValid(context: HologramContext, state: HologramRenderState): Boolean {
+            val distance = when(state.locate) {
+                is LocateOnScreen -> Config.Client.pinScreenDistanceFactor.get()
+                else -> 1.0
+            } * distance
+            if (state.locate is LocateOnScreen) return true
             val pos = context.hologramCenterPosition()
             val playerPos = Minecraft.getInstance().player?.position() ?: return false
             val dis = pos.distance(playerPos.x.toFloat(), playerPos.y.toFloat(), playerPos.z.toFloat())

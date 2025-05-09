@@ -21,7 +21,7 @@ import kotlin.math.sqrt
 object PanelOperatorManager {
     var selectedTarget: HologramRenderState? = null
         set(value) {
-            if (value == null || value.removed) return
+            if (value != null && value.removed) return
             field = value
         }
         get() {
