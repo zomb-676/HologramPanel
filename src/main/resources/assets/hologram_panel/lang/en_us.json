@@ -158,6 +158,8 @@
   "key.categories.hologram_panel" : "Hologram Panel",
   "key.hologram_panel.selector_panel_key": "selector panel",
   "key.hologram_panel.scale_key": "scale hologram",
-  "key.hologram_panel.collapse_key": "collapse hologram"
+  "key.hologram_panel.collapse_key": "collapse hologram",
+
+  "block.hologram_panel.projector" : "Hologram Projector"
 
 }
