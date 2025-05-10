@@ -7,14 +7,19 @@ import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.element.RenderElement
 import net.minecraft.network.chat.Component
 import kotlin.math.floor
+import kotlin.math.max
 
 abstract class ProgressBarElement(val progress: ProgressData, var barWidth: Float = 98f) : RenderElement() {
+
+    private var description : Component = Component.empty()
 
     override fun measureContentSize(
         style: HologramStyle
     ): Size {
+        this.description = getDescription(progress.percent)
+        val descriptionWidth = style.measureString(this.description).width.toFloat()
         //+2 is the outline part of the progress
-        return Size.Companion.of(floor(barWidth + 2).toInt(), style.font.lineHeight + 2).scale()
+        return Size.Companion.of(floor(max(barWidth, descriptionWidth) + 2).toInt(), style.font.lineHeight + 2).scale()
     }
 
     override fun render(style: HologramStyle, partialTicks: Float) {
@@ -44,7 +49,6 @@ abstract class ProgressBarElement(val progress: ProgressData, var barWidth: Floa
             this.fillBar(style, left, right, height, percent)
         }
 
-        val description = getDescription(percent)
         val width = style.measureString(description).width
         style.stack {
             style.translate(0.0, 0.0, 1.0)
