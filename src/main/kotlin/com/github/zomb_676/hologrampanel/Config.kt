@@ -46,7 +46,7 @@ object Config {
 
     fun onTagUpdate(event: TagsUpdatedEvent) {
         if (FMLLoader.getDist() == Dist.CLIENT) {
-            Client.onTagUpdate(event.registryAccess)
+            Client.updateHideList(event.registryAccess)
         }
     }
 
@@ -172,8 +172,9 @@ object Config {
         internal val hideEntityTypesList: MutableSet<EntityType<*>> = mutableSetOf()
         internal val hideBlocksList: MutableSet<Block> = mutableSetOf()
 
-        fun onTagUpdate(provider: HolderLookup.Provider) {
+        fun updateHideList(provider: HolderLookup.Provider) {
             run {
+                this.hideEntityTypesList.clear()
                 val entityTypeData = provider.lookup(Registries.ENTITY_TYPE).getOrNull() ?: return@run
                 val tags = entityTypeData.listTags().asSequence()
                     .associateBy { set -> set.key().location }
@@ -196,6 +197,7 @@ object Config {
                 }
             }
             run {
+                this.hideBlocksList.clear()
                 val blockTypeData = provider.lookup(Registries.BLOCK).getOrNull() ?: return@run
                 val tags = blockTypeData.listTags().asSequence()
                     .associateBy { set -> set.key().location }
@@ -224,19 +226,21 @@ object Config {
                 renderMinDistance.set(1.0)
                 renderMinDistance.set(8.0)
             }
-            when (searchBackend.get()) {
-                SearchBackend.Type.REI -> if (ModInstalled.reiInstalled) return
-                SearchBackend.Type.JEI -> if (ModInstalled.jeiInstalled) return
-                else -> return
-            }
-            searchBackend.setAndSave(SearchBackend.Type.AUTO)
-            Minecraft.getInstance().gui.chat.addMessage(
-                Component.literal(
-                    "search backend switch to auto for fallback"
+            run {
+                when (searchBackend.get()) {
+                    SearchBackend.Type.REI -> if (ModInstalled.reiInstalled) return@run
+                    SearchBackend.Type.JEI -> if (ModInstalled.jeiInstalled) return@run
+                    SearchBackend.Type.AUTO, SearchBackend.Type.DEFAULT -> return@run
+                }
+                searchBackend.setAndSave(SearchBackend.Type.AUTO)
+                Minecraft.getInstance().gui.chat.addMessage(
+                    Component.literal(
+                        "search backend switch to auto for fallback"
+                    )
                 )
-            )
+            }
             Minecraft.getInstance().level?.registryAccess()?.also { access ->
-                onTagUpdate(access)
+                updateHideList(access)
             }
         }
 
