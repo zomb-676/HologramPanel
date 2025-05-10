@@ -171,6 +171,10 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
         fun onClick() {
             val selector = this.instance ?: return
+            if (Minecraft.getInstance().screen != null) {
+               this.tryEnd()
+                return
+            }
             if (selector.canBackToParent) {
                 selector.recoveryToParent()
             } else {

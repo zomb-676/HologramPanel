@@ -145,8 +145,8 @@ object EventHandler {
                     }
                 }
 
-                else if isDownAction -> when (event.key) {
-                    AllRegisters.KeyMapping.collapseKey.key.value -> HologramManager.trySwitchWidgetCollapse()
+                AllRegisters.KeyMapping.collapseKey.key.value if isDownAction -> {
+                    HologramManager.trySwitchWidgetCollapse()
                 }
             }
 
@@ -441,6 +441,14 @@ object EventHandler {
                             val type = getArgument("tooltip_type", TooltipType::class.java)
                             Config.Style.itemTooltipType.setAndSave(type)
                         }
+                    }
+                }
+                "force_exit_mouse_freely_move_mode" {
+                    execute {
+                        if (CycleSelector.instanceExist()) {
+                            CycleSelector.tryEnd()
+                        }
+                        MouseInputModeUtil.exit()
                     }
                 }
             }
