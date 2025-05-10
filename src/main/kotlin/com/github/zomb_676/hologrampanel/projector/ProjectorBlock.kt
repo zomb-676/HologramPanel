@@ -59,7 +59,7 @@ class ProjectorBlock(blockProperties: Properties) : Block(blockProperties.noOccl
         hand: InteractionHand,
         hitResult: BlockHitResult
     ): InteractionResult {
-        if (!level.isClientSide) return InteractionResult.FAIL
+        if (!level.isClientSide) return InteractionResult.CONSUME
         val storage = level.getCapability(IHologramStorage.CAPABILITY, pos) ?: return InteractionResult.FAIL
         val bind = storage.bindState ?: PanelOperatorManager.selectedTarget
         if (bind == null) {
