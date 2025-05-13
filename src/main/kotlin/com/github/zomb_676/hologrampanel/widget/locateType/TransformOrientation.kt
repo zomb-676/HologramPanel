@@ -46,9 +46,9 @@ enum class TransformOrientation {
     },
     PLAYER {
         private inline val camera get() = Minecraft.getInstance().gameRenderer.mainCamera
-        override fun extractX(player: Player, local: Any): Vector3f = camera.lookVector.normalize(Vector3f())
+        override fun extractX(player: Player, local: Any): Vector3f = camera.leftVector.normalize(Vector3f())
         override fun extractY(player: Player, local: Any): Vector3f = camera.upVector.normalize(Vector3f())
-        override fun extractZ(player: Player, local: Any): Vector3f = camera.leftVector.normalize(Vector3f())
+        override fun extractZ(player: Player, local: Any): Vector3f = camera.lookVector.normalize(Vector3f())
         override fun rotateX(rotation: Quaternionf, cameraRotation: Quaternionf, modifyDegree: Float): Quaternionf {
             val container = Quaternionf()
             return rotation.premul(cameraRotation.invert(container))
