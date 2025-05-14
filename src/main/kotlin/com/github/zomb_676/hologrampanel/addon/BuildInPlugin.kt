@@ -25,6 +25,7 @@ class BuildInPlugin : IHologramPlugin {
         register.registerBlockComponent(EnderChestProvider)
         register.registerBlockComponent(LecternProvider)
         register.registerBlockComponent(CauldronBlockProvider)
+        register.registerBlockComponent(ChestProvider)
 
         register.registerBlockComponent(UniversalContainerBlockProvider)
         register.registerBlockComponent(UniversalFluidBlockProvider)

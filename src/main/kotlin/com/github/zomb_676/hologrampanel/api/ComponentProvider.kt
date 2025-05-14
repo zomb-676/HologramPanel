@@ -14,8 +14,9 @@ import net.minecraft.resources.ResourceLocation
  * [com.github.zomb_676.hologrampanel.widget.dynamic.Remember.keep]
  *
  * @param T the context whe widget is at
+ * @param V the target type you want to provider, the `in` variant is used for delegate operation, see [targetClass]
  */
-interface ComponentProvider<T : HologramContext, V> {
+interface ComponentProvider<T : HologramContext, in V> {
 
     /**
      * this is called when any data changed or ar displayType change
@@ -23,11 +24,13 @@ interface ComponentProvider<T : HologramContext, V> {
     fun appendComponent(builder: HologramWidgetBuilder<T>, displayType: DisplayType)
 
     /**
+     * this method must be overwritten if [V] is differed
+     *
      * @return the game object class you want to display.
      * must be the type represented by the corresponding context
      */
     @EfficientConst
-    fun targetClass(): Class<V>
+    fun targetClass(): Class<@UnsafeVariance V>
 
     /**
      * @return identity object for debug and customize
@@ -61,4 +64,9 @@ interface ComponentProvider<T : HologramContext, V> {
      * if return true is possible, check [HologramWidgetBuilder.onForceDisplay]
      */
     fun requireRebuildOnForceDisplay(context: T): Boolean = false
+
+    @EfficientConst
+    fun considerShare() : Boolean = false
+    fun exposeSharedTarget(context: T): Any? = null
+    fun isTargetSame(selfContext: T, checkContext: T, checkTarget: Any): Boolean = false
 }

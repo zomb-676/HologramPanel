@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag
 /**
  * implementation this if your [ComponentProvider] require server data
  */
-interface ServerDataProvider<T : HologramContext, V> : ComponentProvider<T, V> {
+interface ServerDataProvider<T : HologramContext, in V> : ComponentProvider<T, V> {
     /**
      * run on logic server
      *

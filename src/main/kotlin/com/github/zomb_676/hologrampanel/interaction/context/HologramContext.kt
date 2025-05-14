@@ -8,14 +8,12 @@ import com.github.zomb_676.hologrampanel.widget.dynamic.Remember
 import io.netty.buffer.Unpooled
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.core.RegistryAccess
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
-import net.minecraft.world.phys.HitResult
 import net.neoforged.neoforge.common.extensions.ICommonPacketListener
 import org.jetbrains.annotations.ApiStatus
 import org.joml.Vector3fc

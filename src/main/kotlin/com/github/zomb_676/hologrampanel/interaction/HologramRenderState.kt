@@ -13,10 +13,11 @@ import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateInWorld
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateOnScreen
+import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import org.joml.Vector3f
@@ -27,6 +28,7 @@ import kotlin.math.sqrt
 class HologramRenderState(
     val widget: HologramWidget,
     val context: HologramContext,
+    val sourceCollection: SourceCollection?,
     displayType: DisplayType,
     additionTicket: List<HologramTicket<*>>
 ) {
@@ -115,7 +117,10 @@ class HologramRenderState(
         return true
     }
 
-    fun sourcePosition(partialTick: Float) = locate.getSourceWorldPosition(context, partialTick)
+    fun getLocateSourcePosition(partialTick: Float) = locate.getSourceWorldPosition(context, partialTick)
+
+    fun sourcePosition(partialTick: Float) =
+        this.sourceCollection?.getGroupSourcePosition() ?: getLocateSourcePosition(partialTick)
 
     /**
      * measure the size of the widget and record it
@@ -129,13 +134,13 @@ class HologramRenderState(
      * via [MVPMatrixRecorder.transform], transforming world vec3 to [com.github.zomb_676.hologrampanel.util.packed.ScreenCoordinate]
      */
     fun updateRenderScreenPosition(partialTick: Float): ScreenPosition {
-        this.screenPos = this.locate.getScreenSpacePosition(context, partialTick)
+        this.screenPos = this.getSourceScreenPosition(partialTick)
         return this.screenPos
     }
 
     fun getSourceScreenPosition(partialTick: Float): ScreenPosition {
-        if (this.locate is LocateInWorld) return this.screenPos
-        return this.locate.getSourceScreenSpacePosition(context, partialTick)
+        if (this.locate is LocateOnScreen) return locate.getScreenSpacePosition(context, partialTick)
+        return MVPMatrixRecorder.transform(this.sourcePosition(partialTick)).screenPosition
     }
 
     /**
@@ -144,6 +149,8 @@ class HologramRenderState(
     fun setDisplayScale(scale: Double) {
         this.displayScale = scale
     }
+
+    fun sourceGroupVisible() = sourceCollection?.visible(this) ?: true
 
     /**
      * clip Hologram that is at the back of the view

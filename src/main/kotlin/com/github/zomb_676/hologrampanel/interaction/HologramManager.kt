@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.interaction
 
 import com.github.zomb_676.hologrampanel.*
+import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.HologramHolder
 import com.github.zomb_676.hologrampanel.api.HologramInteractive
 import com.github.zomb_676.hologrampanel.api.HologramTicket
@@ -22,15 +23,13 @@ import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateFacingPlayer
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateInWorld
-import com.github.zomb_676.hologrampanel.widget.locateType.LocateOnScreen
+import com.github.zomb_676.hologrampanel.widget.locateType.*
+import com.google.common.collect.BiMap
+import com.google.common.collect.HashBiMap
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
@@ -68,6 +67,8 @@ object HologramManager {
     private var collapseTarget: HologramWidgetComponent.Group<*>? = null
 
     private var screenPinHolograms: MutableList<HologramRenderState> = mutableListOf()
+
+    private var exposeMap: BiMap<Any, SourceCollection> = HashBiMap.create()
 
     var isUnderForceDisplay: Boolean = false
         internal set(value) {
@@ -122,7 +123,37 @@ object HologramManager {
         ticket: List<HologramTicket<*>>,
     ): HologramRenderState? {
         if (!widgets.containsKey(context.getIdentityObject())) {
-            val state = HologramRenderState(widget, context, displayType, ticket)
+            fun <T : HologramContext> ComponentProvider<T, *>.checkTargetSame(checkContext: HologramContext, expose: Any) =
+                this.isTargetSame(context.unsafeCast(), checkContext.unsafeCast(), expose)
+
+            val state: HologramRenderState = if (widget is DynamicBuildWidget<*> && context is BlockHologramContext) {
+                val entry = widget.providers
+                    .asSequence()
+                    .filter(ComponentProvider<*, *>::considerShare)
+                    .firstNotNullOfOrNull { provider ->
+                        exposeMap.entries.find { (expose, collection) ->
+                            val checkContext = collection.currentSource?.context ?: return@find false
+                            try {
+                                provider.checkTargetSame(checkContext, expose)
+                            } catch (e: Throwable) {
+                                false
+                            }
+                        }
+                    }
+                if (entry != null) {
+                    val state = HologramRenderState(widget, context, entry.value, displayType, ticket)
+                    entry.value.add(state)
+                    state
+                } else {
+                    val source = SourceCollection()
+                    val state = HologramRenderState(widget, context, source, displayType, ticket)
+                    val expose = source.addAndInit(state)
+                    exposeMap[expose] = source
+                    state
+                }
+            } else {
+                HologramRenderState(widget, context, null, displayType, ticket)
+            }
             if (!HologramEvent.Add<HologramContext>(state).dispatchForge().allowAdd()) return null
 
             widgets[context.getIdentityObject()] = widget
@@ -169,6 +200,11 @@ object HologramManager {
             profiler.push("measure")
             val widgetSize = state.measure(displayType, style)
             profiler.pop()
+
+            if (!state.sourceGroupVisible()) {
+                state.displayed = false
+                continue
+            }
 
             //clip hologram at back
             if (!state.viewVectorDegreeCheckPass(partialTicks)) {
@@ -442,6 +478,8 @@ object HologramManager {
             }
 
             DebugHelper.Client.recordRemove(state)
+
+            state.sourceCollection?.onRemove(state, exposeMap)
         }
     }
 
