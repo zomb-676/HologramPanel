@@ -3,6 +3,9 @@ package com.github.zomb_676.hologrampanel.util.selector
 import com.github.zomb_676.hologrampanel.PanelOperatorManager
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.MouseInputModeUtil
+import com.github.zomb_676.hologrampanel.util.MousePositionManager
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.component2
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryBegin
 import com.github.zomb_676.hologrampanel.util.selector.CycleSelector.Companion.tryEnd
 import com.github.zomb_676.hologrampanel.util.stack
@@ -66,12 +69,12 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
         RenderSystem.enableBlend()
 
-        val scale = window.guiScale
-        val handler = Minecraft.getInstance().mouseHandler
-        val x = ((handler.xpos() / scale) - centerX)
-        val y = ((handler.ypos() / scale) - centerY)
+        val (x, y) = run {
+            var (x, y) = MousePositionManager.updateMousePosition()
+            x - centerX to y - centerY
+        }
         val degree = run {
-            val degree = Math.toDegrees(atan(x / y))
+            val degree = Math.toDegrees(atan(x / y).toDouble())
             if (y < 0) {
                 180 + degree
             } else {
@@ -174,7 +177,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         fun onClick() {
             val selector = this.instance ?: return
             if (Minecraft.getInstance().screen != null) {
-               this.tryEnd()
+                this.tryEnd()
                 return
             }
             if (selector.canBackToParent) {
