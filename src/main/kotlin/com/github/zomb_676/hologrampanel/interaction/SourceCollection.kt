@@ -23,7 +23,7 @@ class SourceCollection {
     fun fullyUpdateCentralSourcePosition(partialTick: Float) {
         accumulated.set(0f, 0f, 0f)
         collections.forEach { state ->
-            accumulated.add(state.sourcePosition(partialTick))
+            accumulated.add(state.getSourceWorldPosition())
         }
         accumulated.div(collections.size.toFloat(), cachedSourcePosition)
     }
@@ -38,16 +38,18 @@ class SourceCollection {
     fun add(state: HologramRenderState): SourceCollection {
         require(state.context is BlockHologramContext)
         if (collections.add(state)) {
-            accumulated.add(state.getLocateSourcePosition(0f))
+            accumulated.add(state.getSourceWorldPosition())
             accumulated.div(collections.size.toFloat(), cachedSourcePosition)
+            if (state.controlled) {
+                switchCurrent(state)
+            }
         }
         return this
     }
 
     fun remove(state: HologramRenderState): Boolean {
         if (collections.remove(state)) {
-            state.sourcePosition(0f)
-            accumulated.sub(state.getLocateSourcePosition(0f))
+            accumulated.sub(state.getSourceWorldPosition())
             accumulated.div(collections.size.toFloat(), cachedSourcePosition)
             if (visible(state)) {
                 currentSource = collections.firstOrNull()
@@ -81,7 +83,6 @@ class SourceCollection {
     private fun queryWidgetExpose(state: HologramRenderState): Any? {
         fun <T : HologramContext> ComponentProvider<T, *>.expose(applyState: HologramRenderState): Any? =
             this.exposeSharedTarget(applyState.context.unsafeCast())
-
 
         val newWidget = state.widget
         if (newWidget is DynamicBuildWidget<*>) {

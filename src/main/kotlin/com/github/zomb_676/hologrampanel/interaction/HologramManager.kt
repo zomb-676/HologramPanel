@@ -173,7 +173,7 @@ object HologramManager {
      */
     internal fun renderOverlayPart(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
         val context = RayTraceHelper.findTarget(32.0, partialTicks)
-        if (context != null && !widgets.containsKey(context.getIdentityObject())) {
+        if (context != null && !checkIdentityExist(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context, DisplayType.NORMAL)
             if (widget != null) {
                 this.tryAddWidget(widget, context, DisplayType.NORMAL, listOf(HologramTicket.ByTickAfterNotSee()))
@@ -226,7 +226,7 @@ object HologramManager {
 
             style.stack {
                 //calculate screen position by world position
-                val screenPos = state.updateRenderScreenPosition(partialTicks).equivalentSmooth(style)
+                val screenPos = state.widgetScreenPos.equivalentSmooth(style)
                 style.move(screenPos.x, screenPos.y)
                 //change scale according to distance
                 val scale: Double = scaleValue * if (locate is LocateFacingPlayer) {
@@ -335,7 +335,7 @@ object HologramManager {
         val target = target ?: return
         if (!target.displayed) return
         style.stack {
-            val screenPos = target.screenPos
+            val screenPos = target.widgetScreenPos
 
             val displayWidth = target.displaySize.width
             val displayHeight = target.displaySize.height
@@ -418,7 +418,7 @@ object HologramManager {
                 when (val locate = state.locate) {
                     is LocateFacingPlayer -> {
                         val size = state.displaySize
-                        val position = state.screenPos
+                        val position = state.widgetScreenPos
                         val left = position.x - size.width / 2
                         if (left > checkX) return@firstOrNull false
                         val right = position.x + size.width / 2
@@ -431,7 +431,7 @@ object HologramManager {
 
                     is LocateOnScreen -> {
                         val size = state.displaySize
-                        val position = state.screenPos
+                        val position = state.widgetScreenPos
                         if (checkX < position.x) return@firstOrNull false
                         if (checkY < position.y) return@firstOrNull false
                         if (checkX > position.x + size.width) return@firstOrNull false
@@ -469,6 +469,7 @@ object HologramManager {
             if (this.interactHologram?.widget == widget) {
                 this.interactHologram = null
             }
+
             if (context is EntityHologramContext) {
                 (context.getEntity() as HologramHolder).`hologramPanel$setWidget`(null)
             }
@@ -549,14 +550,14 @@ object HologramManager {
         var pos = initial.toNotAligned()
         var size = Size.ZERO
         screenPinHolograms.sortBy {
-            it.getSourceScreenPosition(partialTicks).y
+            it.getSourceWorldPosition().y()
         }
         for (state in screenPinHolograms) {
             if (!state.displayed) continue
             val locate = state.locate as? LocateOnScreen? ?: continue
             if (!locate.arrange) continue
             locate.setPosition(pos.x, pos.y + size.height + 5)
-            pos = state.screenPos
+            pos = state.locatedScreenPos
             size = state.displaySize
         }
     }
@@ -578,7 +579,7 @@ object HologramManager {
 
                 val widgetX = (locate.position.x + state.displaySize.width).toDouble()
                 val widgetY = (locate.position.y + state.displaySize.height / 2).toDouble()
-                val (worldX, worldY) = state.getSourceScreenPosition(partialTicks)
+                val (worldX, worldY) = state.locatedScreenPos
 
                 LinkLineRender.fillThreeSegmentConnectionLine(
                     Vector2d(widgetX, widgetY),
@@ -612,7 +613,7 @@ object HologramManager {
                 OpenGLStateManager.preventMainBindWrite {
                     for (state in states) {
                         val locate = state.locate as? LocateFreelyInWorld? ?: continue
-                        val rect = locate.allocatedSpace
+                        val rect = locate.getAllocatedSpace()
                         style.stack {
                             style.move(rect.x, rect.y)
                             style.scale(state.displayScale)
@@ -699,7 +700,7 @@ object HologramManager {
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
                 for (state in states) {
                     val locate = state.locate as? LocateFreelyInWorld? ?: continue
-                    val center = state.sourcePosition(partialTick)
+                    val center = state.getRenderWorldPosition()
                     val (width, height) = state.displaySize
                     val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
                     val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
@@ -709,7 +710,7 @@ object HologramManager {
                     }
 
                     val window = Minecraft.getInstance().window
-                    val rect = locate.allocatedSpace
+                    val rect = locate.getAllocatedSpace()
                     //one minus is because allocator's up-down is different from uv
                     val u0 = (rect.x / window.guiScaledWidth.toFloat())
                     val v1 = 1 - (rect.y / window.guiScaledHeight.toFloat())
@@ -742,7 +743,7 @@ object HologramManager {
             }
             getInteractHologram()?.also { state ->
                 val locate = state.locate as? LocateFreelyInWorld? ?: return@also
-                val center = state.sourcePosition(partialTick)
+                val center = state.getRenderWorldPosition()
                 val window = Minecraft.getInstance().window
                 val width = window.guiScaledWidth
                 val height = window.guiScaledHeight

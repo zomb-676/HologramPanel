@@ -8,6 +8,9 @@ import net.neoforged.fml.javafmlmod.FMLModContainer
 import net.neoforged.fml.loading.FMLEnvironment
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import java.math.RoundingMode
+import java.text.NumberFormat
+import java.util.*
 
 @Mod(HologramPanel.MOD_ID)
 class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: IEventBus) {
@@ -24,6 +27,13 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
         var serverInstalled: Boolean = false
             internal set
+
+        val NUMBER_FORMAT = NumberFormat.getNumberInstance(Locale.US).apply {
+            minimumFractionDigits = 0
+            maximumFractionDigits = 2
+            isGroupingUsed = false
+            roundingMode = RoundingMode.HALF_UP
+        }
     }
 
 

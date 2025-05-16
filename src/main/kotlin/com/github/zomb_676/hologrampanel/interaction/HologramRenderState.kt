@@ -21,6 +21,7 @@ import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import org.joml.Vector3f
+import org.joml.Vector3fc
 import org.joml.Vector4f
 import kotlin.math.ceil
 import kotlin.math.sqrt
@@ -53,10 +54,16 @@ class HologramRenderState(
      */
     var displaySize: Size = Size.ZERO
 
-    /**
-     * screen space position the widget should be rendered, anchored by widget's center
-     */
-    var screenPos: ScreenPosition = ScreenPosition.ZERO
+    var controlled : Boolean = false
+
+    var renderScreenPos: ScreenPosition = ScreenPosition.ZERO
+    var locatedScreenPos : ScreenPosition = ScreenPosition.ZERO
+    var widgetScreenPos : ScreenPosition = ScreenPosition.ZERO
+    private var sourceWorldPosition : Vector3f = Vector3f()
+    private var renderWorldPosition : Vector3f = Vector3f()
+
+    fun getSourceWorldPosition() : Vector3fc = sourceWorldPosition
+    fun getRenderWorldPosition() : Vector3fc = renderWorldPosition
 
     /**
      * current display scale, influenced by distance, [com.github.zomb_676.hologrampanel.Config.Client.globalHologramScale]
@@ -117,11 +124,6 @@ class HologramRenderState(
         return true
     }
 
-    fun getLocateSourcePosition(partialTick: Float) = locate.getSourceWorldPosition(context, partialTick)
-
-    fun sourcePosition(partialTick: Float) =
-        this.sourceCollection?.getGroupSourcePosition() ?: getLocateSourcePosition(partialTick)
-
     /**
      * measure the size of the widget and record it
      */
@@ -130,17 +132,20 @@ class HologramRenderState(
         return this.size
     }
 
-    /**
-     * via [MVPMatrixRecorder.transform], transforming world vec3 to [com.github.zomb_676.hologrampanel.util.packed.ScreenCoordinate]
-     */
-    fun updateRenderScreenPosition(partialTick: Float): ScreenPosition {
-        this.screenPos = this.getSourceScreenPosition(partialTick)
-        return this.screenPos
-    }
+    fun updatePositions(partialTick: Float) {
+        this.sourceWorldPosition.set(locate.getSourceWorldPosition(context, partialTick))
+        if (sourceCollection == null) {
+            locate.getLocatedWorldPosition(context, partialTick)
+        } else {
+            this.locate.applyModifyToWorldPosition(Vector3f(sourceCollection.getGroupSourcePosition()))
+        }.apply(this.renderWorldPosition::set)
 
-    fun getSourceScreenPosition(partialTick: Float): ScreenPosition {
-        if (this.locate is LocateOnScreen) return locate.getScreenSpacePosition(context, partialTick)
-        return MVPMatrixRecorder.transform(this.sourcePosition(partialTick)).screenPosition
+        this.locatedScreenPos = MVPMatrixRecorder.transform(this.sourceWorldPosition).screenPosition
+        this.renderScreenPos = MVPMatrixRecorder.transform(this.renderWorldPosition).screenPosition
+        this.widgetScreenPos = when(val locate = locate) {
+            is LocateOnScreen -> locate.getScreenSpacePosition()
+            is LocateInWorld -> this.renderScreenPos
+        }
     }
 
     /**
@@ -159,7 +164,7 @@ class HologramRenderState(
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
         val viewVector = camera.lookVector
         val cameraPosition = camera.position
-        val sourcePosition = this.sourcePosition(partialTick)
+        val sourcePosition = this.renderWorldPosition
         val sourceVector = Vector3f(
             (sourcePosition.x() - cameraPosition.x).toFloat(),
             (sourcePosition.y() - cameraPosition.y).toFloat(),
@@ -221,7 +226,7 @@ class HologramRenderState(
      * the distance between [mainCamera] and [sourcePosition]
      */
     fun distanceToCamera(partialTick: Float): Double {
-        val source = this.sourcePosition(partialTick)
+        val source = this.renderWorldPosition
         val camera = Minecraft.getInstance().gameRenderer.mainCamera.position
         val x = source.x() - camera.x
         val y = source.y() - camera.y

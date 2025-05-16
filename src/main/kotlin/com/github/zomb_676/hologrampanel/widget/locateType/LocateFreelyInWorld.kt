@@ -156,6 +156,9 @@ class LocateFreelyInWorld() : LocateInWorld {
         this.updateEulerDegrees()
     }
 
+    override fun toString(): String =
+        "LocateFreelyInWorld(xRot=$xRot, yRot=$yRot, roll=$roll, scale=$scale, offset=${offset.toString(HologramPanel.NUMBER_FORMAT)})"
+
     companion object {
         private val FORWARDS: Vector3f = Vector3f(0.0f, 0.0f, -1.0f)
         private val UP: Vector3f = Vector3f(0.0f, 1.0f, 0.0f)

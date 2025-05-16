@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.locateType
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.mojang.serialization.Codec
 import com.mojang.serialization.MapCodec
@@ -19,10 +19,13 @@ class LocateOnScreen(val position: Vector2f, var arrange: Boolean = true) : Loca
         position.set(x, y)
     }
 
-    override fun getScreenSpacePosition(context: HologramContext, partialTick: Float): ScreenPosition =
-        ScreenPosition.Companion.of(position.x, position.y)
+    fun getScreenSpacePosition(): ScreenPosition = ScreenPosition.of(position.x, position.y)
 
     override fun getLocateEnum(): LocateEnum = LocateEnum.SCREEN
+
+    override fun toString(): String {
+        return "LocateOnScreen(position=${position.toString(HologramPanel.NUMBER_FORMAT)}, arrange=$arrange)"
+    }
 
     companion object {
         val CODEC: MapCodec<LocateOnScreen> = RecordCodecBuilder.mapCodec { ins ->

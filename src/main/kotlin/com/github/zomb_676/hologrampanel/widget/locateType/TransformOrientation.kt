@@ -142,10 +142,10 @@ enum class TransformOrientation {
                 val locate = target.locate as? LocateInWorld ?: return
                 val matrix = guiGraphics.pose().last().pose()
 
-                val worldPosition = target.sourcePosition(deltaTracker.getGameTimeDeltaPartialTick(false))
+                val worldPosition = target.getRenderWorldPosition()
                 if (!viewVectorDegreeCheckPass(deltaTracker.getGameTimeDeltaPartialTick(false), worldPosition)) return
 
-                val center = MVPMatrixRecorder.transform(worldPosition).screenPosition
+                val center = target.widgetScreenPos
 
                 val transform = Matrix4f().translate(worldPosition.x(), worldPosition.y(), worldPosition.z()).apply {
                     when (PanelOperatorManager.transformOrientation) {

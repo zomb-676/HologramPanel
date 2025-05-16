@@ -151,7 +151,7 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, UPDATE_END_COLOR, UPDATE_BEGIN_COLOR)
-                        val position = next.key.state.sourcePosition(partialTick)
+                        val position = next.key.state.getRenderWorldPosition()
                         fill(position, color, pose, builder)
                     }
                 }
@@ -161,7 +161,7 @@ object DebugHelper {
                         val next = iterator.next()
                         val color =
                             ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, POP_UP_END_COLOR, POP_UP_BEGIN_COLOR)
-                        fill(next.key.sourcePosition(partialTick), color, pose, builder)
+                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
                     }
                 }
                 if (removeData.isNotEmpty()) {
@@ -170,7 +170,7 @@ object DebugHelper {
                         val next = iterator.next()
                         val color =
                             ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, REMOVE_END_COLOR, REMOVE_BEGIN_COLOR)
-                        fill(next.key.sourcePosition(partialTick), color, pose, builder)
+                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
                     }
                 }
                 BufferUploader.drawWithShader(builder.buildOrThrow())
@@ -181,7 +181,7 @@ object DebugHelper {
                 val font = Minecraft.getInstance().font
                 while (iterator.hasNext()) {
                     val next = iterator.next()
-                    val position = next.key.state.sourcePosition(partialTick)
+                    val position = next.key.state.getRenderWorldPosition()
                     val size = next.key.size
                     pose.stack {
                         pose.translate(position.x(), position.y() + 0.6f, position.z())

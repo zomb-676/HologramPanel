@@ -1,10 +1,9 @@
 package com.github.zomb_676.hologrampanel.widget.locateType
 
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
-import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
-import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.mojang.serialization.Codec
 import org.jetbrains.annotations.ApiStatus
+import org.joml.Vector3f
 import org.joml.Vector3fc
 
 /**
@@ -12,16 +11,21 @@ import org.joml.Vector3fc
  */
 sealed interface LocateType {
 
-    fun getScreenSpacePosition(context: HologramContext, partialTick: Float): ScreenPosition
-
     /**
-     * transform [HologramContext.hologramCenterPosition] into minecraft screen space
+     * [HologramContext.hologramCenterPosition]
      */
-    fun getSourceScreenSpacePosition(context: HologramContext, partialTick: Float): ScreenPosition =
-        MVPMatrixRecorder.transform(getSourceWorldPosition(context, partialTick)).screenPosition
-
+    @ApiStatus.NonExtendable
     fun getSourceWorldPosition(context: HologramContext, partialTick: Float): Vector3fc =
         context.hologramCenterPosition(partialTick)
+
+    /**
+     * consider offset of the `locate` setting
+     */
+    @ApiStatus.NonExtendable
+    fun getLocatedWorldPosition(context: HologramContext, partialTick: Float): Vector3fc =
+        applyModifyToWorldPosition(Vector3f(getSourceWorldPosition(context, partialTick)))
+
+    fun applyModifyToWorldPosition(input: Vector3f) : Vector3f = input
 
     @ApiStatus.Internal
     fun getLocateEnum(): LocateEnum
