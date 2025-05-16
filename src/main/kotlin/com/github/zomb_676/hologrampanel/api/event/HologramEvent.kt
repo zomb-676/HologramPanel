@@ -11,39 +11,50 @@ import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.github.zomb_676.hologrampanel.widget.HologramWidget
 import net.minecraft.network.chat.Component
 
-abstract class HologramEvent<T : HologramContext>(private val state: HologramRenderState) : IHologramEvent() {
-    fun getHologramWidget(): HologramWidget = state.widget
-    fun getHologramState(): HologramRenderState = state
+abstract class HologramEvent<T : HologramContext>() : IHologramEvent() {
 
-    fun getContext(): T = state.context.unsafeCast()
+    abstract fun getContext(): T
+
+    abstract class StateBasedEvent<T : HologramContext>(val state : HologramRenderState) : HologramEvent<T>() {
+        fun getHologramWidget(): HologramWidget = state.widget
+        fun getHologramState(): HologramRenderState = state
+        override fun getContext(): T = state.context.unsafeCast()
+    }
 
     /**
      * this is called before truly add a hologram
      */
-    class Add<T : HologramContext>(state: HologramRenderState) : HologramEvent<T>(state) {
+    class AddPre<T : HologramContext>(private val context : T) : HologramEvent<T>() {
         private var allowAdd: Boolean = true
 
         fun allowAdd(): Boolean = allowAdd
+
         fun setAllowAdd(allow: Boolean) {
             this.allowAdd = allow
         }
+
+        override fun getContext(): T = context
     }
+
+    class AddPost<T : HologramContext>(state : HologramRenderState) : StateBasedEvent<T>(state)
 
     /**
      * this is called when a hologram is about to be removed
      * call [getTicketAdder] and add ticket to renew it
      */
-    class Remove<T : HologramContext>(state: HologramRenderState) : HologramEvent<T>(state) {
+    class RemovePre<T : HologramContext>(state: HologramRenderState) : StateBasedEvent<T>(state) {
         private var ticketAdder = TicketAdder<T>(mutableListOf())
         fun allowRemove(): Boolean = this.ticketAdder.isEmpty()
 
         fun getTicketAdder(): TicketAdder<T> = ticketAdder
     }
 
+    class RemovePost<T : HologramContext>(state: HologramRenderState) : StateBasedEvent<T>(state)
+
     /**
      * this is called to check if interact should happen
      */
-    sealed class Interact<T : HologramContext>(state: HologramRenderState) : HologramEvent<T>(state) {
+    sealed class Interact<T : HologramContext>(state: HologramRenderState) : StateBasedEvent<T>(state) {
         protected var interactMessage: Component? = null
             private set
 

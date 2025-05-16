@@ -122,48 +122,50 @@ object HologramManager {
         displayType: DisplayType,
         ticket: List<HologramTicket<*>>,
     ): HologramRenderState? {
-        if (!widgets.containsKey(context.getIdentityObject())) {
-            fun <T : HologramContext> ComponentProvider<T, *>.checkTargetSame(checkContext: HologramContext, expose: Any) =
-                this.isTargetSame(context.unsafeCast(), checkContext.unsafeCast(), expose)
+        if (checkIdentityExist(context.getIdentityObject())) return null
 
-            val state: HologramRenderState = if (widget is DynamicBuildWidget<*> && context is BlockHologramContext) {
-                val entry = widget.providers
-                    .asSequence()
-                    .filter(ComponentProvider<*, *>::considerShare)
-                    .firstNotNullOfOrNull { provider ->
-                        exposeMap.entries.find { (expose, collection) ->
-                            val checkContext = collection.currentSource?.context ?: return@find false
-                            try {
-                                provider.checkTargetSame(checkContext, expose)
-                            } catch (e: Throwable) {
-                                false
-                            }
+        if (!HologramEvent.AddPre(context).dispatchForge().allowAdd()) return null
+
+        fun <T : HologramContext> ComponentProvider<T, *>.checkTargetSame(checkContext: HologramContext, expose: Any) =
+            this.isTargetSame(context.unsafeCast(), checkContext.unsafeCast(), expose)
+
+        val state: HologramRenderState = if (context is BlockHologramContext && widget is DynamicBuildWidget<*> && widget.considerShare()) {
+            val entry = widget.sharedComponents
+                .firstNotNullOfOrNull { provider ->
+                    exposeMap.entries.find { (expose, collection) ->
+                        val checkContext = collection.currentSource?.context ?: return@find false
+                        try {
+                            provider.checkTargetSame(checkContext, expose)
+                        } catch (e: Throwable) {
+                            false
                         }
                     }
-                if (entry != null) {
-                    val state = HologramRenderState(widget, context, entry.value, displayType, ticket)
-                    entry.value.add(state)
-                    state
-                } else {
-                    val source = SourceCollection()
-                    val state = HologramRenderState(widget, context, source, displayType, ticket)
-                    val expose = source.addAndInit(state)
-                    exposeMap[expose] = source
-                    state
                 }
+            if (entry != null) {
+                val state = HologramRenderState(widget, context, entry.value, displayType, ticket)
+                state.updatePositions(0f)
+                entry.value.add(state)
+                state
             } else {
-                HologramRenderState(widget, context, null, displayType, ticket)
+                val source = SourceCollection()
+                val state = HologramRenderState(widget, context, source, displayType, ticket)
+                state.updatePositions(0f)
+                val expose = source.addAndInit(state)
+                exposeMap[expose] = source
+                state
             }
-            if (!HologramEvent.Add<HologramContext>(state).dispatchForge().allowAdd()) return null
-
-            widgets[context.getIdentityObject()] = widget
-            states[widget] = state
-
-            widget.onAdd(state)
-
-            return state
+        } else {
+            HologramRenderState(widget, context, null, displayType, ticket).apply { updatePositions(0f) }
         }
-        return null
+
+        widgets[context.getIdentityObject()] = widget
+        states[widget] = state
+
+        widget.onAdd(state)
+
+        HologramEvent.AddPost<HologramContext>(state).dispatchForge()
+
+        return state
     }
 
     /**
@@ -195,16 +197,16 @@ object HologramManager {
                 state.displayed = false
                 continue
             }
+            if (!state.sourceGroupVisible()) {
+                state.displayed = false
+                continue
+            }
+            state.updatePositions(partialTicks)
             val displayType = state.displayType
             //measure size
             profiler.push("measure")
             val widgetSize = state.measure(displayType, style)
             profiler.pop()
-
-            if (!state.sourceGroupVisible()) {
-                state.displayed = false
-                continue
-            }
 
             //clip hologram at back
             if (!state.viewVectorDegreeCheckPass(partialTicks)) {
@@ -456,10 +458,11 @@ object HologramManager {
     internal fun remove(widget: HologramWidget) {
         val state = this.states.remove(widget)
         if (state != null) {
-            val event = HologramEvent.Remove<HologramContext>(state).dispatchForge()
-            if (!event.allowRemove()) {
-                state.hologramTicks.addAll(event.getTicketAdder().list)
-                return
+            HologramEvent.RemovePre<HologramContext>(state).dispatchForge().also { event ->
+                if (!event.allowRemove()) {
+                    state.hologramTicks.addAll(event.getTicketAdder().list)
+                    return
+                }
             }
 
             state.removed = true
@@ -481,6 +484,8 @@ object HologramManager {
             DebugHelper.Client.recordRemove(state)
 
             state.sourceCollection?.onRemove(state, exposeMap)
+
+            HologramEvent.RemovePost<HologramContext>(state).dispatchForge()
         }
     }
 

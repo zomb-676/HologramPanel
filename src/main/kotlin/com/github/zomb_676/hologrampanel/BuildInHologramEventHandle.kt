@@ -13,11 +13,11 @@ object BuildInHologramEventHandle {
         forgeBus.addListener(::onWidgetRemoved)
     }
 
-    fun onWidgetAdded(event: HologramEvent.Add<*>) {
+    fun onWidgetAdded(event: HologramEvent.AddPost<*>) {
         ProjectorManager.checkProjectorSetting(event.getHologramState())
     }
 
-    fun onWidgetRemoved(event: HologramEvent.Remove<*>) {
+    fun onWidgetRemoved(event: HologramEvent.RemovePre<*>) {
 
     }
 }
