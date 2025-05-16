@@ -312,7 +312,7 @@ object EventHandler {
             MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE
         ).playToServer(
             TransTargetPayload.TYPE, TransTargetPayload.STREAM_CODEC, TransTargetPayload.HANDLE
-        ).playToServer(
+        ).playBidirectional(
             SetProjectorSettingPayload.TYPE, SetProjectorSettingPayload.STREAM_CODEC, SetProjectorSettingPayload.HANDLE
         )
     }
