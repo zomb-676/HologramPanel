@@ -1,7 +1,5 @@
 package com.github.zomb_676.hologrampanel.util.rect
 
-import net.neoforged.api.distmarker.Dist
-import net.neoforged.api.distmarker.OnlyIn
 import org.lwjgl.stb.STBRPRect
 
 /**
@@ -16,9 +14,7 @@ value class PackedRect(@PublishedApi internal val data: STBRPRect.Buffer) {
 
     inline val assigned get() = data.was_packed()
 
-    @OnlyIn(Dist.CLIENT)
     companion object {
-        @OnlyIn(Dist.CLIENT)
         val EMPTY = PackedRect(STBRPRect.create(1))
     }
 
