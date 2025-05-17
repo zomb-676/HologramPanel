@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget.locateType
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.rect.PackedRect
@@ -10,6 +10,8 @@ import com.mojang.serialization.Codec
 import com.mojang.serialization.MapCodec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.client.Camera
+import net.neoforged.api.distmarker.Dist
+import net.neoforged.api.distmarker.OnlyIn
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Quaternionfc
@@ -142,8 +144,19 @@ class LocateFreelyInWorld() : LocateInWorld {
     /**
      * used for operating remapping
      */
-    var allocatedSpace: PackedRect = PackedRect.Companion.EMPTY
+    @OnlyIn(Dist.CLIENT)
+    private var allocatedSpace: PackedRect? = null
 
+    @OnlyIn(Dist.CLIENT)
+    fun getAllocatedSpace() : PackedRect = allocatedSpace ?: PackedRect.EMPTY
+
+    @OnlyIn(Dist.CLIENT)
+    fun setAllocatedSpace(allocatedSpace: PackedRect) {
+        this.allocatedSpace = allocatedSpace
+    }
+
+    @get:OnlyIn(Dist.CLIENT)
+    @set:OnlyIn(Dist.CLIENT)
     var target: RenderTarget? = null
 
     override fun getLocateEnum(): LocateEnum = LocateEnum.FREELY_IN_WORLD
