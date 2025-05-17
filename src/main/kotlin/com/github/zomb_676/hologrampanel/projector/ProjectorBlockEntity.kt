@@ -1,7 +1,6 @@
 package com.github.zomb_676.hologrampanel.projector
 
 import com.github.zomb_676.hologrampanel.AllRegisters
-import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
@@ -25,6 +24,9 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     override fun saveAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
         super.saveAdditional(tag, registries)
         cap.writeToNBT(tag)
+        level?.takeIf { it.isClientSide }?.run {
+            cap.onDataSyncedFromServer()
+        }
     }
 
     override fun getUpdateTag(registries: HolderLookup.Provider): CompoundTag {
@@ -36,6 +38,9 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     override fun handleUpdateTag(tag: CompoundTag, lookupProvider: HolderLookup.Provider) {
         super.handleUpdateTag(tag, lookupProvider)
         cap.readFromNbt(tag)
+        level?.takeIf { it.isClientSide }?.run {
+            cap.onDataSyncedFromServer()
+        }
     }
 
     //change dimension does not call this
@@ -44,6 +49,7 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
         val level = this.level ?: return
         if (level.isClientSide) {
             ProjectorManager.remove(this)
+            cap.bindState?.controlled = false
         }
     }
 
@@ -60,6 +66,7 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
         val level = this.level ?: return
         if (level.isClientSide) {
             ProjectorManager.remove(this)
+            cap.bindState?.controlled = false
         }
     }
 
@@ -82,8 +89,6 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     }
 
     fun setStateLocate(state: HologramRenderState) {
-        val old = state.locate
-        state.locate = this.cap.getLocateType()
-        HologramManager.notifyHologramLocateTypeChange(state, old)
+        cap.setTargetBySelfInfo(state)
     }
 }

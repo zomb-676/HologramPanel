@@ -110,6 +110,9 @@ object HologramManager {
         return widgets.containsKey(any)
     }
 
+    fun queryWidgetByIdentity(any: Any) : HologramRenderState? =
+        widgets[any]?.run(states::get)
+
     /**
      * @return not null if added success
      *

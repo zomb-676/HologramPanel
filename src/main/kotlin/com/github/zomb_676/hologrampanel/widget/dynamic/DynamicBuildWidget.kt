@@ -20,6 +20,10 @@ class DynamicBuildWidget<T : HologramContext>(
     target: T, val container: DynamicBuildComponentWidget.Group<T>, val providers: List<ComponentProvider<T, *>>
 ) : HologramComponentWidget<T>(target, container) {
 
+    val sharedComponents = providers.filter(ComponentProvider<T, *>::considerShare)
+    
+    fun considerShare() = sharedComponents.isNotEmpty()
+
     private var maps: Map<ComponentProvider<T, *>, List<DynamicBuildComponentWidget<T>>> =
         target.getRememberDataUnsafe<T>().providers().associateWith { prov ->
             this.container.children.filter { it.getProvider() == prov }

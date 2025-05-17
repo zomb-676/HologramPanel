@@ -59,6 +59,11 @@ class SourceCollection {
         return false
     }
 
+    fun switchCurrent(source: HologramRenderState) {
+        if (!collections.contains(source)) return
+        currentSource = source
+    }
+
     //TODO not visible here should not sync
     fun visible(state: HologramRenderState) = state === currentSource
 
@@ -86,9 +91,10 @@ class SourceCollection {
 
         val newWidget = state.widget
         if (newWidget is DynamicBuildWidget<*>) {
-            return newWidget.providers.asSequence().filter(ComponentProvider<*, *>::considerShare)
-                .firstNotNullOfOrNull { it.expose(state) }
+            return newWidget.sharedComponents.firstNotNullOfOrNull { it.expose(state) }
         }
         return null
     }
+
+    fun size() = collections.size
 }

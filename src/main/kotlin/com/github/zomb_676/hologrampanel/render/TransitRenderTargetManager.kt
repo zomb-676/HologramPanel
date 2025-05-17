@@ -82,7 +82,7 @@ object TransitRenderTargetManager {
         for ((target, records) in entries) {
             val res = target.tryAllocate(width, height)
             if (res.assigned) {
-                locate.allocatedSpace = res
+                locate.setAllocatedSpace(res)
                 locate.target = target
                 records.add(state)
                 return target
@@ -93,7 +93,7 @@ object TransitRenderTargetManager {
         val res = new.tryAllocate(width, height)
         if (!res.assigned) throw RuntimeException("too big requested width:$width, height:$height")
         entries.put(new, mutableListOf(state))
-        locate.allocatedSpace = res
+        locate.setAllocatedSpace(res)
         locate.target = new
         return new
     }

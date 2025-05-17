@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.projector
 
 import com.github.zomb_676.hologrampanel.HologramPanel
+import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContextPrototype
 import com.github.zomb_676.hologrampanel.payload.SetProjectorSettingPayload
@@ -19,7 +20,7 @@ class IHologramStorage {
     private var locateType: LocateType = LocateFacingPlayer()
 
     var bindState: HologramRenderState? = null
-        get() = if (field.run { this == null || this.removed }) {
+        get() = if (field.run { this == null || this.removed || !this.sourceGroupVisible() }) {
             field = null
             null
         } else field
@@ -52,13 +53,39 @@ class IHologramStorage {
         }
     }
 
-    fun setAndSyncToServer(target : HologramRenderState, pos : BlockPos) {
+    fun setAndSyncToServer(target: HologramRenderState, pos: BlockPos) {
+        if (bindState != null && bindState !== target) {
+            bindState?.controlled = false
+        }
         this.setLocateType(target.locate)
         this.storePrototype(HologramContextPrototype.extract(target.context))
+        target.controlled = true
         this.bindState = target
         val tag = CompoundTag()
         this.writeToNBT(tag)
         SetProjectorSettingPayload(tag, pos).sendToServer()
+    }
+
+    fun setTargetBySelfInfo(target: HologramRenderState) {
+        bindState.takeIf { it === target }?.also { bindState ->
+            bindState.controlled = false
+        }
+        val old = target.locate
+        target.locate = this.getLocateType()
+        HologramManager.notifyHologramLocateTypeChange(target, old)
+        target.controlled = true
+    }
+
+    fun onDataSyncedFromServer() {
+        val bindState = bindState ?: run {
+            val identity = when (val prototype = prototype) {
+                is HologramContextPrototype.BlockHologramPrototype -> prototype.pos
+                is HologramContextPrototype.EntityHologramPrototype -> prototype.entityUUID
+                null -> return
+            }
+            HologramManager.queryWidgetByIdentity(identity)
+        } ?: return
+        setTargetBySelfInfo(bindState)
     }
 
     companion object {
