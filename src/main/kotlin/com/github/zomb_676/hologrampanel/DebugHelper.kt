@@ -221,6 +221,13 @@ object DebugHelper {
                         drawHelper.drawString("InteractHologramContext:${interactHologram.context}").nextLine()
                         val tickets = interactHologram.hologramTicks.joinToString()
                         drawHelper.drawString("Ticket:$tickets").nextLine()
+                        val sourceCollection = interactHologram.sourceCollection
+                        drawHelper.drawString("controlledByProjector:${interactHologram.controlled}").nextLine()
+                        if (sourceCollection == null) {
+                            drawHelper.drawString("sourceCollection:not contain").nextLine()
+                        } else {
+                            drawHelper.drawString("sourceCollection:${sourceCollection.size()}").nextLine()
+                        }
                     }
                 }
                 when (val draggingSource = HologramInteractionManager.draggingSource) {
