@@ -40,7 +40,7 @@ class SourceCollection {
         if (collections.add(state)) {
             accumulated.add(state.getSourceWorldPosition())
             accumulated.div(collections.size.toFloat(), cachedSourcePosition)
-            if (state.controlled) {
+            if (state.isControlled()) {
                 switchCurrent(state)
             }
         }

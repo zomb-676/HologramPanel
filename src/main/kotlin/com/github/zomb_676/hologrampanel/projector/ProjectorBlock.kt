@@ -1,7 +1,6 @@
 package com.github.zomb_676.hologrampanel.projector
 
 import com.github.zomb_676.hologrampanel.PanelOperatorManager
-import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
 import com.github.zomb_676.hologrampanel.util.VoxelShapeUtils
 import com.github.zomb_676.hologrampanel.util.addClientMessage
 import net.minecraft.core.BlockPos
@@ -66,7 +65,7 @@ class ProjectorBlock(blockProperties: Properties) : Block(blockProperties.noOccl
             addClientMessage("not bind or bound invalid")
             return InteractionResult.FAIL
         } else {
-            storage.setAndSyncToServer(bind, pos)
+            storage.setAndSyncToServer(bind)
             PanelOperatorManager.selectedTarget = bind
             addClientMessage("success bind data")
             return InteractionResult.SUCCESS

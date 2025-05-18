@@ -155,7 +155,7 @@ object PanelOperatorManager {
                     val storage = level.getCapability(IHologramStorage.CAPABILITY, block.blockPos) ?: return@run
                     add(ComponentRenderElement("bind to target").setScale(0.8)) {
                         val target = findTarget(createTimeHologram) ?: return@add
-                        storage.setAndSyncToServer(target, be.blockPos)
+                        storage.setAndSyncToServer(target)
                     }
                 }
             }

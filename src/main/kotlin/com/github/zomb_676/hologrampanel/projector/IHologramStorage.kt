@@ -15,7 +15,7 @@ import net.minecraft.nbt.NbtOps
 import net.neoforged.neoforge.capabilities.BlockCapability
 import java.util.*
 
-class IHologramStorage {
+class IHologramStorage(val pos: BlockPos) {
     private var prototype: HologramContextPrototype? = null
     private var locateType: LocateType = LocateFacingPlayer()
 
@@ -24,8 +24,6 @@ class IHologramStorage {
             field = null
             null
         } else field
-
-    fun isInControl(): Boolean = this.prototype != null
 
     fun getStoredPrototype(): HologramContextPrototype? = this.prototype
 
@@ -53,14 +51,18 @@ class IHologramStorage {
         }
     }
 
-    fun setAndSyncToServer(target: HologramRenderState, pos: BlockPos) {
+    fun setAndSyncToServer(target: HologramRenderState) {
         if (bindState != null && bindState !== target) {
-            bindState?.controlled = false
+            bindState?.controlled = null
         }
         this.setLocateType(target.locate)
         this.storePrototype(HologramContextPrototype.extract(target.context))
-        target.controlled = true
+        target.controlled = this
         this.bindState = target
+        this.syncToServer()
+    }
+
+    fun syncToServer() {
         val tag = CompoundTag()
         this.writeToNBT(tag)
         SetProjectorSettingPayload(tag, pos).sendToServer()
@@ -68,12 +70,12 @@ class IHologramStorage {
 
     fun setTargetBySelfInfo(target: HologramRenderState) {
         bindState.takeIf { it === target }?.also { bindState ->
-            bindState.controlled = false
+            bindState.controlled = null
         }
         val old = target.locate
         target.locate = this.getLocateType()
         HologramManager.notifyHologramLocateTypeChange(target, old)
-        target.controlled = true
+        target.controlled = this
     }
 
     fun onDataSyncedFromServer() {
@@ -92,8 +94,8 @@ class IHologramStorage {
         val CAPABILITY: BlockCapability<IHologramStorage, Void?> =
             BlockCapability.createVoid(HologramPanel.rl("hologram_store"), IHologramStorage::class.java)
 
-        fun readFromNBT(nbt: CompoundTag) =
-            CODEC.decode(NbtOps.INSTANCE, nbt).result().map { it.first }.orElse(IHologramStorage())
+        fun readFromNBT(nbt: CompoundTag): IHologramStorage =
+            CODEC.decode(NbtOps.INSTANCE, nbt).result().map { it.first }.orElseThrow()
 
         val CODEC: Codec<IHologramStorage> = RecordCodecBuilder.create { ins ->
             ins.group(
@@ -101,8 +103,9 @@ class IHologramStorage {
                     Optional.ofNullable(it.prototype)
                 },
                 LocateType.CODEC.fieldOf("locateType").forGetter(IHologramStorage::locateType),
-            ).apply(ins) { prototype, locateType ->
-                IHologramStorage().also { storage ->
+                BlockPos.CODEC.fieldOf("cap_pos").forGetter(IHologramStorage::pos)
+            ).apply(ins) { prototype, locateType, pos ->
+                IHologramStorage(pos).also { storage ->
                     prototype.ifPresent(storage::storePrototype)
                     storage.locateType = locateType
                 }

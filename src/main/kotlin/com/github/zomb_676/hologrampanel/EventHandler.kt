@@ -198,6 +198,7 @@ object EventHandler {
 
                     else -> return@run
                 }
+                modifyTarget.controlled?.syncToServer()
                 event.isCanceled = true
                 return
             }

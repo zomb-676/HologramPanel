@@ -14,7 +14,10 @@ import net.minecraft.world.level.block.state.BlockState
 class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     AllRegisters.BlockEntities.projectorType.get(), pos, blockState
 ) {
-    val cap = IHologramStorage()
+    /**
+     * the [pos] maybe a mutable instance must transform it into an immutable one
+     */
+    val cap = IHologramStorage(pos.immutable())
 
     override fun loadAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
         super.loadAdditional(tag, registries)
@@ -49,7 +52,7 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
         val level = this.level ?: return
         if (level.isClientSide) {
             ProjectorManager.remove(this)
-            cap.bindState?.controlled = false
+            cap.bindState?.controlled = null
         }
     }
 
@@ -66,7 +69,7 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
         val level = this.level ?: return
         if (level.isClientSide) {
             ProjectorManager.remove(this)
-            cap.bindState?.controlled = false
+            cap.bindState?.controlled = null
         }
     }
 

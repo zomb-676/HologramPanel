@@ -4,6 +4,7 @@ import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.api.HologramTicket
 import com.github.zomb_676.hologrampanel.api.TicketAdder
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.projector.IHologramStorage
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
@@ -54,7 +55,9 @@ class HologramRenderState(
      */
     var displaySize: Size = Size.ZERO
 
-    var controlled : Boolean = false
+    var controlled : IHologramStorage? = null
+
+    fun isControlled() = controlled != null
 
     var renderScreenPos: ScreenPosition = ScreenPosition.ZERO
     var locatedScreenPos : ScreenPosition = ScreenPosition.ZERO

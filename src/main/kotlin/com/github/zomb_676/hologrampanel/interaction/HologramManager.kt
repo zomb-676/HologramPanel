@@ -611,6 +611,7 @@ object HologramManager {
         if (state.locate is LocateOnScreen) {
             this.screenPinHolograms.add(state)
         }
+        state.controlled?.setAndSyncToServer(state)
     }
 
     fun renderFacingVectors(style: HologramStyle, partialTicks: Float) = MousePositionManager.mouseInvalidAreaScope {
