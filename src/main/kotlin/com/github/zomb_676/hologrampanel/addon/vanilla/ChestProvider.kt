@@ -7,6 +7,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.block.ChestBlock
 import net.minecraft.world.level.block.entity.ChestBlockEntity
+import net.minecraft.world.level.block.state.properties.ChestType
 
 object ChestProvider : ServerDataProvider<BlockHologramContext, ChestBlockEntity> by UniversalContainerBlockProvider {
 
@@ -26,8 +27,10 @@ object ChestProvider : ServerDataProvider<BlockHologramContext, ChestBlockEntity
     override fun isTargetSame(selfContext: BlockHologramContext, checkContext: BlockHologramContext, checkTarget: Any): Boolean {
         val checkState = checkContext.getBlockState()
         if (checkState.block !is ChestBlock) return false
+        if (checkState.getValue(ChestBlock.TYPE) == ChestType.SINGLE) return false
         val selfState = selfContext.getBlockState()
         if (selfState.block !is ChestBlock) return false
+        if (selfState.getValue(ChestBlock.TYPE) == ChestType.SINGLE) return false
         val direction = ChestBlock.getConnectedDirection(checkState)
         return checkContext.pos.relative(direction) == selfContext.pos
     }
