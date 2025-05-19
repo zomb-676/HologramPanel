@@ -23,6 +23,7 @@ import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.google.common.collect.ImmutableBiMap
 import net.minecraft.network.chat.Component
 import kotlin.math.max
+import kotlin.math.min
 
 /**
  * the actual usage, not directly use the instance of class across frames
@@ -58,7 +59,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 if (it.hasCalculateSize()) {
                     calculatedSizeElement++
                     val elementHeight = if (it.isLimitHeight()) {
-                        it.getLimitHeight()
+                        min(it.getLimitHeight(), it.contentSize.height)
                     } else it.contentSize.height
                     if (offset == AlignedScreenPosition.ZERO) {
                         width += it.contentSize.width
