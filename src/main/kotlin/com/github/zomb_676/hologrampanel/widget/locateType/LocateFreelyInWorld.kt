@@ -169,7 +169,8 @@ class LocateFreelyInWorld() : LocateInWorld {
     }
 
     override fun toString(): String =
-        "LocateFreelyInWorld(xRot=$xRot, yRot=$yRot, roll=$roll, scale=$scale, offset=${offset.toString(HologramPanel.NUMBER_FORMAT)})"
+        "LocateFreelyInWorld(xRot=%.2f, yRot=%.2f, roll=%.2f, scale=%.2f, offset=${offset.toString(HologramPanel.NUMBER_FORMAT)})"
+            .format(xRot, yRot, roll, scale)
 
     companion object {
         private val FORWARDS: Vector3f = Vector3f(0.0f, 0.0f, -1.0f)

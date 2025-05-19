@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
 import org.joml.Vector2f
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 object PanelOperatorManager {
@@ -134,7 +135,11 @@ object PanelOperatorManager {
                         is LocateFreelyInWorld -> locate.byCamera(camera)
                         else -> {
                             target.locate = LocateFreelyInWorld().byCamera(camera).apply {
-                                camera.lookVector.mul(-sqrt(3f) / 2f, offset)
+                                if (locate is LocateFacingPlayer && locate.offset.run { abs(x) + abs(y) + abs(z) } > 0.01f) {
+                                    offset.set(locate.offset)
+                                } else {
+                                    camera.lookVector.mul(-sqrt(3f) / 2f, offset)
+                                }
                             }
                             HologramManager.notifyHologramLocateTypeChange(target, locate)
                         }
@@ -144,14 +149,17 @@ object PanelOperatorManager {
                     val target = findTarget(createTimeHologram) ?: return@add
                     if (target.locate !is LocateFacingPlayer) {
                         val old = target.locate
-                        target.locate = LocateFacingPlayer()
+                        target.locate = LocateFacingPlayer().also { facingPlayer ->
+                            if (old is LocateInWorld) {
+                                facingPlayer.offset.set(old.offset)
+                            }
+                        }
                         HologramManager.notifyHologramLocateTypeChange(target, old)
                     }
                 }
                 run {
                     val block = findBlock() ?: return@run
                     val level = Minecraft.getInstance().level ?: return@run
-                    val be = level.getBlockEntity(block.blockPos) ?: return@run
                     val storage = level.getCapability(IHologramStorage.CAPABILITY, block.blockPos) ?: return@run
                     add(ComponentRenderElement("bind to target").setScale(0.8)) {
                         val target = findTarget(createTimeHologram) ?: return@add

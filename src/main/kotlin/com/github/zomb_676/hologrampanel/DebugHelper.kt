@@ -228,6 +228,7 @@ object DebugHelper {
                         } else {
                             drawHelper.drawString("sourceCollection:${sourceCollection.size()}").nextLine()
                         }
+                        drawHelper.drawString("locate:${interactHologram.locate}").nextLine()
                     }
                 }
                 when (val draggingSource = HologramInteractionManager.draggingSource) {
@@ -244,6 +245,7 @@ object DebugHelper {
                     }
                 }
                 drawHelper.drawString("projectorCount:${ProjectorManager.getListeners().size}").nextLine()
+                drawHelper.drawString("sourceCollectionCount:${HologramManager.sourceCollectionCount()}")
             }
         }
 

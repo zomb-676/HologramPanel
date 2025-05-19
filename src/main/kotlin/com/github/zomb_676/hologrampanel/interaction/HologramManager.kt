@@ -524,6 +524,8 @@ object HologramManager {
      */
     fun widgetCount(): Int = states.size
 
+    fun sourceCollectionCount() : Int = exposeMap.size
+
     /**
      * @param size the size the interactive take
      * @param hologramStyle query actual position from its matrix
