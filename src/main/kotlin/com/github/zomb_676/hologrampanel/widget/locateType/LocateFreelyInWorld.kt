@@ -87,7 +87,6 @@ class LocateFreelyInWorld() : LocateInWorld {
     }
 
     fun byCamera(camera: Camera): LocateFreelyInWorld {
-        camera.lookVector.mul(-1f, view)
         this.xRot = camera.xRot
         this.yRot = -camera.yRot
         this.roll = camera.roll
@@ -98,7 +97,7 @@ class LocateFreelyInWorld() : LocateInWorld {
     }
 
     private fun updateRotation() {
-        this.quaternion.rotateYXZ(
+        this.quaternion.identity().rotateYXZ(
             Math.PI.toFloat() - JomlMath.toRadians(-yRot),
             JomlMath.toRadians(-xRot),
             JomlMath.toRadians(-roll)
