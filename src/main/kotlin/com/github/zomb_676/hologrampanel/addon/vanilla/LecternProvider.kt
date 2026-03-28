@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.LecternBlock
 import net.minecraft.world.level.block.entity.LecternBlockEntity
 
@@ -43,6 +43,6 @@ data object LecternProvider : ServerDataProvider<BlockHologramContext, LecternBl
 
     override fun targetClass(): Class<LecternBlock> = LecternBlock::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("lectern_book")
+    override fun location(): Identifier = HologramPanel.rl("lectern_book")
 
 }

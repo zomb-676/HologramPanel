@@ -8,7 +8,7 @@ import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.JukeboxBlock
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity
 import kotlin.jvm.optionals.getOrNull
@@ -49,8 +49,8 @@ data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBl
 
     override fun targetClass(): Class<JukeboxBlock> = JukeboxBlock::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.Companion.rl("juke_box")
+    override fun location(): Identifier = HologramPanel.Companion.rl("juke_box")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
+    override fun replaceProvider(target: Identifier): Boolean =
         target == UniversalContainerBlockProvider.location()
 }

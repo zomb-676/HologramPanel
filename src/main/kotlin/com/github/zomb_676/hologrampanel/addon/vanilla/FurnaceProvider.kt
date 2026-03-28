@@ -11,7 +11,7 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.AbstractFurnaceBlock
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity
@@ -54,7 +54,7 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
 
     override fun targetClass(): Class<AbstractFurnaceBlock> = AbstractFurnaceBlock::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.Companion.rl("abstract_furnace_block")
+    override fun location(): Identifier = HologramPanel.Companion.rl("abstract_furnace_block")
 
     override fun appendServerData(
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
@@ -72,6 +72,6 @@ data object FurnaceProvider : ServerDataProvider<BlockHologramContext, AbstractF
         return true
     }
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
+    override fun replaceProvider(target: Identifier): Boolean =
         target == UniversalContainerBlockProvider.location()
 }

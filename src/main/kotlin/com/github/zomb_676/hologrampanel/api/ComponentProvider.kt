@@ -3,7 +3,7 @@ package com.github.zomb_676.hologrampanel.api
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 
 /**
  * attach component to a specific game object
@@ -36,7 +36,7 @@ interface ComponentProvider<T : HologramContext, in V> {
      * @return identity object for debug and customize
      */
     @EfficientConst
-    fun location(): ResourceLocation
+    fun location(): Identifier
 
     /**
      * this will prevent the returned [ComponentProvider] if both you are in a same candidate list
@@ -48,7 +48,7 @@ interface ComponentProvider<T : HologramContext, in V> {
      * only called during collecting providers based on class
      */
     @EfficientConst
-    fun replaceProvider(target: ResourceLocation): Boolean = false
+    fun replaceProvider(target: Identifier): Boolean = false
 
     /**
      * for performance implementation, if you know only some targets or some targets never need this

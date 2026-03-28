@@ -5,7 +5,7 @@
 //import mezz.jei.api.IModPlugin
 //import mezz.jei.api.JeiPlugin
 //import mezz.jei.api.runtime.IJeiRuntime
-//import net.minecraft.resources.ResourceLocation
+//import net.minecraft.resources.Identifier
 //import net.minecraft.world.item.Item
 //import net.minecraft.world.item.ItemStack
 //
@@ -24,7 +24,7 @@
 //        }
 //    }
 //
-//    override fun getPluginUid(): ResourceLocation = PLUGIN_LOCATION
+//    override fun getPluginUid(): Identifier = PLUGIN_LOCATION
 //
 //    override fun onRuntimeAvailable(jeiRuntime: IJeiRuntime) {
 //        available = true

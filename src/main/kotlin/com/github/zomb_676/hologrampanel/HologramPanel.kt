@@ -1,6 +1,6 @@
 package com.github.zomb_676.hologrampanel
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.common.Mod
@@ -23,7 +23,7 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
         val underDevelopment = !FMLEnvironment.production
         val underDebug = underDevelopment
 
-        fun rl(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
+        fun rl(path: String): Identifier = Identifier.fromNamespaceAndPath(MOD_ID, path)
 
         var serverInstalled: Boolean = false
             internal set

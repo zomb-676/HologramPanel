@@ -1,6 +1,6 @@
 package com.github.zomb_676.hologrampanel.api
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.neoforged.neoforge.common.ModConfigSpec
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,7 +12,7 @@ interface IHologramPlugin {
      * @return the identity path for your plugin
      */
     @EfficientConst
-    fun location(): ResourceLocation
+    fun location(): Identifier
 
     /**
      * register and setup settings on both physical sides

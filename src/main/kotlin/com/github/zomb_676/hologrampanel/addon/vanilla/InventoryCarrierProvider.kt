@@ -7,7 +7,7 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.npc.InventoryCarrier
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.items.wrapper.InvWrapper
@@ -57,5 +57,5 @@ data object InventoryCarrierProvider : ServerDataProvider<EntityHologramContext,
 
     override fun targetClass(): Class<InventoryCarrier> = InventoryCarrier::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("inventory_carrier")
+    override fun location(): Identifier = HologramPanel.rl("inventory_carrier")
 }

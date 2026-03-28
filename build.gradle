@@ -130,7 +130,6 @@ Closure<ModuleDependency> modernUIExcludes = { ModuleDependency dep ->
 }
 
 dependencies {// TODO: Use localRuntime?
-    implementation('org.jetbrains.kotlin:kotlin-stdlib:2.3.20')
     jarJar(implementation('org.jetbrains.kotlin:kotlin-stdlib:2.3.20'))
 
     runtimeOnly("curse.maven:jade-324717:7817285")

@@ -10,7 +10,7 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.capabilities.Capabilities
 
@@ -66,7 +66,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
 
     override fun targetClass(): Class<BlockEntity> = BlockEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_block")
+    override fun location(): Identifier = HologramPanel.rl("universal_fluid_block")
 
     override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean =
         TransHandle.BlockFluidTransHandle.hasHandle(check)

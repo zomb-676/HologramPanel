@@ -8,7 +8,7 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.EnderChestBlock
 import net.neoforged.neoforge.items.wrapper.InvWrapper
@@ -58,8 +58,8 @@ data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderC
 
     override fun targetClass(): Class<EnderChestBlock> = EnderChestBlock::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("ender_chest")
+    override fun location(): Identifier = HologramPanel.rl("ender_chest")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
+    override fun replaceProvider(target: Identifier): Boolean =
         target == UniversalContainerBlockProvider.location()
 }

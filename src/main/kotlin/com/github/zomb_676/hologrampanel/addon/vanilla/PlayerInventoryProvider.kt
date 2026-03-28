@@ -7,7 +7,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramConte
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.player.Player
 
 object PlayerInventoryProvider : ServerDataProvider<EntityHologramContext, Player> {
@@ -29,8 +29,8 @@ object PlayerInventoryProvider : ServerDataProvider<EntityHologramContext, Playe
 
     override fun targetClass(): Class<Player> = Player::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("player_inventory")
+    override fun location(): Identifier = HologramPanel.rl("player_inventory")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
+    override fun replaceProvider(target: Identifier): Boolean =
         UniversalContainerEntityProvider.location() == target
 }

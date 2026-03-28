@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.AbstractCauldronBlock
 import net.neoforged.neoforge.capabilities.Capabilities
 
@@ -35,5 +35,5 @@ data object CauldronBlockProvider : ComponentProvider<BlockHologramContext, Abst
     }
 
     override fun targetClass(): Class<AbstractCauldronBlock> = AbstractCauldronBlock::class.java
-    override fun location(): ResourceLocation = HologramPanel.rl("cauldron")
+    override fun location(): Identifier = HologramPanel.rl("cauldron")
 }

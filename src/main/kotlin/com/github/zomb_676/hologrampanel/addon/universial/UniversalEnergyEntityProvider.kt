@@ -8,7 +8,7 @@ import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import net.neoforged.neoforge.capabilities.Capabilities
 
@@ -40,7 +40,7 @@ data object UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramCon
 
     override fun targetClass(): Class<Entity> = Entity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_entity")
+    override fun location(): Identifier = HologramPanel.rl("universal_energy_entity")
 
     override fun appliesTo(context: EntityHologramContext, check: Entity) : Boolean =
         TransHandle.EntityEnergyTransHandle.hasHandle(context.getEntity())

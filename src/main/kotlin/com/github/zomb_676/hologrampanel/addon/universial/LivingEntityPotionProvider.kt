@@ -10,7 +10,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffectUtil
 import net.minecraft.world.entity.LivingEntity
@@ -90,6 +90,6 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
 
     override fun targetClass(): Class<LivingEntity> = LivingEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("living_entity_potion")
+    override fun location(): Identifier = HologramPanel.rl("living_entity_potion")
 
 }

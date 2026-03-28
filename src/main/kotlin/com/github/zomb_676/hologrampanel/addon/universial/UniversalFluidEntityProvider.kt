@@ -10,7 +10,7 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -65,7 +65,7 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
 
     override fun targetClass(): Class<Entity> = Entity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_entity")
+    override fun location(): Identifier = HologramPanel.rl("universal_fluid_entity")
 
     override fun appliesTo(context: EntityHologramContext, check: Entity): Boolean =
         TransHandle.EntityFluidTransHandle.hasHandle(check)

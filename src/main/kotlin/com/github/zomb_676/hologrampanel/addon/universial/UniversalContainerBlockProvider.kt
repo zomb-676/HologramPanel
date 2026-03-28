@@ -18,7 +18,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
@@ -94,7 +94,7 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
 
     override fun targetClass(): Class<BlockEntity> = BlockEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_container_block")
+    override fun location(): Identifier = HologramPanel.rl("universal_container_block")
 
     override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean {
         val cap = TransHandle.BlockItemTransHandle.getHandle(check)

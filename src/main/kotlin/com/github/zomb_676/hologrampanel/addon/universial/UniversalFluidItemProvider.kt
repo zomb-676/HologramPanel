@@ -10,7 +10,7 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.item.ItemEntity
 
 data object UniversalFluidItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
@@ -68,9 +68,9 @@ data object UniversalFluidItemProvider : ServerDataProvider<EntityHologramContex
 
     override fun targetClass(): Class<ItemEntity> = ItemEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_item")
+    override fun location(): Identifier = HologramPanel.rl("universal_fluid_item")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
+    override fun replaceProvider(target: Identifier): Boolean =
         target == UniversalFluidEntityProvider.location()
 
     override fun appliesTo(context: EntityHologramContext, check: ItemEntity): Boolean =
