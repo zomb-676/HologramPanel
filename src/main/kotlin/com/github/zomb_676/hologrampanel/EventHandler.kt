@@ -160,7 +160,7 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            val window = Minecraft.getInstance().window.window
+            val window = Minecraft.getInstance().window.handle()
             val shiftDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
 
             run {
@@ -427,9 +427,9 @@ object EventHandler {
                             val str = StringArgumentType.getString(this, "str")
                             SearchBackend.getCurrentBackend().setSearchString(str)
                             val style = Style.EMPTY.withClickEvent(
-                                ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hologram_panel search")
+                                ClickEvent.RunCommand("/hologram_panel search")
                             ).withHoverEvent(
-                                HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("click to clear"))
+                                HoverEvent.ShowText(Component.literal("click to clear"))
                             )
                             source.sendSystemMessage(Component.literal("set search string:${str}").withStyle(style))
                         }

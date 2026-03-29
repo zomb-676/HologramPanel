@@ -20,7 +20,7 @@ import net.neoforged.fml.ModContainer
 import net.neoforged.fml.config.ModConfig
 import net.neoforged.fml.event.config.ModConfigEvent
 import net.neoforged.fml.javafmlmod.FMLModContainer
-import net.neoforged.fml.loading.FMLLoader
+import net.neoforged.fml.loading.FMLEnvironment
 import net.neoforged.neoforge.client.gui.ConfigurationScreen
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory
 import net.neoforged.neoforge.common.ModConfigSpec
@@ -45,7 +45,7 @@ object Config {
     }
 
     fun onTagUpdate(event: TagsUpdatedEvent) {
-        if (FMLLoader.getDist() == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             Client.updateHideList(event.lookupProvider)
         }
     }
@@ -233,7 +233,7 @@ object Config {
                     SearchBackend.Type.AUTO, SearchBackend.Type.DEFAULT -> return@run
                 }
                 searchBackend.setAndSave(SearchBackend.Type.AUTO)
-                Minecraft.getInstance().gui.chat.addMessage(
+                Minecraft.getInstance().gui.chat.addClientSystemMessage(
                     Component.literal(
                         "search backend switch to auto for fallback"
                     )

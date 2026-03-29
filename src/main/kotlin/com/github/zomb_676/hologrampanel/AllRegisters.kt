@@ -9,6 +9,7 @@ import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.KeyMapping
+import net.minecraft.client.KeyMapping.Category
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
@@ -95,9 +96,11 @@ object AllRegisters {
     }
 
     object KeyMapping {
-        const val KEY_CATEGORY = "key.categories.${HologramPanel.MOD_ID}"
+        val KEY_CATEGORY = Category(HologramPanel.rl("key.categories.${HologramPanel.MOD_ID}"))
 
         fun register(event: RegisterKeyMappingsEvent) {
+            event.registerCategory(KEY_CATEGORY)
+
             event.register(panelKey)
             event.register(scaleKey)
             event.register(collapseKey)

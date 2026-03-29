@@ -20,7 +20,7 @@ class HologramPanel(val container: FMLModContainer, val dist: Dist, val modBus: 
 
         val LOGGER: Logger = LogManager.getLogger(MOD_ID)
 
-        val underDevelopment = !FMLEnvironment.production
+        val underDevelopment = !FMLEnvironment.isProduction()
         val underDebug = underDevelopment
 
         fun rl(path: String): Identifier = Identifier.fromNamespaceAndPath(MOD_ID, path)
