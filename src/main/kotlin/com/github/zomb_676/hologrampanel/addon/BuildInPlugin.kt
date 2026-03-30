@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.Block
 
 @HologramPlugin
 class BuildInPlugin : IHologramPlugin {
-    override fun location(): Identifier = HologramPanel.Companion.rl("build_in")
+    override fun location(): Identifier = HologramPanel.rl("build_in")
 
     override fun registerCommon(register: HologramCommonRegistration) {
         register.registerBlockComponent(FurnaceProvider)
@@ -99,7 +99,7 @@ class BuildInPlugin : IHologramPlugin {
 
             override fun targetClass(): Class<Entity> = Entity::class.java
 
-            override fun location(): Identifier = HologramPanel.Companion.rl("default_entity_description_provider")
+            override fun location(): Identifier = HologramPanel.rl("default_entity_description_provider")
         }
     }
 }
