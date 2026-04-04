@@ -7,6 +7,7 @@ import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.neoforged.neoforge.client.network.ClientPacketDistributor
 import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
@@ -58,6 +59,6 @@ class TransTargetPayload<S1 : Any, S2 : Any>(
         if (storeCount < queryCount) {
             transOperation.queryPath.count = storeCount
         }
-        PacketDistributor.sendToServer(this)
+        ClientPacketDistributor.sendToServer(this)
     }
 }

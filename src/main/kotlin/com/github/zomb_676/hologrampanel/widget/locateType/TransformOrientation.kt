@@ -129,7 +129,7 @@ enum class TransformOrientation {
             }
 
             private fun changeAlpha(originColor: Int, key: Int): Int {
-                val window = Minecraft.getInstance().window.window
+                val window = Minecraft.getInstance().window.handle()
                 return if (GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS) {
                     originColor
                 } else {

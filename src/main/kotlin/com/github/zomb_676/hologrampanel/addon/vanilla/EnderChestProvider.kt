@@ -11,7 +11,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.Identifier
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.EnderChestBlock
-import net.neoforged.neoforge.items.wrapper.InvWrapper
+import net.neoforged.neoforge.transfer.item.ItemUtil
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper
 
 data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderChestBlock> {
     override fun appendServerData(
@@ -21,11 +22,11 @@ data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderC
     ): Boolean {
         val player = context.getPlayer()
         val inventory = player.enderChestInventory ?: return false
-        val wrapper = InvWrapper(inventory)
+        val wrapper = VanillaContainerWrapper.of(inventory)
         val buffer = context.createRegistryFriendlyByteBuf()
         var writeItemCount = 0
-        repeat(wrapper.slots) { index ->
-            val item = wrapper.getStackInSlot(index)
+        repeat(wrapper.size()) { index ->
+            val item = ItemUtil.getStack(wrapper, index)
             if (!item.isEmpty) {
                 ItemStack.STREAM_CODEC.encode(buffer, item)
                 writeItemCount++
@@ -43,10 +44,13 @@ data object EnderChestProvider : ServerDataProvider<BlockHologramContext, EnderC
         val context = builder.context
         val remember = builder.context.getRememberData()
         val items by remember.server(0, listOf()) { tag ->
-            val count = tag.getInt("item_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("item_data"))
-            List(count) {
-                ItemStack.STREAM_CODEC.decode(buffer)
+            tag.getInt("item_count").flatMap { count ->
+                tag.getByteArray("item_data").map { itemData ->
+                    val buffer = context.warpRegistryFriendlyByteBuf(itemData)
+                    List(count) {
+                        ItemStack.STREAM_CODEC.decode(buffer)
+                    }
+                }
             }
         }
         if (items.isNotEmpty()) {

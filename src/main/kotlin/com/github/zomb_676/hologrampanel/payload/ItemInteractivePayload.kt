@@ -15,11 +15,15 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.capabilities.Capabilities
-import net.neoforged.neoforge.items.wrapper.InvWrapper
-import net.neoforged.neoforge.items.wrapper.PlayerInvWrapper
-import net.neoforged.neoforge.network.PacketDistributor
+import net.neoforged.neoforge.client.network.ClientPacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import net.neoforged.neoforge.network.handling.IPayloadHandler
+import net.neoforged.neoforge.transfer.access.ItemAccess
+import net.neoforged.neoforge.transfer.item.ItemResource
+import net.neoforged.neoforge.transfer.item.ItemUtil
+import net.neoforged.neoforge.transfer.item.PlayerInventoryWrapper
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper
+import net.neoforged.neoforge.transfer.transaction.Transaction
 import java.util.*
 import kotlin.math.min
 
@@ -51,38 +55,46 @@ class ItemInteractivePayload(
             override fun handle(payload: ItemInteractivePayload, payloadContext: IPayloadContext) {
                 val cap = when (val context = payload.context) {
                     is BlockHologramContext ->
-                        context.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, context.pos, null)
+                        context.getLevel().getCapability(Capabilities.Item.BLOCK, context.pos, null)
 
                     is EntityHologramContext -> {
                         val entity = context.getEntity()
                         if (entity is ItemEntity) {
-                            entity.item.getCapability(Capabilities.ItemHandler.ITEM)
+                            ItemAccess.forStack(entity.item).getCapability(Capabilities.Item.ITEM)
                         } else {
-                            entity.getCapability(Capabilities.ItemHandler.ENTITY_AUTOMATION, null)
+                            entity.getCapability(Capabilities.Item.ENTITY_AUTOMATION, null)
                         }
                     }
                 } ?: return
                 if (payload.targetSlot < 0) {
                     if (payload.take) {
                         var toTake = payload.count
-                        for (index in 0..<cap.slots) {
-                            val stored = cap.getStackInSlot(index)
+                        for (index in 0..<cap.size()) {
+                            val stored = ItemUtil.getStack(cap, index)
                             if (!ItemStack.isSameItemSameComponents(stored, payload.itemStack)) continue
-                            val extracted = cap.extractItem(index, min(stored.count, toTake), false)
-                            toTake -= extracted.count
-                            giveItemToPlayer(extracted, payloadContext.player() as ServerPlayer)
-                            if (toTake <= 0) break
+                            Transaction.openRoot().use {
+                                val extracted = cap.extract(index, ItemResource.of(stored),
+                                    min(stored.count, toTake), it)
+                                it.commit()
+                                toTake -= extracted
+                                giveItemToPlayer(ItemStack(stored.item, extracted), payloadContext.player() as ServerPlayer)
+                                if (toTake <= 0) break
+                            }
                         }
                     } else {
                         val player = payloadContext.player() as ServerPlayer
                         var storeItem = payload.itemStack
                         storeItem.count = payload.count
                         if (ItemStack.isSameItemSameComponents(player.mainHandItem, payload.itemStack)) {
-                            for (index in 0..<cap.slots) {
+                            for (index in 0..<cap.size()) {
                                 if (storeItem.isEmpty) {
                                     break
                                 } else {
-                                    storeItem = cap.insertItem(index, storeItem, false)
+                                    Transaction.openRoot().use {
+                                        val inserted = cap.insert(index, ItemResource.of(storeItem), storeItem.count, it)
+                                        storeItem = storeItem.copyWithCount(storeItem.count - inserted)
+                                        it.commit()
+                                    }
                                 }
                             }
                             player.mainHandItem.count -= payload.count - storeItem.count
@@ -93,42 +105,52 @@ class ItemInteractivePayload(
                             }
                         }
                         if (!storeItem.isEmpty) {
-                            val playerInv = PlayerInvWrapper(player.inventory)
+                            val playerInv = PlayerInventoryWrapper.of(player)
                             var storeIndex = 0
-                            for (playerInvIndex in 0..playerInv.slots) {
-                                val playerItem = playerInv.getStackInSlot(playerInvIndex)
+                            for (playerInvIndex in 0..playerInv.size()) {
+                                val playerItem = ItemUtil.getStack(playerInv, playerInvIndex)
                                 if (!ItemStack.isSameItemSameComponents(playerItem, storeItem)) continue
-                                var toStoreItem = playerInv.extractItem(playerInvIndex, storeItem.count, false)
-                                storeItem.count -= toStoreItem.count
-                                while (storeIndex < cap.slots) {
-                                    toStoreItem = cap.insertItem(storeIndex, toStoreItem, false)
-                                    if (toStoreItem.isEmpty) {
-                                        break
-                                    } else {
-                                        storeIndex++
-                                    }
-                                }
-                                storeItem.count += toStoreItem.count
-                                playerInv.insertItem(playerInvIndex, toStoreItem, false)
-                                if (storeItem.count <= 0) return
+                                Transaction.openRoot().use {
+                                    val ir = ItemResource.of(storeItem)
+                                    var toStoreItem = playerInv.extract(playerInvIndex, ir, storeItem.count, it)
+                                    it.commit()
+                                    storeItem.count -= toStoreItem
 
-                                val current = cap.getStackInSlot(storeIndex)
-                                if (current.count < cap.getSlotLimit(storeIndex)) {
-                                    storeIndex++
-                                } else break
+                                    while (storeIndex < cap.size()) {
+                                        toStoreItem -= cap.insert(storeIndex, ir, toStoreItem, it)
+                                        it.commit()
+                                        if (toStoreItem <= 0) {
+                                            break
+                                        } else {
+                                            storeIndex++
+                                        }
+                                    }
+                                    storeItem.count += toStoreItem
+                                    playerInv.insert(playerInvIndex, ir, toStoreItem, it)
+                                    it.commit()
+                                    if (storeItem.count <= 0) return
+
+                                    val current = cap.getAmountAsInt(storeIndex)
+                                    if (current < cap.getCapacityAsInt(storeIndex, ir)) {
+                                        storeIndex++
+                                    } else break
+                                }
                             }
                         }
                     }
                 } else {
-                    if (payload.targetSlot >= cap.slots) return
+                    if (payload.targetSlot >= cap.size()) return
                     if (payload.take) {
-                        val itemCanTake = cap.getStackInSlot(payload.targetSlot)
+                        val itemCanTake = ItemUtil.getStack(cap, payload.targetSlot)
                         if (!ItemStack.isSameItemSameComponents(itemCanTake, payload.itemStack)) return
                         val takeCount = min(itemCanTake.count, payload.count)
-                        val actualTake = cap.extractItem(payload.targetSlot, takeCount, false)
-                        giveItemToPlayer(actualTake, payloadContext.player() as ServerPlayer)
+                        Transaction.openRoot().use {
+                            val actualTake = cap.extract(payload.targetSlot, ItemResource.of(itemCanTake), takeCount, it)
+                            it.commit()
+                            giveItemToPlayer(ItemStack(itemCanTake.item, actualTake), payloadContext.player() as ServerPlayer)
+                        }
                     } else {
-                        val stored = cap.getStackInSlot(payload.targetSlot)
+                        val stored = ItemUtil.getStack(cap, payload.targetSlot)
                         if (!stored.isEmpty && !ItemStack.isSameItemSameComponents(stored, payload.itemStack)) return
                         var storeCount = if (stored.isEmpty) {
                             payload.count
@@ -141,24 +163,31 @@ class ItemInteractivePayload(
                             val mainHandItem = player.mainHandItem
                             if (!ItemStack.isSameItemSameComponents(mainHandItem, stored)) return@run
                             val toStoreItem = mainHandItem.copyWithCount(min(storeCount, mainHandItem.count))
-                            val res = cap.insertItem(payload.targetSlot, toStoreItem, false)
-                            mainHandItem.count = mainHandItem.count - (toStoreItem.count - res.count)
-                            player.setItemInHand(InteractionHand.MAIN_HAND, mainHandItem)
-                            storeCount -= (toStoreItem.count - res.count)
+                            Transaction.openRoot().use {
+                                val res = cap.insert(payload.targetSlot, ItemResource.of(toStoreItem), toStoreItem.count, it)
+                                it.commit()
+                                mainHandItem.count -= res
+                                player.setItemInHand(InteractionHand.MAIN_HAND, mainHandItem)
+                                storeCount -= res
+                            }
                         }
                         if (storeCount > 0) {
-                            val playerInv = InvWrapper(player.inventory)
-                            for (invIndex in 0..<playerInv.slots) {
-                                val invItem = playerInv.getStackInSlot(invIndex)
+                            val playerInv = VanillaContainerWrapper.of(player.inventory)
+                            for (invIndex in 0..<playerInv.size()) {
+                                val invItem = ItemUtil.getStack(playerInv, invIndex)
                                 if (!ItemStack.isSameItemSameComponents(invItem, payload.itemStack)) continue
-                                val extracted = playerInv.extractItem(invIndex, storeCount, false)
-                                val res = cap.insertItem(payload.targetSlot, extracted, false)
-                                if (!res.isEmpty) {
-                                    giveItemToPlayer(res, player)
-                                    break
+                                Transaction.openRoot().use {
+                                    val ir = ItemResource.of(invItem)
+                                    val extracted = playerInv.extract(invIndex, ir, storeCount, it)
+                                    val res = cap.insert(payload.targetSlot, ir, extracted, it)
+                                    it.commit()
+                                    if (extracted - res > 0) {
+                                        giveItemToPlayer(ItemStack(invItem.item, extracted - res), player)
+                                        break
+                                    }
+                                    storeCount -= extracted
+                                    if (storeCount == 0) break
                                 }
-                                storeCount -= extracted.count
-                                if (storeCount == 0) break
                             }
                         }
                     }
@@ -182,7 +211,7 @@ class ItemInteractivePayload(
             if (targetSlot < 0 && count > itemStack.maxStackSize) return
             val syncUUID = DataQueryManager.Client.queryContextUUID(context) ?: return
             val payload = ItemInteractivePayload(itemStack, count, true, targetSlot, context, syncUUID)
-            PacketDistributor.sendToServer(payload)
+            ClientPacketDistributor.sendToServer(payload)
         }
 
         fun store(itemStack: ItemStack, count: Int, context: HologramContext, targetSlot: Int = -1) {
@@ -190,7 +219,7 @@ class ItemInteractivePayload(
             if (targetSlot < 0 && count > itemStack.maxStackSize) return
             val syncUUID = DataQueryManager.Client.queryContextUUID(context) ?: return
             val payload = ItemInteractivePayload(itemStack, count, false, targetSlot, context, syncUUID)
-            PacketDistributor.sendToServer(payload)
+            ClientPacketDistributor.sendToServer(payload)
         }
     }
 }

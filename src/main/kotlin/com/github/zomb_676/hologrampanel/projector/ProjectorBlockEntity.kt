@@ -10,6 +10,8 @@ import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.storage.ValueInput
+import net.minecraft.world.level.storage.ValueOutput
 
 class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
     AllRegisters.BlockEntities.projectorType.get(), pos, blockState
@@ -19,14 +21,14 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
      */
     val cap = IHologramStorage(pos.immutable())
 
-    override fun loadAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
-        super.loadAdditional(tag, registries)
-        cap.readFromNbt(tag)
+    override fun loadAdditional(input: ValueInput) {
+        super.loadAdditional(input)
+        cap.readFromInput(input)
     }
 
-    override fun saveAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
-        super.saveAdditional(tag, registries)
-        cap.writeToNBT(tag)
+    override fun saveAdditional(output: ValueOutput) {
+        super.saveAdditional(output)
+        cap.writeToOutput(output)
         level?.takeIf { it.isClientSide }?.run {
             cap.onDataSyncedFromServer()
         }
@@ -38,9 +40,9 @@ class ProjectorBlockEntity(pos: BlockPos, blockState: BlockState) : BlockEntity(
         return tag
     }
 
-    override fun handleUpdateTag(tag: CompoundTag, lookupProvider: HolderLookup.Provider) {
-        super.handleUpdateTag(tag, lookupProvider)
-        cap.readFromNbt(tag)
+    override fun handleUpdateTag(input: ValueInput) {
+        super.handleUpdateTag(input)
+        cap.readFromInput(input)
         level?.takeIf { it.isClientSide }?.run {
             cap.onDataSyncedFromServer()
         }

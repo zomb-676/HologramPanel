@@ -207,7 +207,7 @@ object MousePositionManager {
      */
     fun updateMousePosition(): MousePositionManager {
         val window: Window = Minecraft.getInstance().window
-        when (GLFW.glfwGetInputMode(window.window, GLFW.GLFW_CURSOR)) {
+        when (GLFW.glfwGetInputMode(window.handle(), GLFW.GLFW_CURSOR)) {
             GLFW.GLFW_CURSOR_NORMAL -> {
                 val mouseHandle: MouseHandler = Minecraft.getInstance().mouseHandler
                 mouseX = (mouseHandle.xpos() * window.guiScaledWidth / window.screenWidth).toFloat()

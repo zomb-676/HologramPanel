@@ -17,11 +17,11 @@ object MouseInputModeUtil {
 
     private fun setCursorMode(cursorMode: Int) {
         if (getCursorMode() == cursorMode) return
-        GLFW.glfwSetInputMode(Minecraft.getInstance().window.window, GLFW.GLFW_CURSOR, cursorMode)
+        GLFW.glfwSetInputMode(Minecraft.getInstance().window.handle(), GLFW.GLFW_CURSOR, cursorMode)
     }
 
     private fun getCursorMode(): Int {
-        return GLFW.glfwGetInputMode(Minecraft.getInstance().window.window, GLFW.GLFW_CURSOR)
+        return GLFW.glfwGetInputMode(Minecraft.getInstance().window.handle(), GLFW.GLFW_CURSOR)
     }
 
     @JvmStatic
@@ -34,7 +34,7 @@ object MouseInputModeUtil {
             setCursorMode(MOVE_CURSOR_MODE)
             Minecraft.getInstance().mouseHandler.xpos = window.screenWidth / 2.0
             Minecraft.getInstance().mouseHandler.ypos = window.screenHeight / 2.0
-            GLFW.glfwSetCursorPos(window.window, (window.screenWidth / 2).toDouble(), (window.screenHeight / 2).toDouble())
+            GLFW.glfwSetCursorPos(window.handle(), (window.screenWidth / 2).toDouble(), (window.screenHeight / 2).toDouble())
         }
     }
 

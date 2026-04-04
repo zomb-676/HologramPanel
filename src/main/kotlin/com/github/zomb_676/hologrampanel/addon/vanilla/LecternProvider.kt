@@ -6,7 +6,9 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtOps
 import net.minecraft.resources.Identifier
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.LecternBlock
 import net.minecraft.world.level.block.entity.LecternBlockEntity
 
@@ -19,7 +21,8 @@ data object LecternProvider : ServerDataProvider<BlockHologramContext, LecternBl
         val lectern = context.getBlockEntity<LecternBlockEntity>() ?: return false
         if (lectern.hasBook()) {
             val item = lectern.book
-            targetData.put("book", item.saveOptional(context.getRegistryAccess()))
+            targetData.put("book", ItemStack.CODEC.encode(item,context.getRegistryAccess()
+                .createSerializationContext(NbtOps.INSTANCE), CompoundTag()).getOrThrow())
             return true
         } else {
             targetData.put("book", CompoundTag())

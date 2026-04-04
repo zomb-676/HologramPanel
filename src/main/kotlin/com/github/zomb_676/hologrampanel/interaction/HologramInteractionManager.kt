@@ -22,7 +22,7 @@ object HologramInteractionManager {
     private val FORBIDDEN_COMPONENT = Component.literal("Interactive Is Disabled On This Server")
     private val MISSING_PREVENT_COMPONENT = Component.literal("Interactive Prevent Message missing")
 
-    val mouseClicked get() = GLFW.glfwGetMouseButton(Minecraft.getInstance().window.window, GLFW.GLFW_MOUSE_BUTTON_LEFT) != 0
+    val mouseClicked get() = GLFW.glfwGetMouseButton(Minecraft.getInstance().window.handle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) != 0
 
     internal var draggingSource: InteractiveEntry? = null
         private set

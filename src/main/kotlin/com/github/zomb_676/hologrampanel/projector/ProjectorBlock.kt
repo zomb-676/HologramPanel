@@ -23,7 +23,7 @@ import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.minecraft.world.phys.shapes.VoxelShape
 
-class ProjectorBlock(blockProperties: Properties) : Block(blockProperties.noOcclusion().noCollission().strength(0.5f)), EntityBlock {
+class ProjectorBlock(blockProperties: Properties) : Block(blockProperties.noOcclusion().noCollision().strength(0.5f)), EntityBlock {
     companion object {
         val FACING: EnumProperty<Direction> = BlockStateProperties.FACING
         private val AABBs = box(4.0, 0.0, 4.0, 12.0, 3.0, 12.0).let { box ->

@@ -10,7 +10,8 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.npc.InventoryCarrier
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.items.wrapper.InvWrapper
+import net.neoforged.neoforge.transfer.item.ItemUtil
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper
 
 data object InventoryCarrierProvider : ServerDataProvider<EntityHologramContext, InventoryCarrier> {
     override fun appendServerData(
@@ -19,11 +20,11 @@ data object InventoryCarrierProvider : ServerDataProvider<EntityHologramContext,
         context: EntityHologramContext
     ): Boolean {
         val carrier = context.getEntity() as? InventoryCarrier? ?: return false
-        val inv = InvWrapper(carrier.inventory)
+        val inv = VanillaContainerWrapper.of(carrier.inventory)
         val buffer = context.createRegistryFriendlyByteBuf()
         var writeItemCount = 0
-        repeat(inv.slots) { index ->
-            val item = inv.getStackInSlot(index)
+        repeat(inv.size()) { index ->
+            val item = ItemUtil.getStack(inv, index)
             if (!item.isEmpty) {
                 ItemStack.STREAM_CODEC.encode(buffer, item)
                 writeItemCount++
@@ -42,10 +43,13 @@ data object InventoryCarrierProvider : ServerDataProvider<EntityHologramContext,
         val context = builder.context
         val remember = builder.context.getRememberData()
         val items by remember.server(0, listOf()) { tag ->
-            val count = tag.getInt("item_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("item_data"))
-            List(count) {
-                ItemStack.STREAM_CODEC.decode(buffer)
+            tag.getInt("item_count").flatMap { count ->
+                tag.getByteArray("item_data").map { itemData ->
+                    val buffer = context.warpRegistryFriendlyByteBuf(itemData)
+                    List(count) {
+                        ItemStack.STREAM_CODEC.decode(buffer)
+                    }
+                }
             }
         }
         if (items.isNotEmpty()) {

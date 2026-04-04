@@ -3,10 +3,10 @@ package com.github.zomb_676.hologrampanel.widget.element
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.RenderType
+import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite
-import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
+import net.minecraft.data.AtlasIds
 
 /**
  * render a [TextureAtlasSprite], original use its size as element size
@@ -17,7 +17,7 @@ class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderEl
     companion object {
         @Suppress("DEPRECATION")
         val missing: TextureAtlasSprite =
-            Minecraft.getInstance().modelManager.getAtlas(TextureAtlas.LOCATION_BLOCKS)
+            Minecraft.getInstance().atlasManager.getAtlasOrThrow(AtlasIds.BLOCKS)// FIXME: Is this right?
                 .getSprite(MissingTextureAtlasSprite.getLocation())
     }
 
@@ -32,7 +32,7 @@ class TextureAtlasSpriteRenderElement(val sprite: TextureAtlasSprite) : RenderEl
         style: HologramStyle, partialTicks: Float
     ) {
         val size = this.contentSize
-        style.guiGraphics.blitSprite(RenderType::guiTextured, sprite, 0, 0, size.width, size.height)
+        style.guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, 0, 0, size.width, size.height)
     }
 
     fun setRenderSize(width: Int, height: Int) {
