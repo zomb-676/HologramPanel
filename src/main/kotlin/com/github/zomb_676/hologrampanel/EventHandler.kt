@@ -18,10 +18,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
-import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
 import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.HoverEvent
@@ -263,11 +260,8 @@ object EventHandler {
             event.registerBelow(
                 VanillaGuiLayers.CROSSHAIR, HologramPanel.rl("interaction_mode_layer"), InteractionLayer.getLayer()
             )
-            event.registerAboveAll(HologramPanel.rl("cycle_selector"), object : LayeredDraw.Layer {
-                override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
-                    CycleSelector.render(guiGraphics, deltaTracker)
-                }
-            })
+            event.registerAboveAll(HologramPanel.rl("cycle_selector")
+            ) { guiGraphics, deltaTracker -> CycleSelector.render(guiGraphics, deltaTracker) }
             event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.Client.getLayer())
             event.registerAboveAll(HologramPanel.rl("drag_entries"), InteractionLayer.getDraggingLayer())
             event.registerBelowAll(HologramPanel.rl("transform_orientation"), TransformOrientation.getTransformOrientationLayer())

@@ -19,8 +19,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.neoforged.neoforge.client.gui.GuiLayer
 import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.ShapeRenderer
@@ -33,7 +33,7 @@ import org.joml.Vector3fc
 import kotlin.math.max
 
 object DebugHelper {
-    private class DrawHelper(val guiGraphics: GuiGraphics, val padding: Int = 2) {
+    private class DrawHelper(val guiGraphics: GuiGraphicsExtractor, val padding: Int = 2) {
         private val font = Minecraft.getInstance().font
         private var x: Int = 0
         private var y: Int = 0
@@ -198,8 +198,8 @@ object DebugHelper {
             }
         }
 
-        fun getLayer() = object : LayeredDraw.Layer {
-            override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+        fun getLayer() = object : GuiLayer {
+            override fun render(guiGraphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
                 val drawHelper = DrawHelper(guiGraphics)

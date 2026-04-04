@@ -218,8 +218,8 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
         }
 
         /**
-         * this will call [net.minecraft.client.gui.GuiGraphics.renderItemDecorations]
-         */
+         * this will call [net.minecraft.client.gui.GuiGraphicsExtractor.itemDecorations]
+         */// TODO: Determine whether this doc is correct now
         fun itemStack(name: String, itemStack: ItemStack): ItemStackElement {
             return ItemStackElement(itemStack = itemStack).attach(name)
         }

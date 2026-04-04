@@ -33,7 +33,7 @@ import com.google.common.collect.HashBiMap
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.renderer.CoreShaders
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import org.joml.Matrix4f
@@ -176,7 +176,7 @@ object HologramManager {
      *
      * update [HologramRenderState], [interactHologram], [interactiveTarget], [collapseTarget] and do render
      */
-    internal fun renderOverlayPart(guiGraphics: GuiGraphics, partialTicks: Float) = profilerStack("hologram_panel_render") {
+    internal fun renderOverlayPart(guiGraphics: GuiGraphicsExtractor, partialTicks: Float) = profilerStack("hologram_panel_render") {
         val context = RayTraceHelper.findTarget(32.0, partialTicks)
         if (context != null && !checkIdentityExist(context.getIdentityObject())) {
             val widget = RayTraceHelper.createHologramWidget(context, DisplayType.NORMAL)

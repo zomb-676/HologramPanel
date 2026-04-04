@@ -10,7 +10,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.renderer.CoreShaders
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.network.chat.Component
@@ -18,6 +18,7 @@ import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.annotations.ApiStatus
+import org.joml.Matrix3x2fStack
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector4f
@@ -27,10 +28,10 @@ import kotlin.math.max
 import kotlin.math.sin
 
 /**
- * a wrapped [GuiGraphics] which is intended for convenience use and customize widget style
+ * a wrapped [GuiGraphicsExtractor] which is intended for convenience use and customize widget style
  */
 interface HologramStyle {
-    val guiGraphics: GuiGraphics
+    val guiGraphics: GuiGraphicsExtractor
     var contextColor: Int
 
     fun drawFullyBackground(size : Size)
@@ -69,23 +70,23 @@ interface HologramStyle {
     fun elementPadding(): Int
 
     fun drawString(string: String, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
-        guiGraphics.drawString(font, string, x, y, color, false)
+        guiGraphics.text(font, string, x, y, color, false)
     }
 
     fun drawString(string: Component, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
-        guiGraphics.drawString(font, string, x, y, color, false)
+        guiGraphics.text(font, string, x, y, color, false)
     }
 
     fun drawString(string: FormattedCharSequence, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
-        guiGraphics.drawString(font, string, x, y, color, false)
+        guiGraphics.text(font, string, x, y, color, false)
     }
 
     fun drawHorizontalLine(left: Int, right: Int, y: Int, color: Int = contextColor) {
-        guiGraphics.hLine(left, right, y, color)
+        guiGraphics.horizontalLine(left, right, y, color)
     }
 
     fun drawVerticalLine(up: Int, down: Int, x: Int, color: Int = contextColor) {
-        guiGraphics.vLine(x, up, down, color)
+        guiGraphics.verticalLine(x, up, down, color)
     }
 
     fun move(x: Int, y: Int) {
@@ -161,10 +162,10 @@ interface HologramStyle {
         this.pose().mulPose(quaternion)
     }
 
-    fun push() = this.guiGraphics.pose().pushPose()
-    fun pop() = this.guiGraphics.pose().popPose()
+    fun push() = this.guiGraphics.pose().pushMatrix()
+    fun pop() = this.guiGraphics.pose().popMatrix()
 
-    fun pose(): PoseStack = this.guiGraphics.pose()
+    fun pose(): Matrix3x2fStack = this.guiGraphics.pose()
     fun poseMatrix(): Matrix4f = this.guiGraphics.pose().last().pose()
 
     val font: Font get() = Minecraft.getInstance().font
@@ -178,7 +179,7 @@ interface HologramStyle {
     }
 
     fun outline(size: Size, color: Int = contextColor) {
-        guiGraphics.renderOutline(0, 0, size.width, size.height, color)
+        guiGraphics.outline(0, 0, size.width, size.height, color)
     }
 
     @ApiStatus.NonExtendable
@@ -200,7 +201,7 @@ interface HologramStyle {
     }
 
     fun item(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
-        guiGraphics.renderItem(itemStack, x, y)
+        guiGraphics.item(itemStack, x, y)
     }
 
     fun itemFiltered(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
@@ -209,7 +210,7 @@ interface HologramStyle {
     }
 
     fun itemDecoration(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
-        guiGraphics.renderItemDecorations(font, itemStack, x, y)
+        guiGraphics.itemDecorations(font, itemStack, x, y)
     }
 
     fun itemWithDecoration(itemStack: ItemStack, x: Int = 0, y: Int = 0) {
@@ -386,7 +387,7 @@ interface HologramStyle {
         val ITEM_STACK_SIZE = Size.of(ITEM_STACK_LENGTH, ITEM_STACK_LENGTH)
     }
 
-    class DefaultStyle(override val guiGraphics: GuiGraphics) : HologramStyle {
+    class DefaultStyle(override val guiGraphics: GuiGraphicsExtractor) : HologramStyle {
         companion object {
             val SINGLE_INNER_PADDING = Padding(2)
             val COLLAPSE_SIZE = Size.of(4)

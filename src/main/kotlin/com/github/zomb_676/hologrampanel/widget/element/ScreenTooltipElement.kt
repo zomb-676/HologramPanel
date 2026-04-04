@@ -15,8 +15,8 @@ import net.neoforged.neoforge.client.ClientHooks
 import kotlin.math.max
 
 /**
- * similar to [net.minecraft.client.gui.GuiGraphics.renderTooltipInternal]
- */
+ * similar to [net.minecraft.client.gui.GuiGraphicsExtractor.tooltip]
+ */// TODO
 open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipType? = null) : RenderElement() {
     var sprite = item.get(DataComponents.TOOLTIP_STYLE)
     var tooltips: List<ClientTooltipComponent> = listOf()

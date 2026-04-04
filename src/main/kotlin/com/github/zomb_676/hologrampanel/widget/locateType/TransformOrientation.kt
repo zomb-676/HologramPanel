@@ -9,8 +9,8 @@ import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.neoforged.neoforge.client.gui.GuiLayer
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.world.entity.player.Player
 import org.joml.Matrix4f
@@ -112,7 +112,7 @@ enum class TransformOrientation {
         private const val Y_COLOR = 0xff00ff00.toInt()
         private const val Z_COLOR = 0xff0000ff.toInt()
 
-        fun getTransformOrientationLayer(): LayeredDraw.Layer = object : LayeredDraw.Layer {
+        fun getTransformOrientationLayer(): GuiLayer = object : GuiLayer {
             private fun addLine(
                 begin: ScreenPosition,
                 end: ScreenPosition,
@@ -137,7 +137,7 @@ enum class TransformOrientation {
                 }
             }
 
-            override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+            override fun render(guiGraphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
                 val target = PanelOperatorManager.selectedTarget ?: return
                 val locate = target.locate as? LocateInWorld ?: return
                 val matrix = guiGraphics.pose().last().pose()

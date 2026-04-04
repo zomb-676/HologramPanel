@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.network.chat.Component
 import net.minecraft.util.profiling.Profiler
 import net.minecraft.util.profiling.ProfilerFiller
@@ -15,6 +15,7 @@ import net.neoforged.bus.api.Event
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.common.ModConfigSpec
 import net.neoforged.neoforge.common.NeoForge
+import org.joml.Matrix3x2fStack
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL
@@ -46,7 +47,13 @@ inline fun PoseStack.stack(crossinline code: () -> Unit) {
     this.popPose()
 }
 
-inline fun GuiGraphics.stack(crossinline code: () -> Unit) {
+inline fun Matrix3x2fStack.stack(crossinline code: () -> Unit) {
+    this.pushMatrix()
+    code.invoke()
+    this.popMatrix()
+}
+
+inline fun GuiGraphicsExtractor.stack(crossinline code: () -> Unit) {
     this.pose().stack(code)
 }
 
@@ -150,7 +157,7 @@ private object ConfigSaveHelper {
                 } catch (e: Throwable) {
                     HologramPanel.LOGGER.debug("config: path({}), value:{} failed to save", value.path.joinToString(), value.get())
                     HologramPanel.LOGGER.debug("Error while saving config", e)
-                    Minecraft.getInstance().gui.chat.addMessage(Component.literal("failed to save config, see log for detailed information"))
+                    Minecraft.getInstance().gui.chat.addClientSystemMessage(Component.literal("failed to save config, see log for detailed information"))
                 }
             }
         } finally {
@@ -203,7 +210,7 @@ fun <T : Event> T.dispatch(bus: IEventBus): T {
 
 fun <T : Event> T.dispatchForge() = dispatch(NeoForge.EVENT_BUS)
 
-fun addClientMessage(message: Component) = Minecraft.getInstance().gui.chat.addMessage(message)
+fun addClientMessage(message: Component) = Minecraft.getInstance().gui.chat.addClientSystemMessage(message)
 
 fun addClientMessage(message: String) = addClientMessage(Component.literal(message))
 

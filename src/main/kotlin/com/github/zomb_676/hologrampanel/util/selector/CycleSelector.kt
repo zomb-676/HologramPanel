@@ -12,7 +12,7 @@ import com.github.zomb_676.hologrampanel.util.stack
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
@@ -49,7 +49,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     private var canBackToParent = false
 
-    private fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
+    private fun render(graphics: GuiGraphicsExtractor, tracker: DeltaTracker) {
         this.current = null
         run {
             val nextChildren = this.nextGroup
@@ -154,7 +154,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     companion object {
 
-        fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+        fun render(guiGraphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
             val instance = instance ?: return
             instance.render(guiGraphics, deltaTracker)
         }
