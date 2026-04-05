@@ -115,7 +115,7 @@ interface HologramWidgetComponent<T : Any> {
             val descriptionSize = this.descriptionSize(target, style, displayType)
             if (style.checkMouseInSize(this.visualSize)) {
                 style.stack {
-                    style.pose().translate(0f, 0f, 100f)
+                    style.pose().translate(0f, 0f/*, 100f*/)// TODO
                     style.drawOutlineSelected(this.visualSize)
                 }
             }

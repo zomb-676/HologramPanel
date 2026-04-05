@@ -13,11 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(RenderTarget.class)
 public class RenderTargetMixin {
-    @Inject(method = "bindWrite", at = @At("HEAD"), cancellable = true)
-    public void bindWrite(CallbackInfo ci) {
-        RenderTarget target = (RenderTarget) (Object) this;
-        if (target instanceof MainTarget && OpenGLStateManager.preventMainBindWrite) {
-            ci.cancel();
-        }
-    }
+//    @Inject(method = "bindWrite", at = @At("HEAD"), cancellable = true)
+//    public void bindWrite(CallbackInfo ci) {
+//        RenderTarget target = (RenderTarget) (Object) this;
+//        if (target instanceof MainTarget && OpenGLStateManager.preventMainBindWrite) {
+//            ci.cancel();
+//        }
+//    }
 }

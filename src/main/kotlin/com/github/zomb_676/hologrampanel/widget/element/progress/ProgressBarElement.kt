@@ -44,7 +44,7 @@ abstract class ProgressBarElement(val progress: ProgressData, var barWidth: Floa
                 right = barWidth * percent
             } else {
                 left = (1.0f - percent) * barWidth
-                right = barWidth.toFloat()
+                right = barWidth
             }
             this.fillBar(style, left, right, height, percent)
         }

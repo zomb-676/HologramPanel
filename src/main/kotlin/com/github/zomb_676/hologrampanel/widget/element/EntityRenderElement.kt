@@ -3,9 +3,6 @@ package com.github.zomb_676.hologrampanel.widget.element
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.util.stack
-import com.mojang.blaze3d.platform.Lighting
-import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LightTexture
 import net.minecraft.world.entity.Entity
 import org.joml.Quaternionf
 import kotlin.math.floor
@@ -27,21 +24,21 @@ open class EntityRenderElement(val entity: Entity, val entityScale: Double) : Re
     override fun render(style: HologramStyle, partialTicks: Float) {
         val guiGraphics = style.guiGraphics
         style.stack {
-            style.translate(contentSize.width.toFloat() / 2, contentSize.height.toFloat(), 50.0f)
-            val entityScale = entityScale.toFloat()
-            style.scale(entityScale, entityScale, -entityScale)
-            style.mulPose(QUATERNION)
-            guiGraphics.flush()
-            Lighting.setupForEntityInInventory()
-            val dispatcher = Minecraft.getInstance().entityRenderDispatcher
-
-            dispatcher.setRenderShadow(false)
-            dispatcher.render(
-                entity, 0.0, 0.0, 0.0, 1.0f, guiGraphics.pose(), guiGraphics.bufferSource, LightTexture.FULL_BRIGHT
-            )
-            guiGraphics.flush()
-            dispatcher.setRenderShadow(true)
-            Lighting.setupFor3DItems()
+//            style.translate(contentSize.width.toFloat() / 2, contentSize.height.toFloat(), 50.0f)
+//            val entityScale = entityScale.toFloat()
+//            style.scale(entityScale, entityScale, -entityScale)
+//            style.mulPose(QUATERNION)
+//            guiGraphics.flush()
+//            Lighting.setupForEntityInInventory()
+//            val dispatcher = Minecraft.getInstance().entityRenderDispatcher
+//
+//            dispatcher.setRenderShadow(false)
+//            dispatcher.render(
+//                entity, 0.0, 0.0, 0.0, 1.0f, guiGraphics.pose(), guiGraphics.bufferSource, LightTexture.FULL_BRIGHT
+//            )
+//            guiGraphics.flush()
+//            dispatcher.setRenderShadow(true)
+//            Lighting.setupFor3DItems()// TODO
         }
     }
 

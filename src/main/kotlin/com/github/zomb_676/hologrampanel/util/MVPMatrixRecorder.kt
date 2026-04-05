@@ -21,7 +21,7 @@ object MVPMatrixRecorder {
     private val transformMatrix: Matrix4f = Matrix4f()
 
     fun recordMVPMatrixByCurrentState() {
-        this.transformMatrix.set(RenderSystem.getProjectionMatrix()).mul(RenderSystem.getModelViewMatrix())
+//        this.transformMatrix.set(RenderSystem.getProjectionMatrix()).mul(RenderSystem.getModelViewMatrix())
     }
 
     fun transform(vec3: Vec3) = transform(vec3.x, vec3.y, vec3.z)
@@ -38,7 +38,7 @@ object MVPMatrixRecorder {
         transform(f.x, f.y, f.z)
 
     fun transform(x: Double, y: Double, z: Double): ScreenCoordinate {
-        val cameraPosition = Minecraft.getInstance().gameRenderer.mainCamera.position
+        val cameraPosition = Minecraft.getInstance().gameRenderer.mainCamera.position()
         val vector = Vector4f(
             (x - cameraPosition.x).toFloat(),
             (y - cameraPosition.y).toFloat(),

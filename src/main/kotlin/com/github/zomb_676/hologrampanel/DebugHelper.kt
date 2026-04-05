@@ -9,25 +9,20 @@ import com.github.zomb_676.hologrampanel.projector.ProjectorManager
 import com.github.zomb_676.hologrampanel.util.AutoTicker
 import com.github.zomb_676.hologrampanel.util.FontBufferSource
 import com.github.zomb_676.hologrampanel.util.InteractiveEntry
-import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import com.mojang.blaze3d.vertex.BufferBuilder
+import com.mojang.blaze3d.vertex.PoseStack
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphicsExtractor
-import net.neoforged.neoforge.client.gui.GuiLayer
-import net.minecraft.client.renderer.CoreShaders
-import net.minecraft.client.renderer.LightTexture
-import net.minecraft.client.renderer.ShapeRenderer
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.util.ARGB
 import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
+import net.neoforged.neoforge.client.gui.GuiLayer
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import org.joml.Vector3fc
 import kotlin.math.max
@@ -111,9 +106,9 @@ object DebugHelper {
             val x = pos.x()
             val y = pos.y()
             val z = pos.z()
-            ShapeRenderer.addChainedFilledBoxVertices(
-                poseStack, builder, x - OFFSET, y - OFFSET, z - OFFSET, x + OFFSET, y + OFFSET, z + OFFSET, r, g, b, a
-            )
+//            ShapeRenderer.addChainedFilledBoxVertices(
+//                poseStack, builder, x - OFFSET, y - OFFSET, z - OFFSET, x + OFFSET, y + OFFSET, z + OFFSET, r, g, b, a
+//            )// TODO
         }
 
         fun totalTickDataSize(): String {
@@ -136,66 +131,66 @@ object DebugHelper {
         val fontBufferSource = FontBufferSource()
 
         fun renderLevelLast(event: RenderLevelStageEvent) {
-            if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
-            val pose = event.poseStack
-            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
-            val camPos = event.camera.position
-            pose.translate(-camPos.x, -camPos.y, -camPos.z)
-
-            if (Config.Client.renderDebugHologramLifeCycleBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
-                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-                RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-                RenderSystem.disableDepthTest()
-                if (queryUpdateData.isNotEmpty()) {
-                    val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
-                    while (iterator.hasNext()) {
-                        val next = iterator.next()
-                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, UPDATE_END_COLOR, UPDATE_BEGIN_COLOR)
-                        val position = next.key.state.getRenderWorldPosition()
-                        fill(position, color, pose, builder)
-                    }
-                }
-                if (popUpData.isNotEmpty()) {
-                    val iterator = popUpData.object2IntEntrySet().fastIterator()
-                    while (iterator.hasNext()) {
-                        val next = iterator.next()
-                        val color =
-                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, POP_UP_END_COLOR, POP_UP_BEGIN_COLOR)
-                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
-                    }
-                }
-                if (removeData.isNotEmpty()) {
-                    val iterator = removeData.object2IntEntrySet().fastIterator()
-                    while (iterator.hasNext()) {
-                        val next = iterator.next()
-                        val color =
-                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, REMOVE_END_COLOR, REMOVE_BEGIN_COLOR)
-                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
-                    }
-                }
-                BufferUploader.drawWithShader(builder.buildOrThrow())
-                RenderSystem.enableDepthTest()
-            }
-            if (Config.Client.renderNetworkDebugInfo.get() && queryUpdateData.isNotEmpty()) {
-                val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
-                val font = Minecraft.getInstance().font
-                while (iterator.hasNext()) {
-                    val next = iterator.next()
-                    val position = next.key.state.getRenderWorldPosition()
-                    val size = next.key.size
-                    pose.stack {
-                        pose.translate(position.x(), position.y() + 0.6f, position.z())
-                        pose.mulPose(Minecraft.getInstance().entityRenderDispatcher.cameraOrientation())
-                        pose.scale(0.0125f, -0.0125f, 0.0125f)
-                        val text = byteSize(size)
-                        font.drawInBatch(
-                            text, -(font.width(text) / 2).toFloat(), 0f, -2130706433, false, pose.last().pose(),
-                            fontBufferSource, Font.DisplayMode.SEE_THROUGH, 1056964608, LightTexture.FULL_BRIGHT
-                        )
-                    }
-                }
-                fontBufferSource.endFontBatch()
-            }
+//            if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
+//            val pose = event.poseStack
+//            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
+//            val camPos = event.camera.position
+//            pose.translate(-camPos.x, -camPos.y, -camPos.z)
+//
+//            if (Config.Client.renderDebugHologramLifeCycleBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
+//                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+//                RenderSystem.setShader(CoreShaders.POSITION_COLOR)
+//                RenderSystem.disableDepthTest()
+//                if (queryUpdateData.isNotEmpty()) {
+//                    val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
+//                    while (iterator.hasNext()) {
+//                        val next = iterator.next()
+//                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, UPDATE_END_COLOR, UPDATE_BEGIN_COLOR)
+//                        val position = next.key.state.getRenderWorldPosition()
+//                        fill(position, color, pose, builder)
+//                    }
+//                }
+//                if (popUpData.isNotEmpty()) {
+//                    val iterator = popUpData.object2IntEntrySet().fastIterator()
+//                    while (iterator.hasNext()) {
+//                        val next = iterator.next()
+//                        val color =
+//                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, POP_UP_END_COLOR, POP_UP_BEGIN_COLOR)
+//                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
+//                    }
+//                }
+//                if (removeData.isNotEmpty()) {
+//                    val iterator = removeData.object2IntEntrySet().fastIterator()
+//                    while (iterator.hasNext()) {
+//                        val next = iterator.next()
+//                        val color =
+//                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, REMOVE_END_COLOR, REMOVE_BEGIN_COLOR)
+//                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
+//                    }
+//                }
+//                BufferUploader.drawWithShader(builder.buildOrThrow())
+//                RenderSystem.enableDepthTest()
+//            }
+//            if (Config.Client.renderNetworkDebugInfo.get() && queryUpdateData.isNotEmpty()) {
+//                val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
+//                val font = Minecraft.getInstance().font
+//                while (iterator.hasNext()) {
+//                    val next = iterator.next()
+//                    val position = next.key.state.getRenderWorldPosition()
+//                    val size = next.key.size
+//                    pose.stack {
+//                        pose.translate(position.x(), position.y() + 0.6f, position.z())
+//                        pose.mulPose(Minecraft.getInstance().entityRenderDispatcher.cameraOrientation())
+//                        pose.scale(0.0125f, -0.0125f, 0.0125f)
+//                        val text = byteSize(size)
+//                        font.drawInBatch(
+//                            text, -(font.width(text) / 2).toFloat(), 0f, -2130706433, false, pose.last().pose(),
+//                            fontBufferSource, Font.DisplayMode.SEE_THROUGH, 1056964608, LightTexture.FULL_BRIGHT
+//                        )
+//                    }
+//                }
+//                fontBufferSource.endFontBatch()
+//            }// TODO
         }
 
         fun getLayer() = object : GuiLayer {

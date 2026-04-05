@@ -59,7 +59,7 @@ object Config {
 
     private fun onLoad(event: ModConfigEvent.Loading) {
         if (event.config.spec == Client.space) {
-            Client.tryValidate()
+//            Client.tryValidate()// TODO
         }
         PluginManager.getInstance().onPluginSettingChange(event.config)
     }

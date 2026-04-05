@@ -87,8 +87,8 @@ class LocateFreelyInWorld() : LocateInWorld {
     }
 
     fun byCamera(camera: Camera): LocateFreelyInWorld {
-        this.xRot = camera.xRot
-        this.yRot = -camera.yRot
+        this.xRot = camera.xRot()
+        this.yRot = -camera.yRot()
         this.roll = camera.roll
         this.updateRotation()
         this.updateVectors()

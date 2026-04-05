@@ -40,7 +40,6 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 kotlin {
     compilerOptions {
         freeCompilerArgs.add('-Xcontext-parameters')
-        freeCompilerArgs.add('-Xwhen-guards')
     }
 }
 

@@ -27,16 +27,16 @@ open class LivingEntityRenderElement(val entity: LivingEntity, val entityScale: 
     }
 
     override fun render(style: HologramStyle, partialTicks: Float) {
-        InventoryScreen.renderEntityInInventory(
-            style.guiGraphics,
-            contentSize.width.toFloat() / 2,
-            contentSize.height.toFloat(),
-            entityScale.toFloat(),
-            EMPTY_VECTOR,
-            QUATERNION,
-            null,
-            entity
-        )
+//        InventoryScreen.renderEntityInInventory(
+//            style.guiGraphics,
+//            contentSize.width.toFloat() / 2,
+//            contentSize.height.toFloat(),
+//            entityScale.toFloat(),
+//            EMPTY_VECTOR,
+//            QUATERNION,
+//            null,
+//            entity
+//        )// TODO
     }
 
     protected fun renderEntityOutline(style: HologramStyle) {
@@ -45,10 +45,10 @@ open class LivingEntityRenderElement(val entity: LivingEntity, val entityScale: 
         val centerX = contentSize.width / 2
         val halfWidth = entity.bbWidth * entityScale * getScale()
         val height = entity.bbHeight * entityScale * getScale()
-        graphics.hLine(-1000, 1000, contentSize.height, colorWhite)
-        graphics.hLine(-1000, 1000, (contentSize.height - height).toInt(), colorWhite)
-        graphics.vLine((centerX - halfWidth).toInt(), -1000, +1000, colorWhite)
-        graphics.vLine((centerX + halfWidth).toInt(), -1000, +1000, colorWhite)
+        graphics.horizontalLine(-1000, 1000, contentSize.height, colorWhite)
+        graphics.horizontalLine(-1000, 1000, (contentSize.height - height).toInt(), colorWhite)
+        graphics.verticalLine((centerX - halfWidth).toInt(), -1000, +1000, colorWhite)
+        graphics.verticalLine((centerX + halfWidth).toInt(), -1000, +1000, colorWhite)
     }
 
 }

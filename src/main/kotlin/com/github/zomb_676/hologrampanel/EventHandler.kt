@@ -275,7 +275,7 @@ object EventHandler {
             HologramPanel.serverInstalled = false
         }
 
-        fun onRenderLevelStage(event: RenderLevelStageEvent) {
+        fun onRenderLevelStage(event: RenderLevelStageEvent.AfterTranslucentBlocks) {
             val pose = event.poseStack
             pose.stack {
                 DebugHelper.Client.renderLevelLast(event)
@@ -294,7 +294,7 @@ object EventHandler {
         ).playToClient(
             ComponentResponseDataPayload.TYPE, ComponentResponseDataPayload.STREAM_CODEC, ComponentResponseDataPayload.HANDLE
         ).playBidirectional(
-            SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE
+            SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE, SyncClosePayload.HANDLE
         ).playToClient(
             EntityConversationPayload.TYPE, EntityConversationPayload.STREAM_CODEC, EntityConversationPayload.HANDLE
         ).playToServer(
@@ -304,11 +304,11 @@ object EventHandler {
         ).playToServer(
             ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
         ).playBidirectional(
-            MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE
+            MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE, MimicPayload.HANDLE
         ).playToServer(
             TransTargetPayload.TYPE, TransTargetPayload.STREAM_CODEC, TransTargetPayload.HANDLE
         ).playBidirectional(
-            SetProjectorSettingPayload.TYPE, SetProjectorSettingPayload.STREAM_CODEC, SetProjectorSettingPayload.HANDLE
+            SetProjectorSettingPayload.TYPE, SetProjectorSettingPayload.STREAM_CODEC, SetProjectorSettingPayload.HANDLE, SetProjectorSettingPayload.HANDLE
         )
     }
 
