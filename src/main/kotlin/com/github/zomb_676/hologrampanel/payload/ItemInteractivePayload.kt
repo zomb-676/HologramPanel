@@ -113,12 +113,10 @@ class ItemInteractivePayload(
                                 Transaction.openRoot().use {
                                     val ir = ItemResource.of(storeItem)
                                     var toStoreItem = playerInv.extract(playerInvIndex, ir, storeItem.count, it)
-                                    it.commit()
                                     storeItem.count -= toStoreItem
 
                                     while (storeIndex < cap.size()) {
                                         toStoreItem -= cap.insert(storeIndex, ir, toStoreItem, it)
-                                        it.commit()
                                         if (toStoreItem <= 0) {
                                             break
                                         } else {

@@ -18,8 +18,8 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
     ): Boolean {
         val entity = context.getEntity<ItemEntity>() ?: return false
         val cap = TransHandle.ItemEnergyTransHandle.getHandle(entity.item) ?: return false
-        targetData.putInt("energy_stored", cap.energyStored)
-        targetData.putInt("energy_max", cap.maxEnergyStored)
+        targetData.putInt("energy_stored", cap.amountAsInt)
+        targetData.putInt("energy_max", cap.capacityAsInt)
         return true
     }
 

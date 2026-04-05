@@ -40,7 +40,7 @@ object DebugHelper {
         private var xBegin = 0
         private var yStep = 0
         fun drawString(str: String): DrawHelper {
-            guiGraphics.drawString(font, str, x, y, -1)
+            guiGraphics.text(font, str, x, y, -1)
             x += font.width(str)
             yStep = max(yStep, font.lineHeight)
             return this

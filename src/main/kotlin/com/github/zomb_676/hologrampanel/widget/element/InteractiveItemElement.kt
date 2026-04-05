@@ -16,7 +16,8 @@ import net.minecraft.client.player.LocalPlayer
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.items.IItemHandler
+import net.neoforged.neoforge.transfer.ResourceHandler
+import net.neoforged.neoforge.transfer.item.ItemResource
 import org.lwjgl.glfw.GLFW
 
 /**
@@ -26,7 +27,7 @@ open class InteractiveItemElement private constructor(
     item: ItemStack,
     val interactiveSlot: Int,
     val source: TransSource<*>,
-    val transPath: TransHandle<*, IItemHandler>
+    val transPath: TransHandle<*, ResourceHandler<ItemResource>>
 ) : ItemStackElement(true, item),
     HologramInteractive {
 
@@ -35,7 +36,7 @@ open class InteractiveItemElement private constructor(
             item: ItemStack,
             interactiveSlot: Int,
             source: TransSource<S>,
-            transPath: TransHandle<S, IItemHandler>
+            transPath: TransHandle<S, ResourceHandler<ItemResource>>
         ): InteractiveItemElement {
             return InteractiveItemElement(item, interactiveSlot, source, transPath)
         }
@@ -112,7 +113,7 @@ open class InteractiveItemElement private constructor(
         }
     }
 
-    fun <S : Any> getTransData(count: Int): Triple<TransSource<S>, TransHandle<S, IItemHandler>, TransPath<IItemHandler, ItemStack>> {
+    fun <S : Any> getTransData(count: Int): Triple<TransSource<S>, TransHandle<S, ResourceHandler<ItemResource>>, TransPath<ResourceHandler<ItemResource>, ItemStack>> {
         return Triple(this.source, this.transPath, TransPath.Item.ByIndex(this.interactiveSlot, count)).unsafeCast()
     }
 

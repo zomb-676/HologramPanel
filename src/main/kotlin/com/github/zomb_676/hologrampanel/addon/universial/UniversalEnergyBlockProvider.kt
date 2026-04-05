@@ -17,8 +17,8 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val cap = TransHandle.BlockEnergyTransHandle.getHandleNullable(context.getBlockEntity()) ?: return false
-        targetData.putInt("energy_stored", cap.energyStored)
-        targetData.putInt("energy_max", cap.maxEnergyStored)
+        targetData.putInt("energy_stored", cap.amountAsInt)
+        targetData.putInt("energy_max", cap.capacityAsInt)
         return true
     }
 

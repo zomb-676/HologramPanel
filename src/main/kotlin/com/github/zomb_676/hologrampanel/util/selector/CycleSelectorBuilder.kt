@@ -96,7 +96,7 @@ class CycleSelectorBuilder {
 
     class GroupEntryBuilder {
         val children: MutableList<CycleEntry> = mutableListOf()
-        private var self: CycleEntry? = null
+        private var self: CycleEntry.Single? = null
 
         fun add(code: SingleEntryBuilder.() -> Unit) {
             val builder = SingleEntryBuilder()
@@ -143,7 +143,7 @@ class CycleSelectorBuilder {
             if (self == null) {
                 adjustGroup {}
             }
-            return object : CycleEntry.Group, CycleEntry.Single by self {
+            return object : CycleEntry.Group, CycleEntry.Single by self as CycleEntry.Single {
                 override fun children(): List<CycleEntry> = children
                 override fun onClick(callback: CycleEntry.SelectorCallback, trigType: CycleEntry.TrigType) {
                     callback.openGroup(this)

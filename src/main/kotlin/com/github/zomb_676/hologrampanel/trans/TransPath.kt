@@ -9,6 +9,13 @@ import net.neoforged.neoforge.energy.IEnergyStorage
 import net.neoforged.neoforge.fluids.FluidStack
 import net.neoforged.neoforge.fluids.capability.IFluidHandler
 import net.neoforged.neoforge.items.IItemHandler
+import net.neoforged.neoforge.transfer.ResourceHandler
+import net.neoforged.neoforge.transfer.energy.EnergyHandler
+import net.neoforged.neoforge.transfer.fluid.FluidResource
+import net.neoforged.neoforge.transfer.fluid.FluidUtil
+import net.neoforged.neoforge.transfer.item.ItemResource
+import net.neoforged.neoforge.transfer.item.ItemUtil
+import net.neoforged.neoforge.transfer.transaction.Transaction
 
 /**
  * query/store actual/test object in handles
@@ -65,13 +72,13 @@ sealed interface TransPath<in H : Any, R : Any> {
      */
     var count: Int
 
-    sealed interface Item : TransPath<IItemHandler, ItemStack> {
+    sealed interface Item : TransPath<ResourceHandler<ItemResource>, ItemStack> {
 
         override fun getCount(obj: ItemStack): Int = obj.count
 
         override fun isEmpty(obj: ItemStack): Boolean = obj.isEmpty
 
-        fun IItemHandler.isInRange(index: Int) = index >= 0 && index < this.slots
+        fun ResourceHandler<ItemResource>.isInRange(index: Int) = index >= 0 && index < this.size()
 
         /**
          * operate items at specific slot and
@@ -81,32 +88,46 @@ sealed interface TransPath<in H : Any, R : Any> {
          * @property target work as a filter, use [ItemStack.isSameItemSameComponents]
          */
         data class ByIndex(val index: Int, override var count: Int, val target: ItemStack = ItemStack.EMPTY) : Item {
-            override fun extractActual(handle: IItemHandler): ItemStack {
+            override fun extractActual(handle: ResourceHandler<ItemResource>): ItemStack {
                 if (handle.isInRange(index)) {
-                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, handle.getStackInSlot(index))) return ItemStack.EMPTY
-                    return handle.extractItem(index, count, false)
+                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, ItemUtil.getStack(handle, index))) return ItemStack.EMPTY
+                    return Transaction.openRoot().use {
+                        val result = handle.extract(index, ItemResource.of(target.item), count, it)
+                        it.commit()
+                        ItemStack(target.item, result)
+                    }
                 }
                 return ItemStack.EMPTY
             }
 
-            override fun extractTest(handle: IItemHandler): ItemStack {
+            override fun extractTest(handle: ResourceHandler<ItemResource>): ItemStack {
                 if (handle.isInRange(index)) {
-                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, handle.getStackInSlot(index))) return ItemStack.EMPTY
-                    return handle.extractItem(index, count, true)
+                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, ItemUtil.getStack(handle, index))) return ItemStack.EMPTY
+                    return Transaction.openRoot().use {
+                        val result = handle.extract(index, ItemResource.of(target.item), count, it)
+                        ItemStack(target.item, result)
+                    }
                 }
                 return ItemStack.EMPTY
             }
 
-            override fun storeActual(handle: IItemHandler, store: ItemStack): ItemStack {
+            override fun storeActual(handle: ResourceHandler<ItemResource>, store: ItemStack): ItemStack {
                 if (handle.isInRange(index)) {
-                    return handle.insertItem(index, store, false)
+                    return Transaction.openRoot().use {
+                        val result = handle.insert(index, ItemResource.of(store.item), store.count, it)
+                        it.commit()
+                        ItemStack(store.item, store.count - result)
+                    }
                 }
                 return store
             }
 
-            override fun storeTest(handle: IItemHandler, store: ItemStack): ItemStack {
+            override fun storeTest(handle: ResourceHandler<ItemResource>, store: ItemStack): ItemStack {
                 if (handle.isInRange(index)) {
-                    return handle.insertItem(index, store, true)
+                    return Transaction.openRoot().use {
+                        val result = handle.insert(index, ItemResource.of(store.item), store.count, it)
+                        ItemStack(store.item, store.count - result)
+                    }
                 }
                 return store
             }
@@ -131,45 +152,55 @@ sealed interface TransPath<in H : Any, R : Any> {
                     itemStack.count = value
                 }
 
-            override fun extractActual(handle: IItemHandler): ItemStack {
+            override fun extractActual(handle: ResourceHandler<ItemResource>): ItemStack {
                 val itemReturn = itemStack.copyWithCount(0)
-                for (index in 0..<handle.slots) {
+                for (index in 0..<handle.size()) {
                     if (itemReturn.count < itemStack.count) {
-                        if (ItemStack.isSameItemSameComponents(itemStack, handle.getStackInSlot(index))) {
-                            itemReturn.count += handle.extractItem(index, itemStack.count - itemReturn.count, false).count
+                        if (ItemStack.isSameItemSameComponents(itemStack, ItemUtil.getStack(handle, index))) {
+                            Transaction.openRoot().use {
+                                itemReturn.count += handle.extract(index, ItemResource.of(itemStack), itemStack.count - itemReturn.count, it)
+                                it.commit()
+                            }
                         }
                     } else break
                 }
                 return itemReturn
             }
 
-            override fun extractTest(handle: IItemHandler): ItemStack {
+            override fun extractTest(handle: ResourceHandler<ItemResource>): ItemStack {
                 val itemReturn = itemStack.copyWithCount(0)
-                for (index in 0..<handle.slots) {
+                for (index in 0..<handle.size()) {
                     if (itemReturn.count < itemStack.count) {
-                        if (ItemStack.isSameItemSameComponents(itemStack, handle.getStackInSlot(index))) {
-                            itemReturn.count += handle.extractItem(index, itemStack.count - itemReturn.count, true).count
+                        if (ItemStack.isSameItemSameComponents(itemStack, ItemUtil.getStack(handle, index))) {
+                            Transaction.openRoot().use {
+                                itemReturn.count += handle.extract(index, ItemResource.of(itemStack), itemStack.count - itemReturn.count, it)
+                            }
                         }
                     } else break
                 }
                 return itemReturn
             }
 
-            override fun storeActual(handle: IItemHandler, store: ItemStack): ItemStack {
-                var remain = store
-                for (index in 0..<handle.slots) {
+            override fun storeActual(handle: ResourceHandler<ItemResource>, store: ItemStack): ItemStack {
+                val remain = store.copy()
+                for (index in 0..<handle.size()) {
                     if (remain.count > 0) {
-                        remain = handle.insertItem(index, remain, false)
+                        Transaction.openRoot().use {
+                            remain.count -= handle.insert(index, ItemResource.of(remain), remain.count, it)
+                            it.commit()
+                        }
                     } else break
                 }
                 return remain
             }
 
-            override fun storeTest(handle: IItemHandler, store: ItemStack): ItemStack {
-                var remain = store
-                for (index in 0..<handle.slots) {
+            override fun storeTest(handle: ResourceHandler<ItemResource>, store: ItemStack): ItemStack {
+                val remain = store.copy()
+                for (index in 0..<handle.size()) {
                     if (remain.count > 0) {
-                        remain = handle.insertItem(index, remain, true)
+                        Transaction.openRoot().use {
+                            remain.count -= handle.insert(index, ItemResource.of(remain), remain.count, it)
+                        }
                     } else break
                 }
                 return remain
@@ -210,17 +241,29 @@ sealed interface TransPath<in H : Any, R : Any> {
         }
     }
 
-    sealed interface Energy : TransPath<IEnergyStorage, Int> {
+    sealed interface Energy : TransPath<EnergyHandler, Int> {
 
         override fun isEmpty(obj: Int): Boolean = obj <= 0
 
         override fun getCount(obj: Int): Int = obj
 
         class ByAmount(override var count: Int) : Energy {
-            override fun extractActual(handle: IEnergyStorage): Int = handle.extractEnergy(count, false)
-            override fun extractTest(handle: IEnergyStorage): Int = handle.extractEnergy(count, true)
-            override fun storeActual(handle: IEnergyStorage, store: Int): Int = count - handle.receiveEnergy(count, false)
-            override fun storeTest(handle: IEnergyStorage, store: Int): Int = count - handle.receiveEnergy(count, false)
+            override fun extractActual(handle: EnergyHandler): Int = Transaction.openRoot().use {
+                val ret = handle.extract(count, it)
+                it.commit()
+                ret
+            }
+            override fun extractTest(handle: EnergyHandler): Int = Transaction.openRoot().use {
+                handle.extract(count, it)
+            }
+            override fun storeActual(handle: EnergyHandler, store: Int): Int = Transaction.openRoot().use {
+                val ret = count - handle.insert(count, it)
+                it.commit()
+                ret
+            }
+            override fun storeTest(handle: EnergyHandler, store: Int): Int = Transaction.openRoot().use {
+                count - handle.insert(count, it)
+            }
         }
 
         companion object {
@@ -236,13 +279,13 @@ sealed interface TransPath<in H : Any, R : Any> {
         }
     }
 
-    sealed interface Fluid : TransPath<IFluidHandler, FluidStack> {
+    sealed interface Fluid : TransPath<ResourceHandler<FluidResource>, FluidStack> {
         override fun getCount(obj: FluidStack): Int = obj.amount
 
         override fun isEmpty(obj: FluidStack): Boolean = obj.isEmpty
 
         /**
-         * @property index the target tank in [IFluidHandler]
+         * @property index the target tank in [ResourceHandler]
          * @property stack operate target, [FluidStack.amount] implementation [count]
          */
         class ByIndex(val index: Int, val stack: FluidStack) : Fluid {
@@ -252,37 +295,49 @@ sealed interface TransPath<in H : Any, R : Any> {
                     stack.amount = value
                 }
 
-            override fun extractActual(handle: IFluidHandler): FluidStack {
-                if (index in 0..<handle.tanks) {
+            override fun extractActual(handle: ResourceHandler<FluidResource>): FluidStack {// TODO: sus code, figure out its usage
+                if (index in 0..<handle.size()) {
                     if (stack.isEmpty) return FluidStack.EMPTY
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
-                    return handle.drain(stack, IFluidHandler.FluidAction.EXECUTE)
+                    if (FluidStack.isSameFluidSameComponents(stack, FluidUtil.getStack(handle, index))) return FluidStack.EMPTY
+                    return Transaction.openRoot().use {
+                        val ret = handle.extract(index, FluidResource.of(stack), stack.amount, it)
+                        it.commit()
+                        FluidStack(stack.fluid, ret)
+                    }
                 } else return FluidStack.EMPTY
             }
 
-            override fun extractTest(handle: IFluidHandler): FluidStack {
-                if (index in 0..<handle.tanks) {
+            override fun extractTest(handle: ResourceHandler<FluidResource>): FluidStack {
+                if (index in 0..<handle.size()) {
                     if (stack.isEmpty) return FluidStack.EMPTY
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
-                    return handle.drain(stack, IFluidHandler.FluidAction.SIMULATE)
+                    if (FluidStack.isSameFluidSameComponents(stack, FluidUtil.getStack(handle, index))) return FluidStack.EMPTY
+                    return Transaction.openRoot().use {
+                        val ret = handle.extract(index, FluidResource.of(stack), stack.amount, it)
+                        FluidStack(stack.fluid, ret)
+                    }
                 } else return FluidStack.EMPTY
             }
 
-            override fun storeActual(handle: IFluidHandler, store: FluidStack): FluidStack {
-                if (index in 0..<handle.tanks) {
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
-                    val filledCount = handle.fill(stack, IFluidHandler.FluidAction.EXECUTE)
-                    stack.amount -= filledCount
-                    return stack
+            override fun storeActual(handle: ResourceHandler<FluidResource>, store: FluidStack): FluidStack {
+                if (index in 0..<handle.size()) {
+                    if (FluidStack.isSameFluidSameComponents(stack, FluidUtil.getStack(handle, index))) return FluidStack.EMPTY
+                    return Transaction.openRoot().use {
+                        val filledCount = handle.insert(index, FluidResource.of(stack), stack.amount, it)
+                        it.commit()
+                        stack.amount -= filledCount
+                        stack
+                    }
                 } else return FluidStack.EMPTY
             }
 
-            override fun storeTest(handle: IFluidHandler, store: FluidStack): FluidStack {
-                if (index in 0..<handle.tanks) {
-                    if (FluidStack.isSameFluidSameComponents(stack, handle.getFluidInTank(index))) return FluidStack.EMPTY
-                    val filledCount = handle.fill(stack, IFluidHandler.FluidAction.SIMULATE)
-                    stack.amount -= filledCount
-                    return stack
+            override fun storeTest(handle: ResourceHandler<FluidResource>, store: FluidStack): FluidStack {
+                if (index in 0..<handle.size()) {
+                    if (FluidStack.isSameFluidSameComponents(stack, FluidUtil.getStack(handle, index))) return FluidStack.EMPTY
+                    return Transaction.openRoot().use {
+                        val filledCount = handle.insert(index, FluidResource.of(stack), stack.amount, it)
+                        stack.amount -= filledCount
+                        stack
+                    }
                 } else return FluidStack.EMPTY
             }
 

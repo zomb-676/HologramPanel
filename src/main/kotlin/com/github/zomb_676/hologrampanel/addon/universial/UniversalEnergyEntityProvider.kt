@@ -18,8 +18,8 @@ data object UniversalEnergyEntityProvider : ServerDataProvider<EntityHologramCon
         additionData: CompoundTag, targetData: CompoundTag, context: EntityHologramContext
     ): Boolean {
         val cap = TransHandle.EntityEnergyTransHandle.getHandle(context.getEntity()) ?: return false
-        targetData.putInt("energy_stored", cap.energyStored)
-        targetData.putInt("energy_max", cap.maxEnergyStored)
+        targetData.putInt("energy_stored", cap.amountAsInt)
+        targetData.putInt("energy_max", cap.capacityAsInt)
         return true
     }
 

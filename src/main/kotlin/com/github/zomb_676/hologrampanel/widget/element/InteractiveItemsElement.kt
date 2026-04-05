@@ -12,7 +12,8 @@ import com.github.zomb_676.hologrampanel.util.unsafeCast
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.items.IItemHandler
+import net.neoforged.neoforge.transfer.ResourceHandler
+import net.neoforged.neoforge.transfer.item.ItemResource
 import org.lwjgl.glfw.GLFW
 import kotlin.math.min
 
@@ -22,7 +23,7 @@ import kotlin.math.min
 open class InteractiveItemsElement protected constructor(
     items: List<ItemStack>,
     val source: TransSource<*>,
-    val transHandle: TransHandle<*, IItemHandler>,
+    val transHandle: TransHandle<*, ResourceHandler<ItemResource>>,
     addition: Boolean,
     itemEachLine: Int
 ) : ItemsElement(items, itemEachLine, addition) {
@@ -31,7 +32,7 @@ open class InteractiveItemsElement protected constructor(
         fun <S : Any> create(
             items: List<ItemStack>,
             source: TransSource<S>,
-            transHandle: TransHandle<S, IItemHandler>,
+            transHandle: TransHandle<S, ResourceHandler<ItemResource>>,
             addition: Boolean,
             itemEachLine: Int = 7
         ) = InteractiveItemsElement(items, source, transHandle, addition, itemEachLine)
@@ -119,7 +120,7 @@ open class InteractiveItemsElement protected constructor(
         })
     }
 
-    fun <S : Any> getTransData(item: ItemStack): Triple<TransSource<S>, TransHandle<S, IItemHandler>, TransPath<IItemHandler, ItemStack>> {
+    fun <S : Any> getTransData(item: ItemStack): Triple<TransSource<S>, TransHandle<S, ResourceHandler<ItemResource>>, TransPath<ResourceHandler<ItemResource>, ItemStack>> {
         return Triple(this.source, this.transHandle, TransPath.Item.ByItem(item)).unsafeCast()
     }
 

@@ -64,7 +64,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         val window = Minecraft.getInstance().window
         val centerX = window.guiScaledWidth / 2
         val centerY = window.guiScaledHeight / 2
-        style.guiGraphics.pose().pushPose()
+        style.guiGraphics.pose().pushMatrix()
         style.move(centerX, centerY)
 
         RenderSystem.enableBlend()
@@ -137,7 +137,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
         style.guiGraphics.flush()
         RenderSystem.disableBlend()
-        style.guiGraphics.pose().popPose()
+        style.guiGraphics.pose().popMatrix()
     }
 
     override fun openGroup(group: CycleEntry.Group) {
