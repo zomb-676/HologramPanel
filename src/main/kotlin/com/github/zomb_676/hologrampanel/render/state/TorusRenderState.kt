@@ -1,6 +1,5 @@
-package com.github.zomb_676.hologrampanel.util.renderstate
+package com.github.zomb_676.hologrampanel.render.state
 
-import com.github.zomb_676.hologrampanel.util.renderstate.FloatBlitRenderState
 import com.mojang.blaze3d.pipeline.RenderPipeline
 import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.gui.navigation.ScreenRectangle
@@ -11,10 +10,11 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
-data class CircleRenderState(
+data class TorusRenderState(
     val pipeline: RenderPipeline,
     val textureSetup: TextureSetup,
     val pose: Matrix3x2f,
+    val inRadius: Float,
     val outRadius: Float,
     val beginRadian: Double,
     val endRadian: Double,
@@ -24,24 +24,26 @@ data class CircleRenderState(
     val scissorArea: ScreenRectangle?,
     val bounds: ScreenRectangle? = ScreenAreaUtil.getBounds(-outRadius, -outRadius, outRadius, outRadius, pose, scissorArea)
 ): GuiElementRenderState {
-
     override fun buildVertices(vertexConsumer: VertexConsumer) {
-        vertexConsumer.addVertexWith2DPose(pose, 0f, 0f).setColor(colorIn)
-
         var radius = beginRadian
         val step = Math.toRadians(360.0 / tessellationCount).toFloat()
+
+        fun fillVertex(fillVertexRadius: Double) {
+            val lastSin = sin(fillVertexRadius).toFloat()
+            val lastCos = cos(fillVertexRadius).toFloat()
+            vertexConsumer.addVertexWith2DPose(pose, lastSin * inRadius, lastCos * inRadius).setColor(colorIn)
+            vertexConsumer.addVertexWith2DPose(pose, lastSin * outRadius, lastCos * outRadius).setColor(colorOut)
+        }
+
         while (true) {
             if (abs(radius - endRadian) > abs(step)) {
-                vertexConsumer.addVertexWith2DPose(
-                    pose, sin(radius).toFloat() * outRadius, cos(radius).toFloat() * outRadius
-                ).setColor(colorOut)
+                fillVertex(radius)
                 radius += step
             } else {
+                fillVertex(endRadian)
                 break
             }
         }
-        vertexConsumer.addVertexWith2DPose(pose, sin(endRadian).toFloat() * outRadius, cos(endRadian).toFloat() * outRadius)
-            .setColor(colorOut)
     }
 
     override fun pipeline(): RenderPipeline = pipeline

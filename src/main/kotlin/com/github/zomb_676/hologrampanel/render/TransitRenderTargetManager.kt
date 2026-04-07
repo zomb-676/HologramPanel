@@ -8,6 +8,7 @@ import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
 import com.mojang.blaze3d.pipeline.RenderTarget
 import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.textures.FilterMode
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import net.minecraft.client.Minecraft
 import java.util.*
@@ -137,7 +138,7 @@ object TransitRenderTargetManager {
 //            builder.addVertex(x + w, y, 0f).setUv(1f, 1f)
 //            BufferUploader.drawWithShader(builder.buildOrThrow())
 //
-//            style.guiGraphics.renderOutline(rect.x, rect.y, rect.width, rect.height, -1)
+//            style.guiGraphics.outline(rect.x, rect.y, rect.width, rect.height, -1)
 //        }
 //        style.guiGraphics.flush()
 //
@@ -145,6 +146,31 @@ object TransitRenderTargetManager {
 //        RenderSystem.colorMask(true, true, true, true)
 //        GL46.glBindFramebuffer(GL46.GL_FRAMEBUFFER, mainTarget.frameBufferId)
         // TODO
+        val allocator = run {
+            val window = Minecraft.getInstance().window
+            RectAllocator(window.guiScaledWidth, window.guiScaledHeight)
+        }
+        val sequence = sequence {
+            yield(interactRenderTarget)
+            yieldAll(entries.keys)
+        }
+        for (target in sequence) {
+            val rect = allocator.allocate(target.width / 16, target.height / 16)
+            if (!rect.assigned) break
+            style.guiGraphics.blit(
+                target.colorTextureView!!,
+                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST),
+                rect.x,
+                rect.y,
+                rect.x + rect.width,
+                rect.y + rect.height,
+                0f,
+                1f,
+                1f,
+                0f
+            )
+            style.guiGraphics.outline(rect.x, rect.y, rect.width, rect.height, -1)
+        }
     }
 
     /**

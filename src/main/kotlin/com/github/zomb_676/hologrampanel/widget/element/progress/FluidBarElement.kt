@@ -1,8 +1,8 @@
 package com.github.zomb_676.hologrampanel.widget.element.progress
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.render.state.FloatBlitRenderState.Companion.innerBlit
 import com.github.zomb_676.hologrampanel.util.ProgressData
-import com.github.zomb_676.hologrampanel.util.renderstate.FloatBlitRenderState.Companion.innerBlit
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement.Companion.shortDescription
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.RenderPipelines

@@ -5,10 +5,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.energy.IEnergyStorage
 import net.neoforged.neoforge.fluids.FluidStack
-import net.neoforged.neoforge.fluids.capability.IFluidHandler
-import net.neoforged.neoforge.items.IItemHandler
 import net.neoforged.neoforge.transfer.ResourceHandler
 import net.neoforged.neoforge.transfer.energy.EnergyHandler
 import net.neoforged.neoforge.transfer.fluid.FluidResource
@@ -90,11 +87,12 @@ sealed interface TransPath<in H : Any, R : Any> {
         data class ByIndex(val index: Int, override var count: Int, val target: ItemStack = ItemStack.EMPTY) : Item {
             override fun extractActual(handle: ResourceHandler<ItemResource>): ItemStack {
                 if (handle.isInRange(index)) {
-                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, ItemUtil.getStack(handle, index))) return ItemStack.EMPTY
+                    val resource = handle.getResource(index)
+                    if (!target.isEmpty && !resource.matches(target)) return ItemStack.EMPTY
                     return Transaction.openRoot().use {
-                        val result = handle.extract(index, ItemResource.of(target.item), count, it)
+                        val result = handle.extract(index, resource, count, it)
                         it.commit()
-                        target.copyWithCount(result)
+                        resource.toStack(result)
                     }
                 }
                 return ItemStack.EMPTY
@@ -102,10 +100,11 @@ sealed interface TransPath<in H : Any, R : Any> {
 
             override fun extractTest(handle: ResourceHandler<ItemResource>): ItemStack {
                 if (handle.isInRange(index)) {
-                    if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, ItemUtil.getStack(handle, index))) return ItemStack.EMPTY
+                    val resource = handle.getResource(index)
+                    if (!target.isEmpty && !resource.matches(target)) return ItemStack.EMPTY
                     return Transaction.openRoot().use {
-                        val result = handle.extract(index, ItemResource.of(target.item), count, it)
-                        target.copyWithCount(result)
+                        val result = handle.extract(index, resource, count, it)
+                        resource.toStack(result)
                     }
                 }
                 return ItemStack.EMPTY
@@ -114,7 +113,7 @@ sealed interface TransPath<in H : Any, R : Any> {
             override fun storeActual(handle: ResourceHandler<ItemResource>, store: ItemStack): ItemStack {
                 if (handle.isInRange(index)) {
                     return Transaction.openRoot().use {
-                        val result = handle.insert(index, ItemResource.of(store.item), store.count, it)
+                        val result = handle.insert(index, ItemResource.of(store), store.count, it)
                         it.commit()
                         store.copyWithCount(store.count - result)
                     }
@@ -125,7 +124,7 @@ sealed interface TransPath<in H : Any, R : Any> {
             override fun storeTest(handle: ResourceHandler<ItemResource>, store: ItemStack): ItemStack {
                 if (handle.isInRange(index)) {
                     return Transaction.openRoot().use {
-                        val result = handle.insert(index, ItemResource.of(store.item), store.count, it)
+                        val result = handle.insert(index, ItemResource.of(store), store.count, it)
                         store.copyWithCount(store.count - result)
                     }
                 }

@@ -15,7 +15,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.KeyMapping.Category
-import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.client.renderer.RenderPipelines.MATRICES_PROJECTION_SNIPPET
 import net.minecraft.client.renderer.RenderPipelines.SUNRISE_SUNSET
 import net.minecraft.core.Registry
@@ -161,8 +160,8 @@ object AllRegisters {
     object RenderPipelines {
         val CIRCLE = SUNRISE_SUNSET
 
-        val TORUS = RenderPipeline.builder(MATRICES_PROJECTION_SNIPPET)
-            .withLocation(HologramPanel.rl("pipeline/torus"))
+        val STRIP_BASIC = RenderPipeline.builder(MATRICES_PROJECTION_SNIPPET)
+            .withLocation(HologramPanel.rl("pipeline/triangle_strip_position_color"))
             .withVertexShader("core/position_color")
             .withFragmentShader("core/position_color")
             .withColorTargetState(ColorTargetState(BlendFunction.TRANSLUCENT))
@@ -170,7 +169,7 @@ object AllRegisters {
             .build()
 
         fun register(event: RegisterRenderPipelinesEvent) {
-            event.registerPipeline(TORUS)
+            event.registerPipeline(STRIP_BASIC)
         }
     }
 

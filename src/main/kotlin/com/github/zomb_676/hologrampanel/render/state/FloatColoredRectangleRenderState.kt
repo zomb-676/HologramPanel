@@ -1,4 +1,4 @@
-package com.github.zomb_676.hologrampanel.util.renderstate
+package com.github.zomb_676.hologrampanel.render.state
 
 import com.mojang.blaze3d.pipeline.RenderPipeline
 import com.mojang.blaze3d.vertex.VertexConsumer

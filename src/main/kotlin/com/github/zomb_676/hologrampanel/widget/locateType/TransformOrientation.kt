@@ -1,12 +1,11 @@
 package com.github.zomb_676.hologrampanel.widget.locateType
 
 import com.github.zomb_676.hologrampanel.PanelOperatorManager
-import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredRectangleRenderState.Companion.fill
+import com.github.zomb_676.hologrampanel.render.state.FloatColoredQuadrilateralRenderState.Companion.fillQuad
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.color.HologramColor
-import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredQuadrilateralRenderState.Companion.fillQuad
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor

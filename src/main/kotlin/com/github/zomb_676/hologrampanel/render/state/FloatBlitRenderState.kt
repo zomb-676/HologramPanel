@@ -1,6 +1,5 @@
-package com.github.zomb_676.hologrampanel.util.renderstate
+package com.github.zomb_676.hologrampanel.render.state
 
-import com.github.zomb_676.hologrampanel.util.renderstate.FloatBlitRenderState.Companion.innerBlit
 import com.mojang.blaze3d.pipeline.RenderPipeline
 import com.mojang.blaze3d.textures.GpuSampler
 import com.mojang.blaze3d.textures.GpuTextureView

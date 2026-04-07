@@ -3,20 +3,19 @@ package com.github.zomb_676.hologrampanel.render
 import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.EfficientConst
+import com.github.zomb_676.hologrampanel.render.state.CircleRenderState
+import com.github.zomb_676.hologrampanel.render.state.FloatColoredRectangleRenderState.Companion.fill
+import com.github.zomb_676.hologrampanel.render.state.TorusRenderState
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
 import com.github.zomb_676.hologrampanel.util.MousePositionManager.component2
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
-import com.github.zomb_676.hologrampanel.util.renderstate.CircleRenderState
-import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredRectangleRenderState.Companion.fill
-import com.github.zomb_676.hologrampanel.util.renderstate.TorusRenderState
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.render.TextureSetup
-import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.network.chat.Component
 import net.minecraft.util.ARGB
 import net.minecraft.util.FormattedCharSequence
@@ -26,10 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.joml.Matrix3x2f
 import org.joml.Matrix3x2fStack
 import org.joml.Vector3f
-import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.max
-import kotlin.math.sin
 
 /**
  * a wrapped [GuiGraphicsExtractor] which is intended for convenience use and customize widget style
@@ -339,7 +335,7 @@ interface HologramStyle {
         }
 
         guiGraphics.submitGuiElementRenderState(TorusRenderState(
-            AllRegisters.RenderPipelines.TORUS,
+            AllRegisters.RenderPipelines.STRIP_BASIC,
             TextureSetup.noTexture(),
             Matrix3x2f(guiGraphics.pose()),
             inRadius,

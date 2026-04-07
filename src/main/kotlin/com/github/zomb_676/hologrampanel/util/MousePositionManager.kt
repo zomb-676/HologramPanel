@@ -1,13 +1,18 @@
 package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.interaction.HologramRenderState
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.mouseX
+import com.github.zomb_676.hologrampanel.util.MousePositionManager.mouseY
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateFreelyInWorld
 import com.mojang.blaze3d.platform.Window
 import net.minecraft.client.Minecraft
 import net.minecraft.client.MouseHandler
-import org.joml.*
+import org.joml.Matrix3f
+import org.joml.Matrix3x2f
+import org.joml.Vector2f
+import org.joml.Vector2fc
 import org.lwjgl.glfw.GLFW
 import kotlin.math.abs
 
@@ -245,10 +250,10 @@ object MousePositionManager {
     }
 
     /**
-     * re-anchor origin point by the origin of [matrix4f], should use same scale
+     * re-anchor origin point by the origin of [matrix], should use same scale
      */
-    fun relocateOriginPoint(matrix4f: Matrix4f, code: () -> Unit) {
-        val anchor = matrix4f.transformPosition(0f, 0f, 0f, Vector3f())
+    fun relocateOriginPoint(matrix: Matrix3x2f, code: () -> Unit) {
+        val anchor = matrix.transformPosition(0f, 0f, Vector2f())
         remappingMousePositionScope(this.mouseX + anchor.x, this.mouseY + anchor.y, code)
     }
 
