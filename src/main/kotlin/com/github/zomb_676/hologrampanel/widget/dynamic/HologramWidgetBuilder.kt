@@ -25,6 +25,7 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.material.Fluid
 import net.neoforged.neoforge.fluids.FluidType
 import net.neoforged.neoforge.items.IItemHandler
 import net.neoforged.neoforge.transfer.ResourceHandler
@@ -266,7 +267,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return EnergyBarElement(progressBar).attach(name)
         }
 
-        fun fluid(name: String, progressBar: ProgressData, fluid: FluidType): FluidBarElement {
+        fun fluid(name: String, progressBar: ProgressData, fluid: Fluid): FluidBarElement {
             return FluidBarElement(progressBar, fluid).attach(name)
         }
 

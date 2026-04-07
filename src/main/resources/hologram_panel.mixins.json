@@ -10,8 +10,8 @@
     "GameDataMixin"
   ],
   "client": [
-    "GameRenderMixin",
-    "LevelRenderMixin",
+    "GameRendererMixin",
+    "LevelRendererMixin",
     "MouseHandleMixin",
     "RenderTargetMixin",
     "WindowMixin"

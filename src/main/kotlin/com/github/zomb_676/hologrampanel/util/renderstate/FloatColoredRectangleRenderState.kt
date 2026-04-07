@@ -1,4 +1,4 @@
-package com.github.zomb_676.hologrampanel.util
+package com.github.zomb_676.hologrampanel.util.renderstate
 
 import com.mojang.blaze3d.pipeline.RenderPipeline
 import com.mojang.blaze3d.vertex.VertexConsumer
@@ -6,11 +6,9 @@ import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.navigation.ScreenRectangle
 import net.minecraft.client.gui.render.TextureSetup
 import net.minecraft.client.renderer.RenderPipelines
-import net.minecraft.client.renderer.state.gui.ColoredRectangleRenderState
 import net.minecraft.client.renderer.state.gui.GuiElementRenderState
 import org.joml.Matrix3x2f
 import org.joml.Matrix3x2fc
-import kotlin.math.ceil
 
 data class FloatColoredRectangleRenderState(
     val pipeline: RenderPipeline,
@@ -23,21 +21,8 @@ data class FloatColoredRectangleRenderState(
     val col1: Int,
     val col2: Int,
     val scissorArea: ScreenRectangle?,
-    val bounds: ScreenRectangle?
+    val bounds: ScreenRectangle? = ScreenAreaUtil.getBounds(x0, y0, x1, y1, pose, scissorArea)
 ) : GuiElementRenderState {
-    constructor(
-        pipeline: RenderPipeline,
-        textureSetup: TextureSetup,
-        pose: Matrix3x2fc,
-        x0: Float,
-        y0: Float,
-        x1: Float,
-        y1: Float,
-        col1: Int,
-        col2: Int,
-        scissorArea: ScreenRectangle?
-    ) : this(pipeline, textureSetup, pose, x0, y0, x1, y1, col1, col2, scissorArea, ScreenAreaUtil.getBounds(x0, y0, x1, y1, pose, scissorArea))
-
     override fun buildVertices(vertexConsumer: VertexConsumer) {
         vertexConsumer.addVertexWith2DPose(pose, x0, y0).setColor(col1)
         vertexConsumer.addVertexWith2DPose(pose, x0, y1).setColor(col2)

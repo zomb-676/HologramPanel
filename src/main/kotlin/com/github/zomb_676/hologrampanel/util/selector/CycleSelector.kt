@@ -67,8 +67,6 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         style.guiGraphics.pose().pushMatrix()
         style.move(centerX, centerY)
 
-//        RenderSystem.enableBlend()// TODO
-
         val (x, y) = run {
             var (x, y) = MousePositionManager.updateMousePosition()
             x - centerX to y - centerY
@@ -105,12 +103,10 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             } else {
                 0x7fffffff.toInt()
             }
-//            RenderSystem.enableBlend()
-//            style.drawTorus(
-//                20f, 70f, colorOut = color, colorIn = 0x7fffffff,
-//                beginRadian = from, endRadian = to, isClockWise = false
-//            )
-//            RenderSystem.disableBlend()// TODO
+            style.drawTorus(
+                20f, 70f, colorOut = color, colorIn = 0x7fffffff,
+                beginRadian = from, endRadian = to, isClockWise = false
+            )
 
             val distance = 45f
             val centerDegree = (from + to) / 2
@@ -127,16 +123,12 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         this.canBackToParent = !canSelect && sqrt < 20 * 0.8 && this.openStack.isNotEmpty()
-//        RenderSystem.enableBlend()
-//        if (this.canBackToParent) {
-//            style.drawCycle(16f, colorOut = 0xffffff00.toInt(), colorIn = 0x7fffffff.toInt())
-//        } else if (this.openStack.isNotEmpty()) {
-//            style.drawCycle(16f, colorOut = 0x7fffffff.toInt())
-//        }
-//        RenderSystem.disableBlend()
-//
-//        style.guiGraphics.flush()
-//        RenderSystem.disableBlend()// TODO
+        if (this.canBackToParent) {
+            style.drawCycle(16f, colorOut = 0xffffff00.toInt(), colorIn = 0x7fffffff.toInt())
+        } else if (this.openStack.isNotEmpty()) {
+            style.drawCycle(16f, colorOut = 0x7fffffff.toInt())
+        }
+
         style.guiGraphics.pose().popMatrix()
     }
 

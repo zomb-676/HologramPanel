@@ -88,7 +88,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                 style.stack {
                     if (offset != AlignedScreenPosition.ZERO) style.move(offset)
                     if (element.getScale() != 1.0) style.scale(element.getScale())
-                    if (element.hasAdditionLayer()) style.translate(0.0, 0.0, element.additionLayer().toDouble())
+//                    if (element.hasAdditionLayer()) style.translate(0.0, 0.0, element.additionLayer().toDouble())// FIXME: No longer need this
                     if (element.isLimitHeight(size.height)) {
                         style.guiGraphics.enableScissor(0, 0, size.width, element.getLimitHeight())
                         style.translate(0f, timeInterpolation(size.height - element.getLimitHeight()).toFloat())
@@ -96,10 +96,7 @@ sealed interface DynamicBuildComponentWidget<T : HologramContext> : HologramWidg
                     if (inMouse && style.checkMouseInSize(size)) {
                         DebugHelper.Client.recordHoverElement(element)
                         if (Config.Client.renderWidgetDebugInfo.get()) {
-                            style.stack {
-                                style.translate(0f, 0f, 100f)
-                                style.outline(size, 0xff0000ff.toInt())
-                            }
+                            style.outline(size, 0xff0000ff.toInt())
                         }
                         if (element is HologramInteractive) {
                             HologramManager.submitInteractive(this, element, target, size, style)

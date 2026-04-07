@@ -2,32 +2,32 @@ package com.github.zomb_676.hologrampanel.widget.element.progress
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.util.ProgressData
+import com.github.zomb_676.hologrampanel.util.renderstate.FloatBlitRenderState.Companion.innerBlit
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement.Companion.shortDescription
+import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.RenderPipelines
+import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.network.chat.Component
-import net.neoforged.neoforge.fluids.FluidType
+import net.minecraft.world.level.material.Fluid
 
-class FluidBarElement(progress: ProgressData, val fluid: FluidType) : ProgressBarElement(progress) {
+class FluidBarElement(progress: ProgressData, val fluid: Fluid) : ProgressBarElement(progress) {
     override fun requireOutlineDecorate(): Boolean = true
 
     override fun fillBar(style: HologramStyle, left: Float, right: Float, height: Float, percent: Float) {
-//        val left = left.toFloat()
-//        val right = right.toFloat()
-//        val height = height.toFloat()
-//
-//        val handle: IClientFluidTypeExtensions = IClientFluidTypeExtensions.of(fluid)
-//        val tintColor = handle.tintColor
-//        val sprite: TextureAtlasSprite = FluidSpriteCache.getSprite(handle.stillTexture)
-//
-//        val matrix = style.pose()
-//        val consumer = style.guiGraphics.bufferSource.getBuffer(RenderType.guiTextured(sprite.atlasLocation()))
-//
-//        val maxU = (((sprite.u1 - sprite.u0) * percent) + sprite.u0).toFloat()
-//        val maxV = (((sprite.v1 - sprite.v0) * percent) + sprite.v0).toFloat()
-//
-//        consumer.addVertex(matrix, left, 0f, 0f).setUv(sprite.u0, sprite.v0).setColor(tintColor)
-//        consumer.addVertex(matrix, left, height, 0f).setUv(sprite.u0, maxV).setColor(tintColor)
-//        consumer.addVertex(matrix, right, height, 0f).setUv(maxU, maxV).setColor(tintColor)
-//        consumer.addVertex(matrix, right, 0f, 0f).setUv(maxU, sprite.v0).setColor(tintColor)// TODO
+        val state = fluid.defaultFluidState()
+        val model = Minecraft.getInstance().modelManager.fluidStateModelSet.get(state)
+        val sprite: TextureAtlasSprite = model.stillMaterial.sprite
+
+        val maxU = ((sprite.u1 - sprite.u0) * percent) + sprite.u0
+        val maxV = ((sprite.v1 - sprite.v0) * percent) + sprite.v0
+
+        style.guiGraphics.innerBlit(RenderPipelines.GUI_TEXTURED, sprite.atlasLocation(),
+            left, right,
+            0f, height,
+            sprite.u0, maxU,
+            sprite.v0, maxV,
+            model.fluidTintSource?.color(state) ?: -1
+        )
     }
 
     override fun getDescription(percent: Float): Component {
@@ -46,11 +46,11 @@ class FluidBarElement(progress: ProgressData, val fluid: FluidType) : ProgressBa
             }
             "$current/$max"
         }
-        val fluidName = fluid.description
+        val fluidName = fluid.fluidType.description
         return Component.literal("").append(fluidName).append(" ").append(f)
     }
 
     override fun toString(): String {
-        return "FluidBar(fluid:${fluid.description},${super.toString()})"
+        return "FluidBar(fluid:${fluid.fluidType.description},${super.toString()})"
     }
 }

@@ -1,11 +1,12 @@
 package com.github.zomb_676.hologrampanel.widget.locateType
 
 import com.github.zomb_676.hologrampanel.PanelOperatorManager
+import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredRectangleRenderState.Companion.fill
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.color.HologramColor
-import com.mojang.blaze3d.vertex.VertexConsumer
+import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredQuadrilateralRenderState.Companion.fillQuad
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
@@ -110,16 +111,19 @@ enum class TransformOrientation {
             private fun addLine(
                 begin: ScreenPosition,
                 end: ScreenPosition,
-                consumer: VertexConsumer,
-                matrix: Matrix3x2f,
+                guiGraphics: GuiGraphicsExtractor,
                 color: Int,
                 width: Float = 2.0f
             ) {
-//                val vector = Vector2f(begin.y - end.y, end.x - begin.x).normalize().mul(width / 2)
-//                consumer.addVertexWith2DPose(matrix, begin.x + vector.x, begin.y + vector.y, 0f).setColor(color)
-//                consumer.addVertex(matrix, end.x + vector.x, end.y + vector.y, 0f).setColor(color)
-//                consumer.addVertex(matrix, end.x - vector.x, end.y - vector.y, 0f).setColor(color)
-//                consumer.addVertex(matrix, begin.x - vector.x, begin.y - vector.y, 0f).setColor(color)// TODO
+                val vector = Vector2f(begin.y - end.y, end.x - begin.x).normalize().mul(width / 2)
+                guiGraphics.fillQuad(begin.x + vector.x,
+                    begin.y + vector.y,
+                    end.x + vector.x,
+                    end.y + vector.y,
+                    end.x - vector.x, end.y - vector.y,
+                    begin.x - vector.x, begin.y - vector.y,
+                    color
+                )
             }
 
             private fun changeAlpha(originColor: Int, key: Int): Int {
@@ -134,7 +138,6 @@ enum class TransformOrientation {
             override fun render(guiGraphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
                 val target = PanelOperatorManager.selectedTarget ?: return
                 val locate = target.locate as? LocateInWorld ?: return
-                val matrix = guiGraphics.pose()
 
                 val worldPosition = target.getRenderWorldPosition()
                 if (!viewVectorDegreeCheckPass(deltaTracker.getGameTimeDeltaPartialTick(false), worldPosition)) return
@@ -154,15 +157,9 @@ enum class TransformOrientation {
                 val y = MVPMatrixRecorder.transform(transform.transformPosition(0f, 0.5f, 0f, container)).screenPosition
                 val z = MVPMatrixRecorder.transform(transform.transformPosition(0f, 0f, 0.5f, container)).screenPosition
 
-//                val buffer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
-//
-//                addLine(center, x, buffer, matrix, changeAlpha(X_COLOR, GLFW.GLFW_KEY_X))
-//                addLine(center, y, buffer, matrix, changeAlpha(Y_COLOR, GLFW.GLFW_KEY_Y))
-//                addLine(center, z, buffer, matrix, changeAlpha(Z_COLOR, GLFW.GLFW_KEY_Z))
-//
-//                RenderSystem.disableCull()
-//                guiGraphics.bufferSource.endLastBatch()
-//                RenderSystem.enableCull()// TODO
+                addLine(center, x, guiGraphics, changeAlpha(X_COLOR, GLFW.GLFW_KEY_X))
+                addLine(center, y, guiGraphics, changeAlpha(Y_COLOR, GLFW.GLFW_KEY_Y))
+                addLine(center, z, guiGraphics, changeAlpha(Z_COLOR, GLFW.GLFW_KEY_Z))
             }
         }
 

@@ -63,7 +63,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
                     builder.single("fluid_$index") {
                         val progress = progresses[index]
                         progress.current(fluid.current).max(fluid.max)
-                        fluid("block_fluid", progress, fluid.fluidStack.fluidType)
+                        fluid("block_fluid", progress, fluid.fluidStack.fluid)
                     }
                 }
             }

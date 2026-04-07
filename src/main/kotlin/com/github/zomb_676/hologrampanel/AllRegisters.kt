@@ -4,12 +4,20 @@ import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.projector.ProjectorBlock
 import com.github.zomb_676.hologrampanel.projector.ProjectorBlockEntity
 import com.google.common.base.Supplier
+import com.mojang.blaze3d.pipeline.BlendFunction
+import com.mojang.blaze3d.pipeline.ColorTargetState
+import com.mojang.blaze3d.pipeline.RenderPipeline
 import com.mojang.blaze3d.platform.InputConstants
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.VertexFormat
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.KeyMapping
 import net.minecraft.client.KeyMapping.Category
+import net.minecraft.client.renderer.RenderPipelines
+import net.minecraft.client.renderer.RenderPipelines.MATRICES_PROJECTION_SNIPPET
+import net.minecraft.client.renderer.RenderPipelines.SUNRISE_SUNSET
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
@@ -25,6 +33,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent
 import net.neoforged.neoforge.client.settings.KeyConflictContext
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent
 import net.neoforged.neoforge.registries.*
@@ -147,6 +156,22 @@ object AllRegisters {
             GLFW.GLFW_KEY_LEFT_CONTROL,
             KEY_CATEGORY
         )
+    }
+
+    object RenderPipelines {
+        val CIRCLE = SUNRISE_SUNSET
+
+        val TORUS = RenderPipeline.builder(MATRICES_PROJECTION_SNIPPET)
+            .withLocation(HologramPanel.rl("pipeline/torus"))
+            .withVertexShader("core/position_color")
+            .withFragmentShader("core/position_color")
+            .withColorTargetState(ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLE_STRIP)
+            .build()
+
+        fun register(event: RegisterRenderPipelinesEvent) {
+            event.registerPipeline(TORUS)
+        }
     }
 
     object Codecs {

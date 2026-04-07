@@ -77,6 +77,7 @@ object EventHandler {
             val forgeBus = NeoForge.EVENT_BUS
             modBus.addListener(ClientOnly::registerLayer)
             modBus.addListener(ClientOnly::registerKey)
+            modBus.addListener(ClientOnly::registerRenderPipelines)
             forgeBus.addListener(ClientOnly::onKey)
             forgeBus.addListener(ClientOnly::onMouseButton)
             forgeBus.addListener(ClientOnly::onMouseScroll)
@@ -86,10 +87,15 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onPlayerLogin)
             forgeBus.addListener(ClientOnly::onPlayerLogout)
             forgeBus.addListener(ClientOnly::onRenderLevelStage)
+            forgeBus.addListener(ClientOnly::onExtractLevelRenderState)
         }
 
         private fun registerKey(event: RegisterKeyMappingsEvent) {
             AllRegisters.KeyMapping.register(event)
+        }
+
+        private fun registerRenderPipelines(event: RegisterRenderPipelinesEvent) {
+            AllRegisters.RenderPipelines.register(event)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
@@ -283,6 +289,10 @@ object EventHandler {
             pose.stack {
                 HologramManager.renderWorldPart(event)
             }
+        }
+
+        fun onExtractLevelRenderState(event: ExtractLevelRenderStateEvent) {
+            DebugHelper.Client.extractLevelState(event)
         }
     }
 

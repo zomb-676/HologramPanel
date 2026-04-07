@@ -1,5 +1,6 @@
 package com.github.zomb_676.hologrampanel.render
 
+import com.github.zomb_676.hologrampanel.AllRegisters
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.api.EfficientConst
 import com.github.zomb_676.hologrampanel.util.*
@@ -7,18 +8,28 @@ import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
 import com.github.zomb_676.hologrampanel.util.MousePositionManager.component2
 import com.github.zomb_676.hologrampanel.util.packed.AlignedScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.Size
+import com.github.zomb_676.hologrampanel.util.renderstate.CircleRenderState
+import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredRectangleRenderState.Companion.fill
+import com.github.zomb_676.hologrampanel.util.renderstate.TorusRenderState
 import com.github.zomb_676.hologrampanel.widget.component.HologramWidgetComponent
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.render.TextureSetup
+import net.minecraft.client.renderer.RenderPipelines
 import net.minecraft.network.chat.Component
+import net.minecraft.util.ARGB
 import net.minecraft.util.FormattedCharSequence
 import net.minecraft.world.item.DyeColor
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.annotations.ApiStatus
+import org.joml.Matrix3x2f
 import org.joml.Matrix3x2fStack
 import org.joml.Vector3f
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.max
+import kotlin.math.sin
 
 /**
  * a wrapped [GuiGraphicsExtractor] which is intended for convenience use and customize widget style
@@ -62,15 +73,15 @@ interface HologramStyle {
     @EfficientConst
     fun elementPadding(): Int
 
-    fun drawString(string: String, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
+    fun drawString(string: String, x: Int = 0, y: Int = 0, color: Int = ARGB.opaque(DyeColor.BLACK.textColor)) {
         guiGraphics.text(font, string, x, y, color, false)
     }
 
-    fun drawString(string: Component, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
+    fun drawString(string: Component, x: Int = 0, y: Int = 0, color: Int = ARGB.opaque(DyeColor.BLACK.textColor)) {
         guiGraphics.text(font, string, x, y, color, false)
     }
 
-    fun drawString(string: FormattedCharSequence, x: Int = 0, y: Int = 0, color: Int = DyeColor.BLACK.textColor) {
+    fun drawString(string: FormattedCharSequence, x: Int = 0, y: Int = 0, color: Int = ARGB.opaque(DyeColor.BLACK.textColor)) {
         guiGraphics.text(font, string, x, y, color, false)
     }
 
@@ -90,12 +101,12 @@ interface HologramStyle {
         this.move(alignedScreenPosition.x, alignedScreenPosition.y)
     }
 
-    fun translate(x: Float, y: Float, z: Float = 0.0f) {
-        this.translate(x.toDouble(), y.toDouble(), z.toDouble())
+    fun translate(x: Float, y: Float) {
+        pose().translate(x, y)
     }
 
-    fun translate(x: Double, y: Double, z: Double = 0.0) {
-        pose().translate(x.toFloat(), y.toFloat()/*, z*/)// TODO
+    fun translate(x: Double, y: Double) {
+        translate(x.toFloat(), y.toFloat())
     }
 
     fun fill(size: Size, color: Int = contextColor) {
@@ -111,40 +122,35 @@ interface HologramStyle {
     }
 
     fun fill(minX: Float, minY: Float, maxX: Float, maxY: Float, color: Int = contextColor) {
-//        val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
-//        val pose = guiGraphics.pose().last().pose()
-//        consumer.addVertex(pose, minX, minY, 0.0f).setColor(color)
-//        consumer.addVertex(pose, minX, maxY, 0.0f).setColor(color)
-//        consumer.addVertex(pose, maxX, maxY, 0.0f).setColor(color)
-//        consumer.addVertex(pose, maxX, minY, 0.0f).setColor(color)// TODO
+        guiGraphics.fill(minX, minY, maxX, maxY, color)
     }
 
     /**
      * @param z by default, is 1.0
      */
-    fun scale(x: Double, y: Double, z: Double = 1.0) {
-        this.scale(x.toFloat(), y.toFloat(), z.toFloat())
+    fun scale(x: Double, y: Double) {
+        this.scale(x.toFloat(), y.toFloat())
     }
 
     /**
      * @param z by default, is 1.0
      */
-    fun scale(x: Float, y: Float, z: Float = 1.0f) {
-        guiGraphics.pose().scale(x, y/*, z*/)// TODO
+    fun scale(x: Float, y: Float) {
+        guiGraphics.pose().scale(x, y)
     }
 
     /**
      * not scale z
      */
     fun scale(scale: Double) {
-        this.scale(scale, scale, 1.0)
+        this.scale(scale, scale)
     }
 
     /**
      * not scale z
      */
     fun scale(scale: Float) {
-        this.scale(scale, scale, 1.0f)
+        this.scale(scale, scale)
     }
 
 //    fun mulPose(matrix: Matrix4f) {
@@ -275,29 +281,19 @@ interface HologramStyle {
             }
         }
 
-//        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-//        val tesselator = Tesselator.getInstance()
-//        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
-//
-//        val matrix = guiGraphics.pose().last().pose()
-//        builder.addVertex(matrix, 0f, 0f, 0f).setColor(colorIn)
-//
-//        var radius = beginRadian
-//        val step = Math.toRadians(360.0 / tessellationCount).toFloat()
-//        while (true) {
-//            if (abs(radius - endRadian) > abs(step)) {
-//                builder.addVertex(
-//                    matrix, sin(radius).toFloat() * outRadius, cos(radius).toFloat() * outRadius, 0.0f
-//                ).setColor(colorOut)
-//                radius += step
-//            } else {
-//                break
-//            }
-//        }
-//        builder.addVertex(matrix, sin(endRadian).toFloat() * outRadius, cos(endRadian).toFloat() * outRadius, 0.0f)
-//            .setColor(colorOut)
-//
-//        BufferUploader.drawWithShader(builder.buildOrThrow())// TODO
+        // VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR
+        guiGraphics.submitGuiElementRenderState(CircleRenderState(
+            AllRegisters.RenderPipelines.CIRCLE,
+            TextureSetup.noTexture(),
+            Matrix3x2f(guiGraphics.pose()),
+            outRadius,
+            beginRadian,
+            endRadian,
+            tessellationCount,
+            colorIn,
+            colorOut,
+            guiGraphics.peekScissorStack()
+        ))
     }
 
     /**
@@ -342,33 +338,19 @@ interface HologramStyle {
             }
         }
 
-//        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-//        val tesselator = Tesselator.getInstance()
-//        val builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-//
-//        val matrix = guiGraphics.pose()
-//
-//        var radius = beginRadian
-//        val step = Math.toRadians(360.0 / tessellationCount).toFloat()
-//
-//        fun fillVertex(fillVertexRadius: Double) {
-//            val lastSin = sin(fillVertexRadius).toFloat()
-//            val lastCos = cos(fillVertexRadius).toFloat()
-//            builder.addVertex(matrix, lastSin * inRadius, lastCos * inRadius, 0.0f).setColor(colorIn)
-//            builder.addVertex(matrix, lastSin * outRadius, lastCos * outRadius, 0.0f).setColor(colorOut)
-//        }
-//
-//        while (true) {
-//            if (abs(radius - endRadian) > abs(step)) {
-//                fillVertex(radius)
-//                radius += step
-//            } else {
-//                fillVertex(endRadian)
-//                break
-//            }
-//        }
-//
-//        BufferUploader.drawWithShader(builder.buildOrThrow())// TODO
+        guiGraphics.submitGuiElementRenderState(TorusRenderState(
+            AllRegisters.RenderPipelines.TORUS,
+            TextureSetup.noTexture(),
+            Matrix3x2f(guiGraphics.pose()),
+            inRadius,
+            outRadius,
+            beginRadian,
+            endRadian,
+            tessellationCount,
+            colorIn,
+            colorOut,
+            guiGraphics.peekScissorStack()
+        ))
     }
 
     companion object {
@@ -437,28 +419,20 @@ interface HologramStyle {
             outline(size, OUTLINE_COLOR)
 
             //draw collapse indicator
-//            val matrix = guiGraphics.pose().last().pose()
-//            val consumer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
-//            run {
-//                val centerY = (descriptionSize.height / 2.0f) + SINGLE_INNER_PADDING.up
-//                val left = SINGLE_INNER_PADDING.left.toFloat()
-//                val right = left + COLLAPSE_SIZE.width.toFloat()
-//                val centerX = (left + right) / 2.0f
-//                val up = centerY - 2
-//                val down = centerY + 2
-//                val lineHalfWidth = 0.5f
-//
-//                consumer.addVertex(matrix, left, (centerY - lineHalfWidth), 0.0f).setColor(color)
-//                consumer.addVertex(matrix, left, (centerY + lineHalfWidth), 0.0f).setColor(color)
-//                consumer.addVertex(matrix, right, (centerY + lineHalfWidth), 0.0f).setColor(color)
-//                consumer.addVertex(matrix, right, (centerY - lineHalfWidth), 0.0f).setColor(color)
-//                if (!collapse) {
-//                    consumer.addVertex(matrix, centerX - lineHalfWidth, up, 0.0f).setColor(color)
-//                    consumer.addVertex(matrix, centerX - lineHalfWidth, down, 0.0f).setColor(color)
-//                    consumer.addVertex(matrix, centerX + lineHalfWidth, down, 0.0f).setColor(color)
-//                    consumer.addVertex(matrix, centerX + lineHalfWidth, up, 0.0f).setColor(color)
-//                }
-//            }// TODO
+            run {
+                val centerY = (descriptionSize.height / 2.0f) + SINGLE_INNER_PADDING.up
+                val left = SINGLE_INNER_PADDING.left.toFloat()
+                val right = left + COLLAPSE_SIZE.width.toFloat()
+                val centerX = (left + right) / 2.0f
+                val up = centerY - 2
+                val down = centerY + 2
+                val lineHalfWidth = 0.5f
+
+                guiGraphics.fill(left, centerY - lineHalfWidth, right, centerY + lineHalfWidth, color)
+                if (!collapse) {
+                    guiGraphics.fill(centerX - lineHalfWidth, up, centerX + lineHalfWidth, down, color)
+                }
+            }
 
             //draw split line
             if (isGroupGlobal && !collapse) {
@@ -472,10 +446,7 @@ interface HologramStyle {
         override fun moveToGroupDescription(descriptionSize: Size) {
             move(SINGLE_INNER_PADDING.horizontal + COLLAPSE_SIZE.width, SINGLE_INNER_PADDING.up)
             if (Config.Client.renderWidgetDebugInfo.get()) {
-                stack {
-                    pose().translate(0f, 0f/*, 100f*/)// TODO
-                    outline(descriptionSize, 0xff00000ff.toInt())
-                }
+                outline(descriptionSize, 0xff00000ff.toInt())
             }
         }
 

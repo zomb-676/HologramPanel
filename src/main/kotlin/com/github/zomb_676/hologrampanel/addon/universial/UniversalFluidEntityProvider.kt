@@ -61,7 +61,7 @@ data object UniversalFluidEntityProvider : ServerDataProvider<EntityHologramCont
                     builder.single("fluid_$index") {
                         val progress = progresses[index]
                         progress.current(fluid.current).max(fluid.max)
-                        fluid("entity_fluid", progress, fluid.fluidStack.fluidType)
+                        fluid("entity_fluid", progress, fluid.fluidStack.fluid)
                     }
                 }
             }

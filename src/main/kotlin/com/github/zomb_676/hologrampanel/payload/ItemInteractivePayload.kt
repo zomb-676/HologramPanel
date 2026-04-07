@@ -77,7 +77,7 @@ class ItemInteractivePayload(
                                     min(stored.count, toTake), it)
                                 it.commit()
                                 toTake -= extracted
-                                giveItemToPlayer(ItemStack(stored.item, extracted), payloadContext.player() as ServerPlayer)
+                                giveItemToPlayer(stored.copyWithCount(extracted), payloadContext.player() as ServerPlayer)
                                 if (toTake <= 0) break
                             }
                         }
@@ -107,7 +107,7 @@ class ItemInteractivePayload(
                         if (!storeItem.isEmpty) {
                             val playerInv = PlayerInventoryWrapper.of(player)
                             var storeIndex = 0
-                            for (playerInvIndex in 0..playerInv.size()) {
+                            for (playerInvIndex in 0..<playerInv.size()) {
                                 val playerItem = ItemUtil.getStack(playerInv, playerInvIndex)
                                 if (!ItemStack.isSameItemSameComponents(playerItem, storeItem)) continue
                                 Transaction.openRoot().use {
@@ -145,7 +145,7 @@ class ItemInteractivePayload(
                         Transaction.openRoot().use {
                             val actualTake = cap.extract(payload.targetSlot, ItemResource.of(itemCanTake), takeCount, it)
                             it.commit()
-                            giveItemToPlayer(ItemStack(itemCanTake.item, actualTake), payloadContext.player() as ServerPlayer)
+                            giveItemToPlayer(itemCanTake.copyWithCount(actualTake), payloadContext.player() as ServerPlayer)
                         }
                     } else {
                         val stored = ItemUtil.getStack(cap, payload.targetSlot)
@@ -180,7 +180,7 @@ class ItemInteractivePayload(
                                     val res = cap.insert(payload.targetSlot, ir, extracted, it)
                                     it.commit()
                                     if (extracted - res > 0) {
-                                        giveItemToPlayer(ItemStack(invItem.item, extracted - res), player)
+                                        giveItemToPlayer(invItem.copyWithCount(extracted - res), player)
                                         break
                                     }
                                     storeCount -= extracted

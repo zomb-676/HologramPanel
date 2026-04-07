@@ -59,7 +59,7 @@ object Config {
 
     private fun onLoad(event: ModConfigEvent.Loading) {
         if (event.config.spec == Client.space) {
-//            Client.tryValidate()// TODO
+            Client.tryValidate()
         }
         PluginManager.getInstance().onPluginSettingChange(event.config)
     }
@@ -226,6 +226,7 @@ object Config {
                 renderMinDistance.set(1.0)
                 renderMinDistance.set(8.0)
             }
+            // ModConfigEvent.Loading fires before Minecraft instance is created, so, use ?. here
             run {
                 when (searchBackend.get()) {
                     SearchBackend.Type.REI -> if (ModInstalled.reiInstalled) return@run
@@ -233,13 +234,13 @@ object Config {
                     SearchBackend.Type.AUTO, SearchBackend.Type.DEFAULT -> return@run
                 }
                 searchBackend.setAndSave(SearchBackend.Type.AUTO)
-                Minecraft.getInstance().gui.chat.addClientSystemMessage(
+                Minecraft.getInstance()?.gui?.chat?.addClientSystemMessage(
                     Component.literal(
                         "search backend switch to auto for fallback"
                     )
                 )
             }
-            Minecraft.getInstance().level?.registryAccess()?.also { access ->
+            Minecraft.getInstance()?.level?.registryAccess()?.also { access ->
                 updateHideList(access)
             }
         }

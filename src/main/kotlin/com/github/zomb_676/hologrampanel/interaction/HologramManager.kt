@@ -14,6 +14,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
 import com.github.zomb_676.hologrampanel.render.HologramStyle
+import com.github.zomb_676.hologrampanel.render.LinkLineRender
 import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.util.*
 import com.github.zomb_676.hologrampanel.util.MousePositionManager.component1
@@ -29,10 +30,14 @@ import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.github.zomb_676.hologrampanel.widget.locateType.*
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import org.joml.Matrix3x2f
+import org.joml.Vector2d
 
 object HologramManager {
     /**
@@ -268,7 +273,6 @@ object HologramManager {
                 }
             }
         }
-//        style.guiGraphics.flush()// TODO
 
         this.renderFacingVectors(style, partialTicks)
         this.arrangeScreenPinWidget(partialTicks)
@@ -571,33 +575,30 @@ object HologramManager {
      */
     private fun renderPinScreenPrompt(style: HologramStyle, partialTicks: Float) {
 
-//        RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-//        RenderSystem.disableCull()
-//
-//        this.screenPinHolograms.forEach { state ->
-//            val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-//
-//            if (!state.displayed) return@forEach
-//            if (state.inViewDegree) {
-//                val locate = state.locate as? LocateOnScreen? ?: return@forEach
-//
-//                val widgetX = (locate.position.x + state.displaySize.width).toDouble()
-//                val widgetY = (locate.position.y + state.displaySize.height / 2).toDouble()
-//                val (worldX, worldY) = state.locatedScreenPos
-//
-//                LinkLineRender.fillThreeSegmentConnectionLine(
-//                    Vector2d(widgetX, widgetY),
-//                    Vector2d(worldX.toDouble(), worldY.toDouble()),
-//                    radius = Config.Style.pinPromptRadius.get(),
-//                    lineLength = Config.Style.pinPromptTerminalStraightLineLength.get(),
-//                    builder,
-//                    style.pose(),
-//                    halfLineWidth = Config.Style.pinPromptLineWidth.get().toFloat() / 2.0f
-//                )
-//            }
-//            val meshData = builder.build() ?: return
-//            BufferUploader.drawWithShader(meshData)
-//        }// TODO
+        this.screenPinHolograms.forEach { state ->
+            val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
+
+            if (!state.displayed) return@forEach
+            if (state.inViewDegree) {
+                val locate = state.locate as? LocateOnScreen? ?: return@forEach
+
+                val widgetX = (locate.position.x + state.displaySize.width).toDouble()
+                val widgetY = (locate.position.y + state.displaySize.height / 2).toDouble()
+                val (worldX, worldY) = state.locatedScreenPos
+
+                LinkLineRender.fillThreeSegmentConnectionLine(
+                    Vector2d(widgetX, widgetY),
+                    Vector2d(worldX.toDouble(), worldY.toDouble()),
+                    radius = Config.Style.pinPromptRadius.get(),
+                    lineLength = Config.Style.pinPromptTerminalStraightLineLength.get(),
+                    builder,
+                    style.pose(),
+                    halfLineWidth = Config.Style.pinPromptLineWidth.get().toFloat() / 2.0f
+                )
+            }
+            val meshData = builder.build() ?: return
+            BufferUploader.drawWithShader(meshData)// TODO
+        }
     }
 
     fun notifyHologramLocateTypeChange(state: HologramRenderState, old: LocateType) {
@@ -688,11 +689,10 @@ object HologramManager {
     /**
      * blit all the world hologram from [com.mojang.blaze3d.pipeline.RenderTarget] to the world
      */
-    fun renderWorldPart(event: RenderLevelStageEvent) {
-//        if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
+    fun renderWorldPart(event: RenderLevelStageEvent.AfterTranslucentBlocks) {
 //        val pose = event.poseStack
-//        val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
-//        val camPos = event.camera.position
+//        val partialTick = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(false)
+//        val camPos = event.levelRenderState.cameraRenderState.pos
 //        pose.translate(-camPos.x, -camPos.y, -camPos.z)
 //
 //        RenderSystem.enableBlend()

@@ -94,7 +94,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                     return Transaction.openRoot().use {
                         val result = handle.extract(index, ItemResource.of(target.item), count, it)
                         it.commit()
-                        ItemStack(target.item, result)
+                        target.copyWithCount(result)
                     }
                 }
                 return ItemStack.EMPTY
@@ -105,7 +105,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                     if (!target.isEmpty && !ItemStack.isSameItemSameComponents(target, ItemUtil.getStack(handle, index))) return ItemStack.EMPTY
                     return Transaction.openRoot().use {
                         val result = handle.extract(index, ItemResource.of(target.item), count, it)
-                        ItemStack(target.item, result)
+                        target.copyWithCount(result)
                     }
                 }
                 return ItemStack.EMPTY
@@ -116,7 +116,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                     return Transaction.openRoot().use {
                         val result = handle.insert(index, ItemResource.of(store.item), store.count, it)
                         it.commit()
-                        ItemStack(store.item, store.count - result)
+                        store.copyWithCount(store.count - result)
                     }
                 }
                 return store
@@ -126,7 +126,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                 if (handle.isInRange(index)) {
                     return Transaction.openRoot().use {
                         val result = handle.insert(index, ItemResource.of(store.item), store.count, it)
-                        ItemStack(store.item, store.count - result)
+                        store.copyWithCount(store.count - result)
                     }
                 }
                 return store
@@ -302,7 +302,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                     return Transaction.openRoot().use {
                         val ret = handle.extract(index, FluidResource.of(stack), stack.amount, it)
                         it.commit()
-                        FluidStack(stack.fluid, ret)
+                        stack.copyWithAmount(ret)
                     }
                 } else return FluidStack.EMPTY
             }
@@ -313,7 +313,7 @@ sealed interface TransPath<in H : Any, R : Any> {
                     if (FluidStack.isSameFluidSameComponents(stack, FluidUtil.getStack(handle, index))) return FluidStack.EMPTY
                     return Transaction.openRoot().use {
                         val ret = handle.extract(index, FluidResource.of(stack), stack.amount, it)
-                        FluidStack(stack.fluid, ret)
+                        stack.copyWithAmount(ret)
                     }
                 } else return FluidStack.EMPTY
             }

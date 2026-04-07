@@ -1,8 +1,8 @@
 package com.github.zomb_676.hologrampanel.widget.element.progress
 
 import com.github.zomb_676.hologrampanel.render.HologramStyle
-import com.github.zomb_676.hologrampanel.util.FloatColoredQuadrilateralRenderState.Companion.fillQuad
-import com.github.zomb_676.hologrampanel.util.FloatColoredRectangleRenderState.Companion.fill
+import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredQuadrilateralRenderState.Companion.fillQuad
+import com.github.zomb_676.hologrampanel.util.renderstate.FloatColoredRectangleRenderState.Companion.fill
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.util.stack
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement.Companion.resetNan

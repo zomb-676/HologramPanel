@@ -1,7 +1,7 @@
 package com.github.zomb_676.hologrampanel.render
 
 import com.mojang.blaze3d.vertex.BufferBuilder
-import org.joml.Matrix4f
+import org.joml.Matrix3x2fStack
 import org.joml.Vector2d
 import org.joml.Vector2f
 import kotlin.math.*
@@ -11,7 +11,7 @@ import kotlin.math.*
  */
 object LinkLineRender {
     fun fillThreeSegmentConnectionLine(
-        begin: Vector2d, end: Vector2d, radius: Double, lineLength: Double, builder: BufferBuilder, matrix: Matrix4f,
+        begin: Vector2d, end: Vector2d, radius: Double, lineLength: Double, builder: BufferBuilder, matrix: Matrix3x2fStack,
         lineColor: Int = -1,
         halfLineWidth: Float = 0.8f,
         segment: Int = 50
@@ -28,72 +28,72 @@ object LinkLineRender {
                 calculateTheta3(beginPoint, endPoint, radius)
             }
 
-        if (theta == null) {
-            val beginX = begin.x.toFloat()
-            val beginY = begin.y.toFloat()
-            val endX = end.x.toFloat()
-            val endY = end.y.toFloat()
-            val offset = Vector2f(endY - beginY, beginX - endX).normalize().mul(halfLineWidth)
-            builder.addVertex(matrix, beginX - offset.x, beginY - offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, beginX + offset.x, beginY + offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, endX + offset.x, endY + offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, endX - offset.x, endY - offset.y, 1f).setColor(lineColor)
-            return
-        }
-
-        val beginCircle: Vector2d
-        val endCircle: Vector2d
-        if (beginPoint.y < endPoint.y) {
-            beginCircle = Vector2d(beginPoint.x, beginPoint.y + radius)
-            endCircle = Vector2d(endPoint.x, endPoint.y - radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-        } else {
-            beginCircle = Vector2d(beginPoint.x, beginPoint.y - radius)
-            endCircle = Vector2d(endPoint.x, endPoint.y + radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-        }
-
-        val sign = if (beginPoint.y < endPoint.y) 1 else -1
-        repeat(segment) {
-            val the = theta * 2 / segment * it
-            val sin = sin(the)
-            val cos = cos(the)
-            builder.addVertex(
-                matrix, (beginCircle.x + sin * (radius + halfLineWidth)).toFloat(),
-                (beginCircle.y - cos * sign * (radius + halfLineWidth)).toFloat(),
-                1f
-            ).setColor(lineColor)
-            builder.addVertex(
-                matrix, (beginCircle.x + sin * (radius - halfLineWidth)).toFloat(),
-                (beginCircle.y - cos * sign * (radius - halfLineWidth)).toFloat(),
-                1f
-            ).setColor(lineColor)
-        }
-        for (it in segment downTo 0) {
-            val the = theta * 2 / segment * it
-            val sin = sin(the)
-            val cos = cos(the)
-            builder.addVertex(
-                matrix, (endCircle.x - sin * (radius - halfLineWidth)).toFloat(),
-                (endCircle.y + cos * sign * (radius - halfLineWidth)).toFloat(),
-                1f
-            ).setColor(lineColor)
-            builder.addVertex(
-                matrix, (endCircle.x - sin * (radius + halfLineWidth)).toFloat(),
-                (endCircle.y + cos * sign * (radius + halfLineWidth)).toFloat(),
-                1f
-            ).setColor(lineColor)
-        }
-
-        if (beginPoint.y < endPoint.y) {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-        } else {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-        }
+//        if (theta == null) {
+//            val beginX = begin.x.toFloat()
+//            val beginY = begin.y.toFloat()
+//            val endX = end.x.toFloat()
+//            val endY = end.y.toFloat()
+//            val offset = Vector2f(endY - beginY, beginX - endX).normalize().mul(halfLineWidth)
+//            builder.addVertexWith2DPose(matrix, beginX - offset.x, beginY - offset.y, 1f).setColor(lineColor)
+//            builder.addVertex(matrix, beginX + offset.x, beginY + offset.y, 1f).setColor(lineColor)
+//            builder.addVertex(matrix, endX + offset.x, endY + offset.y, 1f).setColor(lineColor)
+//            builder.addVertex(matrix, endX - offset.x, endY - offset.y, 1f).setColor(lineColor)
+//            return
+//        }
+//
+//        val beginCircle: Vector2d
+//        val endCircle: Vector2d
+//        if (beginPoint.y < endPoint.y) {
+//            beginCircle = Vector2d(beginPoint.x, beginPoint.y + radius)
+//            endCircle = Vector2d(endPoint.x, endPoint.y - radius)
+//            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//        } else {
+//            beginCircle = Vector2d(beginPoint.x, beginPoint.y - radius)
+//            endCircle = Vector2d(endPoint.x, endPoint.y + radius)
+//            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//        }
+//
+//        val sign = if (beginPoint.y < endPoint.y) 1 else -1
+//        repeat(segment) {
+//            val the = theta * 2 / segment * it
+//            val sin = sin(the)
+//            val cos = cos(the)
+//            builder.addVertex(
+//                matrix, (beginCircle.x + sin * (radius + halfLineWidth)).toFloat(),
+//                (beginCircle.y - cos * sign * (radius + halfLineWidth)).toFloat(),
+//                1f
+//            ).setColor(lineColor)
+//            builder.addVertex(
+//                matrix, (beginCircle.x + sin * (radius - halfLineWidth)).toFloat(),
+//                (beginCircle.y - cos * sign * (radius - halfLineWidth)).toFloat(),
+//                1f
+//            ).setColor(lineColor)
+//        }
+//        for (it in segment downTo 0) {
+//            val the = theta * 2 / segment * it
+//            val sin = sin(the)
+//            val cos = cos(the)
+//            builder.addVertex(
+//                matrix, (endCircle.x - sin * (radius - halfLineWidth)).toFloat(),
+//                (endCircle.y + cos * sign * (radius - halfLineWidth)).toFloat(),
+//                1f
+//            ).setColor(lineColor)
+//            builder.addVertex(
+//                matrix, (endCircle.x - sin * (radius + halfLineWidth)).toFloat(),
+//                (endCircle.y + cos * sign * (radius + halfLineWidth)).toFloat(),
+//                1f
+//            ).setColor(lineColor)
+//        }
+//
+//        if (beginPoint.y < endPoint.y) {
+//            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//        } else {
+//            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+//        }// TODO
     }
 
     private fun calculateTheta(begin: Vector2d, end: Vector2d, radius: Double): Double? {

@@ -16,7 +16,7 @@ import kotlin.math.max
 
 /**
  * similar to [net.minecraft.client.gui.GuiGraphicsExtractor.tooltip]
- */// TODO
+ */
 open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipType? = null) : RenderElement() {
     var sprite = item.get(DataComponents.TOOLTIP_STYLE)
     var tooltips: List<ClientTooltipComponent> = listOf()
@@ -53,7 +53,6 @@ open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipTyp
         )
         var height = 0
         style.stack {
-            style.guiGraphics.pose().translate(2.0f, 2.0f/*, 400.0*/)// TODO
             run {
                 val render = when (tooltipType ?: Config.Style.itemTooltipType.get()) {
                     TooltipType.TEXT, TooltipType.SCREEN_NO_BACKGROUND -> false
@@ -61,29 +60,26 @@ open class ScreenTooltipElement(val item: ItemStack, val tooltipType: TooltipTyp
                     TooltipType.SCREEN_ALWAYS_BACKGROUND -> true
                 }
                 if (render) {
-//                    TooltipRenderUtil.renderTooltipBackground(
-//                        style.guiGraphics,
-//                        0,
-//                        0,
-//                        contentSize.width - 4,
-//                        contentSize.height - 5,
-//                        0,
-//                        texture.texture
-//                    )// TODO
+                    TooltipRenderUtil.extractTooltipBackground(
+                        style.guiGraphics,
+                        0,
+                        0,
+                        contentSize.width - 4,
+                        contentSize.height - 5,
+                        texture.texture
+                    )
                 }
             }
 
             tooltips.forEachIndexed { index, tooltip ->
-//                tooltip.renderText(
-//                    font, 0, height, style.pose(), style.guiGraphics.bufferSource
-//                )// TODO
+                tooltip.extractText(style.guiGraphics, font, 0, height)
                 height += tooltip.getHeight(font)
             }
             height = 0
             tooltips.forEachIndexed { index, tooltip ->
-//                tooltip.renderImage(
-//                    font, 0, height, contentSize.width, contentSize.height, style.guiGraphics
-//                )// TODO
+                tooltip.extractImage(
+                    font, 0, height, contentSize.width, contentSize.height, style.guiGraphics
+                )
                 height += tooltip.getHeight(font)
             }
         }
