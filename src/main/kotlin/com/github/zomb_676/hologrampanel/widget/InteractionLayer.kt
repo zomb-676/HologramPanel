@@ -1,6 +1,7 @@
 package com.github.zomb_676.hologrampanel.widget
 
 import com.github.zomb_676.hologrampanel.Config
+import com.github.zomb_676.hologrampanel.EventHandler
 import com.github.zomb_676.hologrampanel.interaction.HologramInteractionManager.dragData
 import com.github.zomb_676.hologrampanel.interaction.HologramManager
 import com.github.zomb_676.hologrampanel.util.glDebugStack
@@ -13,6 +14,10 @@ import net.neoforged.neoforge.client.gui.GuiLayer
 
 object InteractionLayer {
     fun getLayer(): GuiLayer = GuiLayer { guiGraphics, deltaTracker ->
+        val wrs = Minecraft.getInstance().gameRenderer.gameRenderState.windowRenderState
+        if (wrs.isResized) {
+            EventHandler.ClientOnly.onWindowResize(wrs.width, wrs.height)
+        }
         glDebugStack("renderHologramOverlayPart") {
             HologramManager.renderOverlayPart(guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false))
         }

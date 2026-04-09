@@ -13,7 +13,7 @@
     "GameRendererMixin",
     "LevelRendererMixin",
     "MouseHandleMixin",
-    "RenderTargetMixin",
+    "GuiRendererMixin",
     "WindowMixin"
   ],
   "injectors": {

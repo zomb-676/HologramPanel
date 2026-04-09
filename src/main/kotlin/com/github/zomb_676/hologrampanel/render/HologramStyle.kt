@@ -31,7 +31,7 @@ import kotlin.math.max
  * a wrapped [GuiGraphicsExtractor] which is intended for convenience use and customize widget style
  */
 interface HologramStyle {
-    val guiGraphics: GuiGraphicsExtractor
+    var guiGraphics: GuiGraphicsExtractor// TODO: Changing from val to var may potentially break things
     var contextColor: Int
 
     fun drawFullyBackground(size : Size)
@@ -148,14 +148,6 @@ interface HologramStyle {
     fun scale(scale: Float) {
         this.scale(scale, scale)
     }
-
-//    fun mulPose(matrix: Matrix4f) {
-//        this.pose().mulPose(matrix)
-//    }
-//
-//    fun mulPose(quaternion: Quaternionf) {
-//        this.pose().mulPose(quaternion)
-//    }// TODO
 
     fun push(): Matrix3x2fStack = this.guiGraphics.pose().pushMatrix()
     fun pop(): Matrix3x2fStack = this.guiGraphics.pose().popMatrix()
@@ -357,7 +349,7 @@ interface HologramStyle {
         val ITEM_STACK_SIZE = Size.of(ITEM_STACK_LENGTH, ITEM_STACK_LENGTH)
     }
 
-    class DefaultStyle(override val guiGraphics: GuiGraphicsExtractor) : HologramStyle {
+    class DefaultStyle(override var guiGraphics: GuiGraphicsExtractor) : HologramStyle {
         companion object {
             val SINGLE_INNER_PADDING = Padding(2)
             val COLLAPSE_SIZE = Size.of(4)

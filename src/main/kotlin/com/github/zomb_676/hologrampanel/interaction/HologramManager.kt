@@ -13,6 +13,7 @@ import com.github.zomb_676.hologrampanel.interaction.HologramManager.interactive
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.interaction.context.HologramContext
+import com.github.zomb_676.hologrampanel.render.CustomTargetGuiRenderer
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.github.zomb_676.hologrampanel.render.TransitRenderTargetManager
 import com.github.zomb_676.hologrampanel.render.state.LinkLineRenderState
@@ -30,12 +31,19 @@ import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.github.zomb_676.hologrampanel.widget.locateType.*
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
+import com.mojang.blaze3d.buffers.GpuBuffer
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.textures.FilterMode
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexConsumer
+import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.render.TextureSetup
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
-import org.joml.Matrix3x2f
-import org.joml.Vector2d
+import org.joml.*
+import java.util.*
 
 object HologramManager {
     /**
@@ -609,23 +617,56 @@ object HologramManager {
 
     fun renderFacingVectors(style: HologramStyle, partialTicks: Float) = MousePositionManager.mouseInvalidAreaScope {
         glDebugStack("facingVectors") {
+            val (mouseX, mouseY) = MousePositionManager
+            val customGuiGraphics = GuiGraphicsExtractor(Minecraft.getInstance(), TransitRenderTargetManager.customGuiRenderState,
+                mouseX.toInt(), mouseY.toInt())
+            val storedGuiGraphics = style.guiGraphics
+            style.guiGraphics = customGuiGraphics
             for ((target, states) in TransitRenderTargetManager.getEntries()) {
                 if (states.isEmpty()) continue
+                TransitRenderTargetManager.customGuiRenderState.reset()
+                (TransitRenderTargetManager.customGuiRenderer as CustomTargetGuiRenderer).customTarget = target
+                for (state in states) {
+                    val locate = state.locate as? LocateFreelyInWorld? ?: continue
+                    val rect = locate.getAllocatedSpace()
+                    style.stack {
+                        style.move(rect.x, rect.y)
+                        style.scale(state.displayScale)
+                        style.drawFullyBackground(state.size)
+                        state.widget.render(state, style, state.displayType, partialTicks)
+                    }
+                }
+                TransitRenderTargetManager.customGuiRenderer.render(RenderSystem.getShaderFog()!!)
+                TransitRenderTargetManager.customGuiRenderer.endFrame()
+
+//                RenderSystem.getDevice()
+//                    .createCommandEncoder()
+//                    .createRenderPass(
+//                        { "Transit Render Pass" },
+//                        target.colorTextureView!!,
+//                        OptionalInt.of(ARGB.white(0)),
+//                        target.depthTextureView,
+//                        OptionalDouble.empty()
+//                    ).use {
+//
+//                    }
 //                target.bindWrite(true)
 //                OpenGLStateManager.preventMainBindWrite {
-                    for (state in states) {
-                        val locate = state.locate as? LocateFreelyInWorld? ?: continue
-                        val rect = locate.getAllocatedSpace()
-                        style.stack {
-                            style.move(rect.x, rect.y)
-                            style.scale(state.displayScale)
-                            style.drawFullyBackground(state.size)
-                            state.widget.render(state, style, state.displayType, partialTicks)
-                        }
-                    }
+//                    for (state in states) {
+//                        val locate = state.locate as? LocateFreelyInWorld? ?: continue
+//                        val rect = locate.getAllocatedSpace()
+//                        style.stack {
+//                            style.move(rect.x, rect.y)
+//                            style.scale(state.displayScale)
+//                            style.drawFullyBackground(state.size)
+//                            state.widget.render(state, style, state.displayType, partialTicks)
+//                        }
+//                    }
 //                    style.guiGraphics.flush()
 //                }
             }
+            (TransitRenderTargetManager.customGuiRenderer as CustomTargetGuiRenderer).customTarget = null
+            style.guiGraphics = storedGuiGraphics
 //            Minecraft.getInstance().mainRenderTarget.bindWrite(true)// TODO
         }
     }
@@ -681,38 +722,48 @@ object HologramManager {
 //        }
 //        Minecraft.getInstance().mainRenderTarget.bindWrite(true)// TODO
 
-//        MousePositionManager.remappingMouseForInteract(target) {
-//            val (u, v) = MousePositionManager
-//            style.stack {
-//                style.translate(window.guiScaledWidth / 2f, window.guiScaledHeight / 2f)
-//                style.scale(target.displayScale)
-//                run {
-//                    val size = target.size
-//                    style.translate(-size.width / 2f, -size.height / 2f)
-//                    style.drawFullyBackground(target.size)
-//                    MousePositionManager.relocateOriginPoint(style.pose()) {
-//                        style.stack {
-//                            target.widget.render(target, style, target.displayType, partialTick)
-//                        }
-//                        this.getInteractiveTarget()?.renderInteractive(style, target.size, partialTick)
-//                    }
-//                }
-//                if (Config.Client.renderInteractTransientReMappingIndicator.get()) {
-//                    style.stack {
-//                        style.scale(1 / target.displayScale)
-//                        style.drawVerticalLine(-10000, +10000, u.toInt(), -1)
-//                        style.drawHorizontalLine(-10000, +10000, v.toInt(), -1)
-//                    }
-//                    style.drawString("u:%.2f,v:%.2f".format(u, v), 0, -30)
-//                }
-//            }
-//        }
-//        glDebugStack("indicator") {
-//            this.renderInteractionHologramStateTips(target, style)
-//            if (PanelOperatorManager.selectedTarget == target) {
-//                this.renderSelectedHologramStateTips(target, style)
-//            }
-//        }
+        TransitRenderTargetManager.customGuiRenderState.reset()
+        (TransitRenderTargetManager.customGuiRenderer as CustomTargetGuiRenderer).customTarget = renderTarget
+        val storedGuiGraphics = style.guiGraphics
+        MousePositionManager.remappingMouseForInteract(target) {
+            val (u, v) = MousePositionManager
+            val customGuiGraphics = GuiGraphicsExtractor(Minecraft.getInstance(), TransitRenderTargetManager.customGuiRenderState,
+                u.toInt(), v.toInt())
+            style.guiGraphics = customGuiGraphics
+            style.stack {
+                style.translate(window.guiScaledWidth / 2f, window.guiScaledHeight / 2f)
+                style.scale(target.displayScale)
+                run {
+                    val size = target.size
+                    style.translate(-size.width / 2f, -size.height / 2f)
+                    style.drawFullyBackground(target.size)
+                    MousePositionManager.relocateOriginPoint(style.pose()) {
+                        style.stack {
+                            target.widget.render(target, style, target.displayType, partialTick)
+                        }
+                        this.getInteractiveTarget()?.renderInteractive(style, target.size, partialTick)
+                    }
+                }
+                if (Config.Client.renderInteractTransientReMappingIndicator.get()) {
+                    style.stack {
+                        style.scale(1 / target.displayScale)
+                        style.drawVerticalLine(-10000, +10000, u.toInt(), -1)
+                        style.drawHorizontalLine(-10000, +10000, v.toInt(), -1)
+                    }
+                    style.drawString("u:%.2f,v:%.2f".format(u, v), 0, -30)
+                }
+            }
+        }
+        glDebugStack("indicator") {
+            this.renderInteractionHologramStateTips(target, style)
+            if (PanelOperatorManager.selectedTarget == target) {
+                this.renderSelectedHologramStateTips(target, style)
+            }
+        }
+        TransitRenderTargetManager.customGuiRenderer.render(RenderSystem.getShaderFog()!!)
+        TransitRenderTargetManager.customGuiRenderer.endFrame()
+        (TransitRenderTargetManager.customGuiRenderer as CustomTargetGuiRenderer).customTarget = null
+        style.guiGraphics = storedGuiGraphics
     }
 
     /**
@@ -820,100 +871,132 @@ object HologramManager {
 //        Minecraft.getInstance().mainRenderTarget.bindWrite(true)// TODO
 
 
-//        val pose = event.poseStack
-//        val partialTick = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(false)
-//        val camPos = event.levelRenderState.cameraRenderState.pos
-//        pose.translate(-camPos.x, -camPos.y, -camPos.z)
-//
-//        RenderSystem.enableBlend()
-//        RenderSystem.disableCull()
-//        RenderSystem.setShader(CoreShaders.POSITION_TEX)
-//        glDebugStack("world") {
-//            for ((target, states) in TransitRenderTargetManager.getEntries()) {
-//                if (states.isEmpty()) continue
-//                RenderSystem.setShaderTexture(0, target.colorTextureId)
-//                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
-//                RenderSystem.getDevice()
-//                    .createCommandEncoder()
-//                    .createRenderPass({ "Transit Render Pass" })
-//                for (state in states) {
-//                    val locate = state.locate as? LocateFreelyInWorld? ?: continue
-//                    val center = state.getRenderWorldPosition()
-//                    val (width, height) = state.displaySize
-//                    val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
-//                    val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
-//
-//                    fun Vector3f.add(): VertexConsumer {
-//                        return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
-//                    }
-//
-//                    val window = Minecraft.getInstance().window
-//                    val rect = locate.getAllocatedSpace()
-//                    //one minus is because allocator's up-down is different from uv
-//                    val u0 = (rect.x / window.guiScaledWidth.toFloat())
-//                    val v1 = 1 - (rect.y / window.guiScaledHeight.toFloat())
-//                    val u1 = ((rect.x + rect.width) / window.guiScaledWidth.toFloat())
-//                    val v0 = 1 - ((rect.y + rect.height) / window.guiScaledHeight.toFloat())
-//
-//                    val containerVector = Vector3f()
-//                    //left-up
-//                    containerVector.set(center).add(left).add(up).apply {
-//                        locate.updateLeftUp(this)
-//                        if (!state.isInteractAt()) add().setUv(u0, v1)
-//                    }
-//                    //left-down
-//                    containerVector.set(center).add(left).sub(up).apply {
-//                        locate.updateLeftDown(this)
-//                        if (!state.isInteractAt()) add().setUv(u0, v0)
-//                    }
-//                    //right-down
-//                    containerVector.set(center).sub(left).sub(up).apply {
-//                        locate.updateRightDown(this)
-//                        if (!state.isInteractAt()) add().setUv(u1, v0)
-//                    }
-//                    //right-up
-//                    containerVector.set(center).sub(left).add(up).apply {
-//                        locate.updateRightUp(this)
-//                        if (!state.isInteractAt()) add().setUv(u1, v1)
-//                    }
-//                }
-//                builder.build()?.apply(BufferUploader::drawWithShader)
-//            }
-//            getInteractHologram()?.also { state ->
-//                val locate = state.locate as? LocateFreelyInWorld? ?: return@also
-//                val center = state.getRenderWorldPosition()
-//                val window = Minecraft.getInstance().window
-//                val width = window.guiScaledWidth
-//                val height = window.guiScaledHeight
-//
-//                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
-//                RenderSystem.setShaderTexture(0, TransitRenderTargetManager.getInteractTarget().colorTextureId)
-//
-//                val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
-//                val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
-//
-//                fun Vector3f.add(): VertexConsumer {
-//                    return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
-//                }
-//
-//                val u0 = 0.0f
-//                val v1 = 1.0f
-//                val u1 = 1.0f
-//                val v0 = 0.0f
-//
-//                val containerVector = Vector3f()
-//                //left-up
-//                containerVector.set(center).add(left).add(up).add().setUv(u0, v1)
-//                //left-down
-//                containerVector.set(center).add(left).sub(up).add().setUv(u0, v0)
-//                //right-down
-//                containerVector.set(center).sub(left).sub(up).add().setUv(u1, v0)
-//                //right-up
-//                containerVector.set(center).sub(left).add(up).add().setUv(u1, v1)
-//
-//                BufferUploader.drawWithShader(builder.buildOrThrow())
-//            }
-//            TransitRenderTargetManager.refresh()
-//        }
+        val pose = event.poseStack
+        val camPos = event.levelRenderState.cameraRenderState.pos
+        pose.translate(-camPos.x, -camPos.y, -camPos.z)
+        val mainTarget = Minecraft.getInstance().mainRenderTarget
+
+        val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+        for ((target, states) in TransitRenderTargetManager.getEntries()) {
+            for (state in states) {
+                val locate = state.locate as? LocateFreelyInWorld? ?: continue
+                val center = state.getRenderWorldPosition()
+                val (width, height) = state.displaySize
+                val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
+                val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
+
+                fun Vector3f.add(): VertexConsumer {
+                    return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
+                }
+
+                val window = Minecraft.getInstance().window
+                val rect = locate.getAllocatedSpace()
+                //one minus is because allocator's up-down is different from uv
+                val u0 = (rect.x / window.guiScaledWidth.toFloat())
+                val v1 = 1 - (rect.y / window.guiScaledHeight.toFloat())
+                val u1 = ((rect.x + rect.width) / window.guiScaledWidth.toFloat())
+                val v0 = 1 - ((rect.y + rect.height) / window.guiScaledHeight.toFloat())
+
+                val containerVector = Vector3f()
+                //left-up
+                containerVector.set(center).add(left).add(up).apply {
+                    locate.updateLeftUp(this)
+                    if (!state.isInteractAt()) add().setUv(u0, v1)
+                }
+                //left-down
+                containerVector.set(center).add(left).sub(up).apply {
+                    locate.updateLeftDown(this)
+                    if (!state.isInteractAt()) add().setUv(u0, v0)
+                }
+                //right-down
+                containerVector.set(center).sub(left).sub(up).apply {
+                    locate.updateRightDown(this)
+                    if (!state.isInteractAt()) add().setUv(u1, v0)
+                }
+                //right-up
+                containerVector.set(center).sub(left).add(up).apply {
+                    locate.updateRightUp(this)
+                    if (!state.isInteractAt()) add().setUv(u1, v1)
+                }
+            }
+        }
+        getInteractHologram()?.also { state ->
+            val locate = state.locate as? LocateFreelyInWorld? ?: return@also
+            val center = state.getRenderWorldPosition()
+            val window = Minecraft.getInstance().window
+            val width = window.guiScaledWidth
+            val height = window.guiScaledHeight
+
+            val left = locate.getLeft().mul(width / 2f / locate.renderScale, Vector3f())
+            val up = locate.getUp().mul(height / 2f / locate.renderScale, Vector3f())
+
+            fun Vector3f.add(): VertexConsumer {
+                return builder.addVertex(pose.last().pose(), this.x, this.y, this.z)
+            }
+
+            val u0 = 0.0f
+            val v1 = 1.0f
+            val u1 = 1.0f
+            val v0 = 0.0f
+
+            val containerVector = Vector3f()
+            //left-up
+            containerVector.set(center).add(left).add(up).add().setUv(u0, v1)
+            //left-down
+            containerVector.set(center).add(left).sub(up).add().setUv(u0, v0)
+            //right-down
+            containerVector.set(center).sub(left).sub(up).add().setUv(u1, v0)
+            //right-up
+            containerVector.set(center).sub(left).add(up).add().setUv(u1, v1)
+        }
+        val vertexBuffer: GpuBuffer
+        val indexBuffer: GpuBuffer
+        val indexType: VertexFormat.IndexType
+        builder.build()?.use { mesh ->// TODO: Figure out whether this is correct
+            val ds = mesh.drawState()
+            vertexBuffer = ds.format.uploadImmediateVertexBuffer(mesh.vertexBuffer())
+            val autoIndices = RenderSystem.getSequentialBuffer(ds.mode)
+            indexBuffer = autoIndices.getBuffer(ds.indexCount)
+            indexType = autoIndices.type()
+        } ?: run {
+            TransitRenderTargetManager.refresh()
+            return
+        }
+        val dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(
+            event.modelViewMatrix,
+            Vector4f(1.0f),
+            Vector3f(),
+            Matrix4f()
+        )
+        RenderSystem.getDevice()
+            .createCommandEncoder()
+            .createRenderPass(
+                { "Hologram world part" },
+                mainTarget.colorTextureView!!,
+                OptionalInt.empty(),
+                mainTarget.depthTextureView,
+                OptionalDouble.empty()
+            ).use {
+                it.setPipeline(AllRegisters.RenderPipelines.HOLOGRAM_WORLD_PART)
+                RenderSystem.bindDefaultUniforms(it)
+                it.setUniform("DynamicTransforms", dynamicTransforms)
+                it.setVertexBuffer(0, vertexBuffer)
+                it.setIndexBuffer(indexBuffer, indexType)
+                glDebugStack("world") {
+                    var ptr = 0
+                    for ((target, states) in TransitRenderTargetManager.getEntries()) {
+                        if (states.isEmpty()) continue
+                        it.bindTexture("Sampler0", target.colorTextureView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST))
+                        it.drawIndexed(0, 6 * ptr, 6 * states.size, 1)
+                        ptr += states.size
+                    }
+                    getInteractHologram()?.also { state ->
+                        it.bindTexture("Sampler0", TransitRenderTargetManager.getInteractTarget().colorTextureView,
+                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST))
+                        it.drawIndexed(0, 6 * ptr, 6, 1)
+                    }
+                    TransitRenderTargetManager.refresh()
+                }
+            }
     }
 }

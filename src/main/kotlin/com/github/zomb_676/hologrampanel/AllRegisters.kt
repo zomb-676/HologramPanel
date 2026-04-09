@@ -168,8 +168,19 @@ object AllRegisters {
             .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLE_STRIP)
             .build()
 
+        val HOLOGRAM_WORLD_PART = RenderPipeline.builder(MATRICES_PROJECTION_SNIPPET)
+            .withLocation(HologramPanel.rl("pipeline/hologram_world_part"))
+            .withVertexShader("core/position_tex")
+            .withFragmentShader("core/position_tex")
+            .withCull(false)
+            .withColorTargetState(ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
+            .withSampler("Sampler0")
+            .build()
+
         fun register(event: RegisterRenderPipelinesEvent) {
             event.registerPipeline(STRIP_BASIC)
+            event.registerPipeline(HOLOGRAM_WORLD_PART)
         }
     }
 
