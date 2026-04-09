@@ -32,7 +32,7 @@ object InteractionLayer {
                     val window = Minecraft.getInstance().window
                     guiGraphics.pose().translate(window.guiScaledWidth / 2.0f + Config.Style.dragPromptXOffset.get().toFloat(),
                         window.guiScaledHeight / 2.0f + Config.Style.dragPromptYOffset.get().toFloat())
-//                    RenderSystem.setShaderColor(1f, 1f, 1f, Config.Style.dragPromptAlpha.get().toFloat())// TODO
+//                    RenderSystem.setShaderColor(1f, 1f, 1f, Config.Style.dragPromptAlpha.get().toFloat())// FIXME: No longer works
                     guiGraphics.item(item, 0, 0)
                     guiGraphics.itemDecorations(Minecraft.getInstance().font, item, 0, 0)
 //                    guiGraphics.flush()

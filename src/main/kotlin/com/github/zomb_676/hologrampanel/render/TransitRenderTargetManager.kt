@@ -68,10 +68,15 @@ object TransitRenderTargetManager {
             fun create(): TransitRenderTarget {
                 val mainTarget = Minecraft.getInstance().mainRenderTarget
                 val target = TransitRenderTarget(mainTarget.width, mainTarget.height)
-//                target.setClearColor(1f, 1f, 1f, 0f)// TODO
                 return target
             }
         }
+    }
+
+    fun RenderTarget.clear() {
+        RenderSystem.getDevice()
+            .createCommandEncoder()
+            .clearColorAndDepthTextures(colorTexture!!, 0x00FFFFFF, depthTexture!!, 1.0)
     }
 
     fun onResize(width: Int, height: Int) {
