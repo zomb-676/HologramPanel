@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContex
 import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.AbstractCauldronBlock
 import net.neoforged.neoforge.capabilities.Capabilities
 
@@ -18,22 +18,22 @@ data object CauldronBlockProvider : ComponentProvider<BlockHologramContext, Abst
     ) {
         val context = builder.context
         val level = context.getLevel()
-        val cap = level.getCapability(Capabilities.FluidHandler.BLOCK, context.pos, null)
+        val cap = level.getCapability(Capabilities.Fluid.BLOCK, context.pos, null)
         val amount by context.getRememberData().client(0, 0) {
-            level.getCapability(Capabilities.FluidHandler.BLOCK, context.pos, null)?.getFluidInTank(0)?.amount ?: 0
+            level.getCapability(Capabilities.Fluid.BLOCK, context.pos, null)?.getAmountAsInt(0) ?: 0
         }
         if (cap != null) {
             val progress = context.getRememberData().keep(1, ::ProgressData)
-            val fluidStack = cap.getFluidInTank(0)
-            if (!fluidStack.isEmpty) {
-                progress.current(amount).max(cap.getTankCapacity(0))
+            val fluidResource = cap.getResource(0)
+            if (!fluidResource.isEmpty) {
+                progress.current(amount).max(cap.getCapacityAsInt(0, fluidResource))
                 builder.single("fluid") {
-                    fluid("cauldron_fluid", progress, fluidStack.fluidType)
+                    fluid("cauldron_fluid", progress, fluidResource.fluid)
                 }
             }
         }
     }
 
     override fun targetClass(): Class<AbstractCauldronBlock> = AbstractCauldronBlock::class.java
-    override fun location(): ResourceLocation = HologramPanel.rl("cauldron")
+    override fun location(): Identifier = HologramPanel.rl("cauldron")
 }

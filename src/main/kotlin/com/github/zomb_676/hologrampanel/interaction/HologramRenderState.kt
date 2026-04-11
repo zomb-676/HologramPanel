@@ -20,6 +20,7 @@ import com.github.zomb_676.hologrampanel.widget.locateType.LocateInWorld
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateOnScreen
 import com.github.zomb_676.hologrampanel.widget.locateType.LocateType
 import net.minecraft.client.Minecraft
+import org.joml.Matrix3x2f
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.joml.Vector3fc
@@ -165,8 +166,8 @@ class HologramRenderState(
      */
     fun viewVectorDegreeCheckPass(partialTick: Float): Boolean {
         val camera = Minecraft.getInstance().gameRenderer.mainCamera
-        val viewVector = camera.lookVector
-        val cameraPosition = camera.position
+        val viewVector = camera.forwardVector()
+        val cameraPosition = camera.position()
         val sourcePosition = this.renderWorldPosition
         val sourceVector = Vector3f(
             (sourcePosition.x() - cameraPosition.x).toFloat(),
@@ -186,18 +187,18 @@ class HologramRenderState(
      *
      * @return if the current widget has any part in the screen
      */
-    fun displayAreaInScreen(matrix4f: Matrix4f): Boolean {
+    fun displayAreaInScreen(matrix: Matrix3x2f): Boolean {
         val window = Minecraft.getInstance().window
         val width = window.guiScaledWidth.toFloat()
         val height = window.guiScaledHeight.toFloat()
 
-        val checkVector = Vector4f(0f, 0f, 0f, 1f)
-        matrix4f.transform(checkVector)
+        val checkVector = Vector3f(0f, 0f, 1f)
+        matrix.transform(checkVector)
         val x1 = checkVector.x
         val y1 = checkVector.y
 
-        checkVector.set(size.width.toFloat(), size.height.toFloat(), 0f, 1f)
-        matrix4f.transform(checkVector)
+        checkVector.set(size.width.toFloat(), size.height.toFloat(), 1f)
+        matrix.transform(checkVector)
         val x2 = checkVector.x
         val y2 = checkVector.y
 
@@ -206,14 +207,14 @@ class HologramRenderState(
         return !(x1 > width || x2 < 0 || y1 > height || y2 < 0)
     }
 
-    fun updateDisplaySize(matrix4f: Matrix4f) {
-        val checkVector = Vector4f(0f, 0f, 0f, 1f)
-        matrix4f.transform(checkVector)
+    fun updateDisplaySize(matrix: Matrix3x2f) {
+        val checkVector = Vector3f(0f, 0f, 1f)
+        matrix.transform(checkVector)
         val x1 = checkVector.x
         val y1 = checkVector.y
 
-        checkVector.set(size.width.toFloat(), size.height.toFloat(), 0f, 1f)
-        matrix4f.transform(checkVector)
+        checkVector.set(size.width.toFloat(), size.height.toFloat(), 1f)
+        matrix.transform(checkVector)
         val x2 = checkVector.x
         val y2 = checkVector.y
 
@@ -230,7 +231,7 @@ class HologramRenderState(
      */
     fun distanceToCamera(partialTick: Float): Double {
         val source = this.renderWorldPosition
-        val camera = Minecraft.getInstance().gameRenderer.mainCamera.position
+        val camera = Minecraft.getInstance().gameRenderer.mainCamera.position()
         val x = source.x() - camera.x
         val y = source.y() - camera.y
         val z = source.z() - camera.z

@@ -18,10 +18,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
-import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
 import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.HoverEvent
@@ -80,6 +77,7 @@ object EventHandler {
             val forgeBus = NeoForge.EVENT_BUS
             modBus.addListener(ClientOnly::registerLayer)
             modBus.addListener(ClientOnly::registerKey)
+            modBus.addListener(ClientOnly::registerRenderPipelines)
             forgeBus.addListener(ClientOnly::onKey)
             forgeBus.addListener(ClientOnly::onMouseButton)
             forgeBus.addListener(ClientOnly::onMouseScroll)
@@ -89,10 +87,15 @@ object EventHandler {
             forgeBus.addListener(ClientOnly::onPlayerLogin)
             forgeBus.addListener(ClientOnly::onPlayerLogout)
             forgeBus.addListener(ClientOnly::onRenderLevelStage)
+            forgeBus.addListener(ClientOnly::onExtractLevelRenderState)
         }
 
         private fun registerKey(event: RegisterKeyMappingsEvent) {
             AllRegisters.KeyMapping.register(event)
+        }
+
+        private fun registerRenderPipelines(event: RegisterRenderPipelinesEvent) {
+            AllRegisters.RenderPipelines.register(event)
         }
 
         private fun onClientTickPost(event: ClientTickEvent.Post) {
@@ -160,7 +163,7 @@ object EventHandler {
             if (Minecraft.getInstance().level == null) return
             if (Minecraft.getInstance().screen != null) return
 
-            val window = Minecraft.getInstance().window.window
+            val window = Minecraft.getInstance().window.handle()
             val shiftDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
 
             run {
@@ -263,11 +266,8 @@ object EventHandler {
             event.registerBelow(
                 VanillaGuiLayers.CROSSHAIR, HologramPanel.rl("interaction_mode_layer"), InteractionLayer.getLayer()
             )
-            event.registerAboveAll(HologramPanel.rl("cycle_selector"), object : LayeredDraw.Layer {
-                override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
-                    CycleSelector.render(guiGraphics, deltaTracker)
-                }
-            })
+            event.registerAboveAll(HologramPanel.rl("cycle_selector")
+            ) { guiGraphics, deltaTracker -> CycleSelector.render(guiGraphics, deltaTracker) }
             event.registerAboveAll(HologramPanel.rl("debug_layer"), DebugHelper.Client.getLayer())
             event.registerAboveAll(HologramPanel.rl("drag_entries"), InteractionLayer.getDraggingLayer())
             event.registerBelowAll(HologramPanel.rl("transform_orientation"), TransformOrientation.getTransformOrientationLayer())
@@ -281,7 +281,7 @@ object EventHandler {
             HologramPanel.serverInstalled = false
         }
 
-        fun onRenderLevelStage(event: RenderLevelStageEvent) {
+        fun onRenderLevelStage(event: RenderLevelStageEvent.AfterTranslucentBlocks) {
             val pose = event.poseStack
             pose.stack {
                 DebugHelper.Client.renderLevelLast(event)
@@ -289,6 +289,10 @@ object EventHandler {
             pose.stack {
                 HologramManager.renderWorldPart(event)
             }
+        }
+
+        fun onExtractLevelRenderState(event: ExtractLevelRenderStateEvent) {
+            DebugHelper.Client.extractLevelState(event)
         }
     }
 
@@ -300,7 +304,7 @@ object EventHandler {
         ).playToClient(
             ComponentResponseDataPayload.TYPE, ComponentResponseDataPayload.STREAM_CODEC, ComponentResponseDataPayload.HANDLE
         ).playBidirectional(
-            SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE
+            SyncClosePayload.TYPE, SyncClosePayload.STREAM_CODEC, SyncClosePayload.HANDLE, SyncClosePayload.HANDLE
         ).playToClient(
             EntityConversationPayload.TYPE, EntityConversationPayload.STREAM_CODEC, EntityConversationPayload.HANDLE
         ).playToServer(
@@ -310,11 +314,11 @@ object EventHandler {
         ).playToServer(
             ItemInteractivePayload.TYPE, ItemInteractivePayload.STREAM_CODEC, ItemInteractivePayload.HANDLE
         ).playBidirectional(
-            MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE
+            MimicPayload.TYPE, MimicPayload.STREAM_CODEC, MimicPayload.HANDLE, MimicPayload.HANDLE
         ).playToServer(
             TransTargetPayload.TYPE, TransTargetPayload.STREAM_CODEC, TransTargetPayload.HANDLE
         ).playBidirectional(
-            SetProjectorSettingPayload.TYPE, SetProjectorSettingPayload.STREAM_CODEC, SetProjectorSettingPayload.HANDLE
+            SetProjectorSettingPayload.TYPE, SetProjectorSettingPayload.STREAM_CODEC, SetProjectorSettingPayload.HANDLE, SetProjectorSettingPayload.HANDLE
         )
     }
 
@@ -427,9 +431,9 @@ object EventHandler {
                             val str = StringArgumentType.getString(this, "str")
                             SearchBackend.getCurrentBackend().setSearchString(str)
                             val style = Style.EMPTY.withClickEvent(
-                                ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hologram_panel search")
+                                ClickEvent.RunCommand("/hologram_panel search")
                             ).withHoverEvent(
-                                HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("click to clear"))
+                                HoverEvent.ShowText(Component.literal("click to clear"))
                             )
                             source.sendSystemMessage(Component.literal("set search string:${str}").withStyle(style))
                         }

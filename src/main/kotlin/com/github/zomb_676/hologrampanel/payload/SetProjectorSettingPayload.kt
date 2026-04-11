@@ -36,7 +36,7 @@ class SetProjectorSettingPayload(val nbt: CompoundTag, val pos: BlockPos) : Cust
                         val storage = level.getCapability(IHologramStorage.CAPABILITY, payload.pos) ?: return
                         storage.readFromNbt(payload.nbt)
                         be.setChanged()
-                        PacketDistributor.sendToPlayersTrackingChunk(level, ChunkPos(be.blockPos), payload)
+                        PacketDistributor.sendToPlayersTrackingChunk(level, ChunkPos.containing(be.blockPos), payload)
                     }
 
                     PacketFlow.CLIENTBOUND -> {

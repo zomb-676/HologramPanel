@@ -19,13 +19,17 @@ import com.google.common.collect.ImmutableBiMap
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
+import net.minecraft.data.AtlasIds
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.material.Fluid
 import net.neoforged.neoforge.fluids.FluidType
 import net.neoforged.neoforge.items.IItemHandler
+import net.neoforged.neoforge.transfer.ResourceHandler
+import net.neoforged.neoforge.transfer.item.ItemResource
 import java.util.*
 
 class HologramWidgetBuilder<T : HologramContext>(val context: T) {
@@ -212,14 +216,14 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             name: String,
             items: List<ItemStack>,
             source: TransSource<S>,
-            handle: TransHandle<S, IItemHandler>
+            handle: TransHandle<S, ResourceHandler<ItemResource>>
         ): InteractiveItemsElement {
             return InteractiveItemsElement.create(items, source, handle, true).attach(name)
         }
 
         /**
-         * this will call [net.minecraft.client.gui.GuiGraphics.renderItemDecorations]
-         */
+         * this will call [net.minecraft.client.gui.GuiGraphicsExtractor.itemDecorations]
+         */// TODO: Determine whether this doc is correct now
         fun itemStack(name: String, itemStack: ItemStack): ItemStackElement {
             return ItemStackElement(itemStack = itemStack).attach(name)
         }
@@ -229,7 +233,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             item: ItemStack,
             interactiveSlot: Int,
             source: TransSource<S>,
-            transPath: TransHandle<S, IItemHandler>
+            transPath: TransHandle<S, ResourceHandler<ItemResource>>
         ): InteractiveItemElement {
             require(interactiveSlot >= 0)
             return InteractiveItemElement.create(item, interactiveSlot, source, transPath).attach(name)
@@ -263,7 +267,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
             return EnergyBarElement(progressBar).attach(name)
         }
 
-        fun fluid(name: String, progressBar: ProgressData, fluid: FluidType): FluidBarElement {
+        fun fluid(name: String, progressBar: ProgressData, fluid: Fluid): FluidBarElement {
             return FluidBarElement(progressBar, fluid).attach(name)
         }
 
@@ -285,7 +289,7 @@ class HologramWidgetBuilder<T : HologramContext>(val context: T) {
 
         fun heart(name: String): TextureAtlasSpriteRenderElement {
             val location = Gui.HeartType.NORMAL.getSprite(false, false, false)
-            val atlas = Minecraft.getInstance().guiSprites.getSprite(location)
+            val atlas = Minecraft.getInstance().atlasManager.getAtlasOrThrow(AtlasIds.GUI).getSprite(location)
             return sprite(name, atlas).apply { setPositionOffset(0, -1) }
         }
 

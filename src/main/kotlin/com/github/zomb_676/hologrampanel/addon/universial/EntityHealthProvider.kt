@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramConte
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.LivingEntity
 
 data object EntityHealthProvider : ServerDataProvider<EntityHologramContext, LivingEntity> {
@@ -26,7 +26,7 @@ data object EntityHealthProvider : ServerDataProvider<EntityHologramContext, Liv
 
     override fun targetClass(): Class<LivingEntity> = LivingEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.Companion.rl("health_display")
+    override fun location(): Identifier = HologramPanel.Companion.rl("health_display")
 
     override fun appendServerData(
         additionData: CompoundTag,

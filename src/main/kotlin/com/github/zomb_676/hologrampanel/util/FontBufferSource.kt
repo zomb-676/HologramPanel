@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder
 import com.mojang.blaze3d.vertex.VertexConsumer
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import net.minecraft.client.renderer.MultiBufferSource
-import net.minecraft.client.renderer.RenderType
+import net.minecraft.client.renderer.rendertype.RenderType
 import java.util.SequencedMap
 
 /**
@@ -24,7 +24,7 @@ class FontBufferSource : MultiBufferSource {
             val buffer = buffers.computeIfAbsent(renderType) {
                 ByteBufferBuilder(10240)
             }
-            BufferBuilder(buffer, renderType.mode, renderType.format)
+            BufferBuilder(buffer, renderType.mode(), renderType.format())
         }
     }
 

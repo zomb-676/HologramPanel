@@ -9,7 +9,10 @@ import com.github.zomb_676.hologrampanel.util.unsafeCast
 import com.google.common.collect.ImmutableMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
+import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtOps
+import net.minecraft.nbt.Tag
 import net.minecraft.world.item.ItemStack
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -139,6 +142,13 @@ class Remember<T : HologramContext> private constructor() {
         return res.unsafeCast()
     }
 
+    private fun parseOptional(lookupProvider: HolderLookup.Provider, tag: Optional<CompoundTag>): Optional<ItemStack> {// FIXME: Simple port. Find the right new way
+        return tag.flatMap { t ->
+            ItemStack.CODEC.parse(lookupProvider.createSerializationContext(NbtOps.INSTANCE), t)
+                .resultOrPartial({ })
+        }.or { Optional.of(ItemStack.EMPTY) }
+    }
+
     /**
      * @param equals use [ItemStack.matches], consider [net.minecraft.core.component.DataComponentType] data
      */
@@ -148,7 +158,7 @@ class Remember<T : HologramContext> private constructor() {
         equals: (ItemStack, ItemStack) -> Boolean = ItemStack::matches
     ): Holder<T, ItemStack> {
         return server(identity, ItemStack.EMPTY, equals) { tag ->
-            ItemStack.parseOptional(
+            parseOptional(
                 context.getLevel().registryAccess(), tag.getCompound(keyName)
             )
         }
@@ -166,14 +176,14 @@ class Remember<T : HologramContext> private constructor() {
         identity: Int,
         initial: V,
         equal: (V, V) -> Boolean = Objects::equals,
-        code: (tag: CompoundTag) -> V
+        code: (tag: CompoundTag) -> Optional<V>
     ): Holder<T, V> {
         val provider = this.provider ?: throw RuntimeException()
         require(provider is ServerDataProvider<T, *>)
         val key = calculateKey(identity, provider)
         var res: Holder<T, *>? = servers.get(key)
         if (res == null) {
-            res = Holder(provider, this, code, initial, equal)
+            res = Holder(provider, this, { tag -> code.invoke(tag).orElseThrow() }, initial, equal)
             this.addHolder(key, res, DistType.SERVER)
         }
         return res.unsafeCast()

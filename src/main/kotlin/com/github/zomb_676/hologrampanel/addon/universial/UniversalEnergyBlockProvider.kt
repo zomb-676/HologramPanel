@@ -8,7 +8,7 @@ import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.entity.BlockEntity
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -17,8 +17,8 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
         additionData: CompoundTag, targetData: CompoundTag, context: BlockHologramContext
     ): Boolean {
         val cap = TransHandle.BlockEnergyTransHandle.getHandleNullable(context.getBlockEntity()) ?: return false
-        targetData.putInt("energy_stored", cap.energyStored)
-        targetData.putInt("energy_max", cap.maxEnergyStored)
+        targetData.putInt("energy_stored", cap.amountAsInt)
+        targetData.putInt("energy_max", cap.capacityAsInt)
         return true
     }
 
@@ -39,7 +39,7 @@ data object UniversalEnergyBlockProvider : ServerDataProvider<BlockHologramConte
 
     override fun targetClass(): Class<BlockEntity> = BlockEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_block")
+    override fun location(): Identifier = HologramPanel.rl("universal_energy_block")
 
     override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean =
         TransHandle.BlockEnergyTransHandle.hasHandle(check)

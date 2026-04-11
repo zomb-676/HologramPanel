@@ -18,10 +18,11 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.neoforged.neoforge.transfer.item.ItemUtil
 import java.util.*
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -32,8 +33,8 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
         val cap = TransHandle.BlockItemTransHandle.getHandleNullable(context.getBlockEntity()) ?: return false
 
         val container: Object2IntOpenCustomHashMap<ItemStack> = Object2IntOpenCustomHashMap(ItemStackWithComponentStrategy)
-        repeat(cap.slots) { index ->
-            val item = cap.getStackInSlot(index)
+        repeat(cap.size()) { index ->
+            val item = ItemUtil.getStack(cap, index)
             if (item.isEmpty) return@repeat
             container.addTo(item, item.count)
         }
@@ -60,14 +61,14 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
     private fun encodeItem(buffer: RegistryFriendlyByteBuf, itemStack: ItemStack, count: Int) {
         require(!itemStack.isEmpty)
         buffer.writeVarInt(count)
-        ITEM_STREAM_CODEC.encode(buffer, itemStack.itemHolder)
+        ITEM_STREAM_CODEC.encode(buffer, itemStack.typeHolder())
         DataComponentPatch.STREAM_CODEC.encode(buffer, itemStack.components.asPatch())
         ItemStack.OPTIONAL_LIST_STREAM_CODEC
     }
 
     object ItemStackWithComponentStrategy : Hash.Strategy<ItemStack?> {
         override fun hashCode(itemStack: ItemStack?): Int = ItemStack.hashItemAndComponents(itemStack)
-        override fun equals(a: ItemStack?, b: ItemStack?): Boolean = if (b == null) a == null else ItemStack.isSameItemSameComponents(a, b)
+        override fun equals(a: ItemStack?, b: ItemStack?): Boolean = if (b == null) a == null else if (a == null) false else ItemStack.isSameItemSameComponents(a, b)
     }
 
     override fun appendComponent(
@@ -94,11 +95,11 @@ data object UniversalContainerBlockProvider : ServerDataProvider<BlockHologramCo
 
     override fun targetClass(): Class<BlockEntity> = BlockEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_container_block")
+    override fun location(): Identifier = HologramPanel.rl("universal_container_block")
 
     override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean {
         val cap = TransHandle.BlockItemTransHandle.getHandle(check)
-        return cap != null && cap.slots < 128
+        return cap != null && cap.size() < 128
     }
 
     override fun requireRebuildOnForceDisplay(context: BlockHologramContext): Boolean = true

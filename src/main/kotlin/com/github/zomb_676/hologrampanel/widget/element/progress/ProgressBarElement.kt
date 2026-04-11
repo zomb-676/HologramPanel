@@ -44,16 +44,13 @@ abstract class ProgressBarElement(val progress: ProgressData, var barWidth: Floa
                 right = barWidth * percent
             } else {
                 left = (1.0f - percent) * barWidth
-                right = barWidth.toFloat()
+                right = barWidth
             }
             this.fillBar(style, left, right, height, percent)
         }
 
         val width = style.measureString(description).width
-        style.stack {
-            style.translate(0.0, 0.0, 1.0)
-            style.drawString(description, (this.contentSize.width - width) / 2, 2)
-        }
+        style.drawString(description, (this.contentSize.width - width) / 2, 2)
     }
 
     abstract fun fillBar(style: HologramStyle, left: Float, right: Float, height: Float, percent: Float)

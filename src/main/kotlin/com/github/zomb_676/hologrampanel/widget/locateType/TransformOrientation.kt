@@ -1,23 +1,17 @@
 package com.github.zomb_676.hologrampanel.widget.locateType
 
 import com.github.zomb_676.hologrampanel.PanelOperatorManager
+import com.github.zomb_676.hologrampanel.render.state.FloatColoredQuadrilateralRenderState.Companion.fillQuad
 import com.github.zomb_676.hologrampanel.util.JomlMath
 import com.github.zomb_676.hologrampanel.util.MVPMatrixRecorder
 import com.github.zomb_676.hologrampanel.util.packed.ScreenPosition
 import com.github.zomb_676.hologrampanel.util.packed.color.HologramColor
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.RenderType
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.world.entity.player.Player
-import org.joml.Matrix4f
-import org.joml.Quaternionf
-import org.joml.Vector2f
-import org.joml.Vector3f
-import org.joml.Vector3fc
+import net.neoforged.neoforge.client.gui.GuiLayer
+import org.joml.*
 import org.lwjgl.glfw.GLFW
 
 enum class TransformOrientation {
@@ -46,9 +40,9 @@ enum class TransformOrientation {
     },
     PLAYER {
         private inline val camera get() = Minecraft.getInstance().gameRenderer.mainCamera
-        override fun extractX(player: Player, local: Any): Vector3f = camera.leftVector.normalize(Vector3f())
-        override fun extractY(player: Player, local: Any): Vector3f = camera.upVector.normalize(Vector3f())
-        override fun extractZ(player: Player, local: Any): Vector3f = camera.lookVector.normalize(Vector3f())
+        override fun extractX(player: Player, local: Any): Vector3f = camera.leftVector().normalize(Vector3f())
+        override fun extractY(player: Player, local: Any): Vector3f = camera.upVector().normalize(Vector3f())
+        override fun extractZ(player: Player, local: Any): Vector3f = camera.forwardVector().normalize(Vector3f())
         override fun rotateX(rotation: Quaternionf, cameraRotation: Quaternionf, modifyDegree: Float): Quaternionf {
             val container = Quaternionf()
             return rotation.premul(cameraRotation.invert(container))
@@ -112,24 +106,27 @@ enum class TransformOrientation {
         private const val Y_COLOR = 0xff00ff00.toInt()
         private const val Z_COLOR = 0xff0000ff.toInt()
 
-        fun getTransformOrientationLayer(): LayeredDraw.Layer = object : LayeredDraw.Layer {
+        fun getTransformOrientationLayer(): GuiLayer = object : GuiLayer {
             private fun addLine(
                 begin: ScreenPosition,
                 end: ScreenPosition,
-                consumer: VertexConsumer,
-                matrix: Matrix4f,
+                guiGraphics: GuiGraphicsExtractor,
                 color: Int,
                 width: Float = 2.0f
             ) {
                 val vector = Vector2f(begin.y - end.y, end.x - begin.x).normalize().mul(width / 2)
-                consumer.addVertex(matrix, begin.x + vector.x, begin.y + vector.y, 0f).setColor(color)
-                consumer.addVertex(matrix, end.x + vector.x, end.y + vector.y, 0f).setColor(color)
-                consumer.addVertex(matrix, end.x - vector.x, end.y - vector.y, 0f).setColor(color)
-                consumer.addVertex(matrix, begin.x - vector.x, begin.y - vector.y, 0f).setColor(color)
+                guiGraphics.fillQuad(begin.x + vector.x,
+                    begin.y + vector.y,
+                    end.x + vector.x,
+                    end.y + vector.y,
+                    end.x - vector.x, end.y - vector.y,
+                    begin.x - vector.x, begin.y - vector.y,
+                    color
+                )
             }
 
             private fun changeAlpha(originColor: Int, key: Int): Int {
-                val window = Minecraft.getInstance().window.window
+                val window = Minecraft.getInstance().window.handle()
                 return if (GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS) {
                     originColor
                 } else {
@@ -137,10 +134,9 @@ enum class TransformOrientation {
                 }
             }
 
-            override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+            override fun render(guiGraphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
                 val target = PanelOperatorManager.selectedTarget ?: return
                 val locate = target.locate as? LocateInWorld ?: return
-                val matrix = guiGraphics.pose().last().pose()
 
                 val worldPosition = target.getRenderWorldPosition()
                 if (!viewVectorDegreeCheckPass(deltaTracker.getGameTimeDeltaPartialTick(false), worldPosition)) return
@@ -160,22 +156,16 @@ enum class TransformOrientation {
                 val y = MVPMatrixRecorder.transform(transform.transformPosition(0f, 0.5f, 0f, container)).screenPosition
                 val z = MVPMatrixRecorder.transform(transform.transformPosition(0f, 0f, 0.5f, container)).screenPosition
 
-                val buffer = guiGraphics.bufferSource.getBuffer(RenderType.gui())
-
-                addLine(center, x, buffer, matrix, changeAlpha(X_COLOR, GLFW.GLFW_KEY_X))
-                addLine(center, y, buffer, matrix, changeAlpha(Y_COLOR, GLFW.GLFW_KEY_Y))
-                addLine(center, z, buffer, matrix, changeAlpha(Z_COLOR, GLFW.GLFW_KEY_Z))
-
-                RenderSystem.disableCull()
-                guiGraphics.bufferSource.endLastBatch()
-                RenderSystem.enableCull()
+                addLine(center, x, guiGraphics, changeAlpha(X_COLOR, GLFW.GLFW_KEY_X))
+                addLine(center, y, guiGraphics, changeAlpha(Y_COLOR, GLFW.GLFW_KEY_Y))
+                addLine(center, z, guiGraphics, changeAlpha(Z_COLOR, GLFW.GLFW_KEY_Z))
             }
         }
 
         fun viewVectorDegreeCheckPass(partialTick: Float, sourcePosition: Vector3fc): Boolean {
             val camera = Minecraft.getInstance().gameRenderer.mainCamera
-            val viewVector = camera.lookVector
-            val cameraPosition = camera.position
+            val viewVector = camera.forwardVector()
+            val cameraPosition = camera.position()
             val sourceVector = Vector3f(
                 (sourcePosition.x() - cameraPosition.x).toFloat(),
                 (sourcePosition.y() - cameraPosition.y).toFloat(),

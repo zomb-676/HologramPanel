@@ -7,10 +7,12 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.Gui
+import net.minecraft.data.AtlasIds
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffectUtil
 import net.minecraft.world.entity.LivingEntity
@@ -57,22 +59,24 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
         context.getEntity<LivingEntity>()
         val remember = context.getRememberData()
         val data by remember.server(0, listOf()) { tag ->
-            val data = context.warpRegistryFriendlyByteBuf(tag.getByteArray("potions"))
-            val count = data.readVarInt()
-            if (count != 0) {
-                List(count) {
-                    MobEffectInstance.STREAM_CODEC.decode(data)
+            tag.getByteArray("potions").map { ba ->
+                val data = context.warpRegistryFriendlyByteBuf(ba)
+                val count = data.readVarInt()
+                if (count != 0) {
+                    List(count) {
+                        MobEffectInstance.STREAM_CODEC.decode(data)
+                    }
+                } else {
+                    listOf()
                 }
-            } else {
-                listOf()
             }
         }
         if (data.isNotEmpty()) {
             builder.group("potions", "potions") {
-                val effectTextures = Minecraft.getInstance().mobEffectTextures
+                val altas = Minecraft.getInstance().atlasManager.getAtlasOrThrow(AtlasIds.GUI)
                 data.forEachIndexed { index, effect ->
                     builder.single("effect_$index") {
-                        sprite("effect_texture", effectTextures.get(effect.effect)).setRenderSize(9, 9)
+                        sprite("effect_texture", altas.getSprite(Gui.getMobEffectSprite(effect.effect))).setRenderSize(9, 9)
                         component("effect_name", getEffectName(effect))
                         component(
                             "effect_duration",
@@ -90,6 +94,6 @@ data object LivingEntityPotionProvider : ServerDataProvider<EntityHologramContex
 
     override fun targetClass(): Class<LivingEntity> = LivingEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("living_entity_potion")
+    override fun location(): Identifier = HologramPanel.rl("living_entity_potion")
 
 }

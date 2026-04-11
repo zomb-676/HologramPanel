@@ -8,9 +8,10 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.ItemStack
+import net.neoforged.neoforge.transfer.item.ItemUtil
 
 data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramContext, ItemEntity> {
     override fun appendServerData(
@@ -21,8 +22,8 @@ data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramCo
         val cap = TransHandle.ItemItemTransHandle.getHandleNullable(context.getEntity<ItemEntity>()?.item) ?: return false
         val buffer = context.createRegistryFriendlyByteBuf()
         var writeItemCount = 0
-        repeat(cap.slots) { index ->
-            val item = cap.getStackInSlot(index)
+        repeat(cap.size()) { index ->
+            val item = ItemUtil.getStack(cap, index)
             if (!item.isEmpty) {
                 ItemStack.STREAM_CODEC.encode(buffer, item)
                 writeItemCount++
@@ -40,10 +41,13 @@ data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramCo
         val context = builder.context
         val remember = builder.context.getRememberData()
         val items by remember.server(0, listOf()) { tag ->
-            val count = tag.getInt("item_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("item_data"))
-            List(count) {
-                ItemStack.STREAM_CODEC.decode(buffer)
+            tag.getInt("item_count").flatMap { count ->
+                tag.getByteArray("item_data").map {
+                    val buffer = context.warpRegistryFriendlyByteBuf(it)
+                    List(count) {
+                        ItemStack.STREAM_CODEC.decode(buffer)
+                    }
+                }
             }
         }
         if (items.isNotEmpty()) {
@@ -55,9 +59,9 @@ data object UniversalContainerItemProvider : ServerDataProvider<EntityHologramCo
 
     override fun targetClass(): Class<ItemEntity> = ItemEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_container_item")
+    override fun location(): Identifier = HologramPanel.rl("universal_container_item")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
+    override fun replaceProvider(target: Identifier): Boolean =
         target == UniversalContainerEntityProvider.location()
 
     override fun appliesTo(context: EntityHologramContext, check: ItemEntity): Boolean =

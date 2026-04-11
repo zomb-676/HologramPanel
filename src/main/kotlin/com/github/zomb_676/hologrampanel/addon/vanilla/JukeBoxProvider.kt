@@ -8,7 +8,9 @@ import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.nbt.NbtOps
+import net.minecraft.resources.Identifier
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.JukeboxBlock
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity
 import kotlin.jvm.optionals.getOrNull
@@ -20,7 +22,8 @@ data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBl
         context: BlockHologramContext
     ): Boolean {
         val jukebox = context.getBlockEntity<JukeboxBlockEntity>() ?: return true
-        targetData.put("song_item", jukebox.item.saveOptional(context.getLevel().registryAccess()))
+        targetData.put("song_item", ItemStack.CODEC.encode(jukebox.item,context.getLevel()
+            .registryAccess().createSerializationContext(NbtOps.INSTANCE), CompoundTag()).getOrThrow())
         targetData.putLong("song_started", jukebox.songPlayer.ticksSinceSongStarted)
         return true
     }
@@ -37,8 +40,7 @@ data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBl
 
         if (!songItem.isEmpty) {
             val playable = songItem.getComponents().get(DataComponents.JUKEBOX_PLAYABLE) ?: return
-            val song =
-                playable.song().unwrap(context.getLevel().registryAccess()).getOrNull()?.value() ?: return
+            val song = playable.song().value()
             builder.single("song_item") {
                 itemStack("song_item_logo", songItem)
                 component("song_item_description", song.description().copy()).setPositionOffset(0, 3)
@@ -49,8 +51,8 @@ data object JukeBoxProvider : ServerDataProvider<BlockHologramContext, JukeboxBl
 
     override fun targetClass(): Class<JukeboxBlock> = JukeboxBlock::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.Companion.rl("juke_box")
+    override fun location(): Identifier = HologramPanel.Companion.rl("juke_box")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean =
+    override fun replaceProvider(target: Identifier): Boolean =
         target == UniversalContainerBlockProvider.location()
 }

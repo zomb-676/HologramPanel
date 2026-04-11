@@ -22,7 +22,7 @@ object HologramInteractionManager {
     private val FORBIDDEN_COMPONENT = Component.literal("Interactive Is Disabled On This Server")
     private val MISSING_PREVENT_COMPONENT = Component.literal("Interactive Prevent Message missing")
 
-    val mouseClicked get() = GLFW.glfwGetMouseButton(Minecraft.getInstance().window.window, GLFW.GLFW_MOUSE_BUTTON_LEFT) != 0
+    val mouseClicked get() = GLFW.glfwGetMouseButton(Minecraft.getInstance().window.handle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) != 0
 
     internal var draggingSource: InteractiveEntry? = null
         private set
@@ -33,24 +33,24 @@ object HologramInteractionManager {
      * used to check if player's mouse change in level
      */
     private object ViewChecker {
-        private var xRot: Float = Minecraft.getInstance().gameRenderer.mainCamera.xRot
-        private var yRot: Float = Minecraft.getInstance().gameRenderer.mainCamera.yRot
-        private var position: Vec3 = Minecraft.getInstance().gameRenderer.mainCamera.position
+        private var xRot: Float = Minecraft.getInstance().gameRenderer.mainCamera.xRot()
+        private var yRot: Float = Minecraft.getInstance().gameRenderer.mainCamera.yRot()
+        private var position: Vec3 = Minecraft.getInstance().gameRenderer.mainCamera.position()
 
         fun checkChange(): Boolean {
             val camera = Minecraft.getInstance().gameRenderer.mainCamera
             var change = false
-            if (this.xRot != camera.xRot) {
+            if (this.xRot != camera.xRot()) {
                 change = true
-                this.xRot = camera.xRot
+                this.xRot = camera.xRot()
             }
-            if (this.yRot != camera.yRot) {
+            if (this.yRot != camera.yRot()) {
                 change = true
-                this.yRot = camera.yRot
+                this.yRot = camera.yRot()
             }
-            if (this.position != camera.position) {
+            if (this.position != camera.position()) {
                 change = true
-                this.position = camera.position
+                this.position = camera.position()
             }
             return change
         }

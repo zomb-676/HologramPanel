@@ -12,7 +12,7 @@ import com.github.zomb_676.hologrampanel.util.stack
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
@@ -49,7 +49,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     private var canBackToParent = false
 
-    private fun render(graphics: GuiGraphics, tracker: DeltaTracker) {
+    private fun render(graphics: GuiGraphicsExtractor, tracker: DeltaTracker) {
         this.current = null
         run {
             val nextChildren = this.nextGroup
@@ -64,10 +64,8 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         val window = Minecraft.getInstance().window
         val centerX = window.guiScaledWidth / 2
         val centerY = window.guiScaledHeight / 2
-        style.guiGraphics.pose().pushPose()
+        style.guiGraphics.pose().pushMatrix()
         style.move(centerX, centerY)
-
-        RenderSystem.enableBlend()
 
         val (x, y) = run {
             var (x, y) = MousePositionManager.updateMousePosition()
@@ -105,12 +103,10 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
             } else {
                 0x7fffffff.toInt()
             }
-            RenderSystem.enableBlend()
             style.drawTorus(
                 20f, 70f, colorOut = color, colorIn = 0x7fffffff,
                 beginRadian = from, endRadian = to, isClockWise = false
             )
-            RenderSystem.disableBlend()
 
             val distance = 45f
             val centerDegree = (from + to) / 2
@@ -127,17 +123,13 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
         }
 
         this.canBackToParent = !canSelect && sqrt < 20 * 0.8 && this.openStack.isNotEmpty()
-        RenderSystem.enableBlend()
         if (this.canBackToParent) {
             style.drawCycle(16f, colorOut = 0xffffff00.toInt(), colorIn = 0x7fffffff.toInt())
         } else if (this.openStack.isNotEmpty()) {
             style.drawCycle(16f, colorOut = 0x7fffffff.toInt())
         }
-        RenderSystem.disableBlend()
 
-        style.guiGraphics.flush()
-        RenderSystem.disableBlend()
-        style.guiGraphics.pose().popPose()
+        style.guiGraphics.pose().popMatrix()
     }
 
     override fun openGroup(group: CycleEntry.Group) {
@@ -154,7 +146,7 @@ class CycleSelector(topEntry: CycleEntry.Group) : CycleEntry.SelectorCallback {
 
     companion object {
 
-        fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+        fun render(guiGraphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
             val instance = instance ?: return
             instance.render(guiGraphics, deltaTracker)
         }

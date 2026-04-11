@@ -8,7 +8,7 @@ import com.github.zomb_676.hologrampanel.util.ProgressData
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.item.ItemEntity
 import net.neoforged.neoforge.capabilities.Capabilities
 
@@ -18,8 +18,8 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
     ): Boolean {
         val entity = context.getEntity<ItemEntity>() ?: return false
         val cap = TransHandle.ItemEnergyTransHandle.getHandle(entity.item) ?: return false
-        targetData.putInt("energy_stored", cap.energyStored)
-        targetData.putInt("energy_max", cap.maxEnergyStored)
+        targetData.putInt("energy_stored", cap.amountAsInt)
+        targetData.putInt("energy_max", cap.capacityAsInt)
         return true
     }
 
@@ -40,9 +40,9 @@ data object UniversalEnergyItemProvider : ServerDataProvider<EntityHologramConte
 
     override fun targetClass(): Class<ItemEntity> = ItemEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_energy_item")
+    override fun location(): Identifier = HologramPanel.rl("universal_energy_item")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean = target == UniversalEnergyEntityProvider.location()
+    override fun replaceProvider(target: Identifier): Boolean = target == UniversalEnergyEntityProvider.location()
 
     override fun appliesTo(context: EntityHologramContext, check: ItemEntity): Boolean =
         TransHandle.ItemEnergyTransHandle.hasHandle(check.item)

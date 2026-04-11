@@ -10,9 +10,11 @@ import com.github.zomb_676.hologrampanel.util.extractArray
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.capabilities.Capabilities
+import net.neoforged.neoforge.transfer.fluid.FluidResource
+import net.neoforged.neoforge.transfer.fluid.FluidUtil
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContext, BlockEntity> {
@@ -22,10 +24,10 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
         val cap = TransHandle.BlockFluidTransHandle.getHandleNullable(context.getBlockEntity()) ?: return false
         val buffer = context.createRegistryFriendlyByteBuf()
         var fluidCount = 0
-        repeat(cap.tanks) { index ->
-            val fluidStack = cap.getFluidInTank(index)
+        repeat(cap.size()) { index ->
+            val fluidStack = FluidUtil.getStack(cap, index)
             if (!fluidStack.isEmpty) {
-                val entry = FluidDataSyncEntry(fluidStack, cap.getTankCapacity(index))
+                val entry = FluidDataSyncEntry(fluidStack, cap.getCapacityAsInt(index, FluidResource.of(fluidStack)))
                 FluidDataSyncEntry.STREAM_CODEC.encode(buffer, entry)
                 fluidCount++
             }
@@ -42,9 +44,13 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
         val remember = builder.context.getRememberData()
         val fluids by remember.server(0, listOf()) { tag ->
             val count = tag.getInt("fluid_count")
-            val buffer = context.warpRegistryFriendlyByteBuf(tag.getByteArray("fluid_data"))
-            List(count) {
-                FluidDataSyncEntry.STREAM_CODEC.decode(buffer)
+            tag.getInt("fluid_count").flatMap { count ->
+                tag.getByteArray("fluid_data").map {
+                    val buffer = context.warpRegistryFriendlyByteBuf(it)
+                    List(count) {
+                        FluidDataSyncEntry.STREAM_CODEC.decode(buffer)
+                    }
+                }
             }
         }
         val progresses = remember.keep(0) { mutableListOf<ProgressData>() }
@@ -57,7 +63,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
                     builder.single("fluid_$index") {
                         val progress = progresses[index]
                         progress.current(fluid.current).max(fluid.max)
-                        fluid("block_fluid", progress, fluid.fluidStack.fluidType)
+                        fluid("block_fluid", progress, fluid.fluidStack.fluid)
                     }
                 }
             }
@@ -66,7 +72,7 @@ data object UniversalFluidBlockProvider : ServerDataProvider<BlockHologramContex
 
     override fun targetClass(): Class<BlockEntity> = BlockEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("universal_fluid_block")
+    override fun location(): Identifier = HologramPanel.rl("universal_fluid_block")
 
     override fun appliesTo(context: BlockHologramContext, check: BlockEntity): Boolean =
         TransHandle.BlockFluidTransHandle.hasHandle(check)

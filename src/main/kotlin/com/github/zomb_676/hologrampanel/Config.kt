@@ -11,7 +11,7 @@ import net.minecraft.core.HolderLookup
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.block.Block
 import net.neoforged.api.distmarker.Dist
@@ -20,7 +20,7 @@ import net.neoforged.fml.ModContainer
 import net.neoforged.fml.config.ModConfig
 import net.neoforged.fml.event.config.ModConfigEvent
 import net.neoforged.fml.javafmlmod.FMLModContainer
-import net.neoforged.fml.loading.FMLLoader
+import net.neoforged.fml.loading.FMLEnvironment
 import net.neoforged.neoforge.client.gui.ConfigurationScreen
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory
 import net.neoforged.neoforge.common.ModConfigSpec
@@ -45,7 +45,7 @@ object Config {
     }
 
     fun onTagUpdate(event: TagsUpdatedEvent) {
-        if (FMLLoader.getDist() == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             Client.updateHideList(event.lookupProvider)
         }
     }
@@ -179,7 +179,7 @@ object Config {
                 val tags = entityTypeData.listTags().asSequence()
                     .associateBy { set -> set.key().location }
                 for (typeString in this.hideEntityTypes.get()) {
-                    val location = ResourceLocation.tryParse(typeString) ?: continue
+                    val location = Identifier.tryParse(typeString) ?: continue
                     if (tags.containsKey(location)) {
                         tags.getValue(location).forEach { type ->
                             hideEntityTypesList += type.value()
@@ -202,7 +202,7 @@ object Config {
                 val tags = blockTypeData.listTags().asSequence()
                     .associateBy { set -> set.key().location }
                 for (blockString in this.hideBlocks.get()) {
-                    val location = ResourceLocation.tryParse(blockString) ?: continue
+                    val location = Identifier.tryParse(blockString) ?: continue
                     if (tags.containsKey(location)) {
                         tags.getValue(location).forEach { type ->
                             hideBlocksList += type.value()
@@ -226,6 +226,7 @@ object Config {
                 renderMinDistance.set(1.0)
                 renderMinDistance.set(8.0)
             }
+            // ModConfigEvent.Loading fires before Minecraft instance is created, so, use ?. here
             run {
                 when (searchBackend.get()) {
                     SearchBackend.Type.REI -> if (ModInstalled.reiInstalled) return@run
@@ -233,13 +234,13 @@ object Config {
                     SearchBackend.Type.AUTO, SearchBackend.Type.DEFAULT -> return@run
                 }
                 searchBackend.setAndSave(SearchBackend.Type.AUTO)
-                Minecraft.getInstance().gui.chat.addMessage(
+                Minecraft.getInstance()?.gui?.chat?.addClientSystemMessage(
                     Component.literal(
                         "search backend switch to auto for fallback"
                     )
                 )
             }
-            Minecraft.getInstance().level?.registryAccess()?.also { access ->
+            Minecraft.getInstance()?.level?.registryAccess()?.also { access ->
                 updateHideList(access)
             }
         }

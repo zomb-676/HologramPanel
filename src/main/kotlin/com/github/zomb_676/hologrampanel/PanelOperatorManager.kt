@@ -138,7 +138,7 @@ object PanelOperatorManager {
                                 if (locate is LocateFacingPlayer && locate.offset.run { abs(x) + abs(y) + abs(z) } > 0.01f) {
                                     offset.set(locate.offset)
                                 } else {
-                                    camera.lookVector.mul(-sqrt(3f) / 2f, offset)
+                                    camera.forwardVector().mul(-sqrt(3f) / 2f, offset)
                                 }
                             }
                             HologramManager.notifyHologramLocateTypeChange(target, locate)

@@ -14,33 +14,43 @@ import com.github.zomb_676.hologrampanel.widget.component.DataQueryManager
 import com.github.zomb_676.hologrampanel.widget.dynamic.DynamicBuildWidget
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import com.mojang.blaze3d.textures.GpuTextureView
+import com.mojang.blaze3d.vertex.BufferBuilder
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.minecraft.client.DeltaTracker
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Font
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.LayeredDraw
-import net.minecraft.client.renderer.CoreShaders
-import net.minecraft.client.renderer.LightTexture
-import net.minecraft.client.renderer.ShapeRenderer
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.renderer.Lightmap
+import net.minecraft.gizmos.GizmoStyle
+import net.minecraft.gizmos.Gizmos
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.util.ARGB
+import net.minecraft.util.LightCoordsUtil
+import net.minecraft.world.phys.AABB
 import net.neoforged.neoforge.client.event.ClientTickEvent
+import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
+import net.neoforged.neoforge.client.gui.GuiLayer
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import org.joml.Vector3fc
+import java.util.OptionalDouble
+import java.util.OptionalInt
 import kotlin.math.max
 
 object DebugHelper {
-    private class DrawHelper(val guiGraphics: GuiGraphics, val padding: Int = 2) {
+    private class DrawHelper(val guiGraphics: GuiGraphicsExtractor, val padding: Int = 2) {
         private val font = Minecraft.getInstance().font
         private var x: Int = 0
         private var y: Int = 0
         private var xBegin = 0
         private var yStep = 0
         fun drawString(str: String): DrawHelper {
-            guiGraphics.drawString(font, str, x, y, -1)
+            guiGraphics.text(font, str, x, y, -1)
             x += font.width(str)
             yStep = max(yStep, font.lineHeight)
             return this
@@ -103,17 +113,14 @@ object DebugHelper {
             tick(removeData)
         }
 
-        fun fill(pos: Vector3fc, color: Int, poseStack: PoseStack, builder: BufferBuilder) {
-            val r = ARGB.redFloat(color)
-            val g = ARGB.greenFloat(color)
-            val b = ARGB.blueFloat(color)
-            val a = ARGB.alphaFloat(color)
+        fun fill(pos: Vector3fc, color: Int) {
             val x = pos.x()
             val y = pos.y()
             val z = pos.z()
-            ShapeRenderer.addChainedFilledBoxVertices(
-                poseStack, builder, x - OFFSET, y - OFFSET, z - OFFSET, x + OFFSET, y + OFFSET, z + OFFSET, r, g, b, a
-            )
+            Gizmos.cuboid(
+                AABB(x - OFFSET, y - OFFSET, z - OFFSET, x + OFFSET, y + OFFSET, z + OFFSET),
+                GizmoStyle.fill(color)
+            ).setAlwaysOnTop()
         }
 
         fun totalTickDataSize(): String {
@@ -135,24 +142,16 @@ object DebugHelper {
 
         val fontBufferSource = FontBufferSource()
 
-        fun renderLevelLast(event: RenderLevelStageEvent) {
-            if (event.stage != RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) return
-            val pose = event.poseStack
-            val partialTick = event.partialTick.getGameTimeDeltaPartialTick(false)
-            val camPos = event.camera.position
-            pose.translate(-camPos.x, -camPos.y, -camPos.z)
-
+        fun extractLevelState(event: ExtractLevelRenderStateEvent) {
+            val partialTick = event.deltaTracker.getGameTimeDeltaPartialTick(false)
             if (Config.Client.renderDebugHologramLifeCycleBox.get() && (queryUpdateData.isNotEmpty() || popUpData.isNotEmpty() || removeData.isNotEmpty())) {
-                val builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
-                RenderSystem.setShader(CoreShaders.POSITION_COLOR)
-                RenderSystem.disableDepthTest()
                 if (queryUpdateData.isNotEmpty()) {
                     val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
                     while (iterator.hasNext()) {
                         val next = iterator.next()
-                        val color = ARGB.lerp((next.intValue + partialTick) / UPDATE_TINE, UPDATE_END_COLOR, UPDATE_BEGIN_COLOR)
+                        val color = ARGB.srgbLerp((next.intValue + partialTick) / UPDATE_TINE, UPDATE_END_COLOR, UPDATE_BEGIN_COLOR)
                         val position = next.key.state.getRenderWorldPosition()
-                        fill(position, color, pose, builder)
+                        fill(position, color)
                     }
                 }
                 if (popUpData.isNotEmpty()) {
@@ -160,8 +159,8 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            ARGB.lerp((next.intValue + partialTick) / POPUP_TIME, POP_UP_END_COLOR, POP_UP_BEGIN_COLOR)
-                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
+                            ARGB.srgbLerp((next.intValue + partialTick) / POPUP_TIME, POP_UP_END_COLOR, POP_UP_BEGIN_COLOR)
+                        fill(next.key.getRenderWorldPosition(), color)
                     }
                 }
                 if (removeData.isNotEmpty()) {
@@ -169,13 +168,19 @@ object DebugHelper {
                     while (iterator.hasNext()) {
                         val next = iterator.next()
                         val color =
-                            ARGB.lerp((next.intValue + partialTick) / REMOVE_TIME, REMOVE_END_COLOR, REMOVE_BEGIN_COLOR)
-                        fill(next.key.getRenderWorldPosition(), color, pose, builder)
+                            ARGB.srgbLerp((next.intValue + partialTick) / REMOVE_TIME, REMOVE_END_COLOR, REMOVE_BEGIN_COLOR)
+                        fill(next.key.getRenderWorldPosition(), color)
                     }
                 }
-                BufferUploader.drawWithShader(builder.buildOrThrow())
-                RenderSystem.enableDepthTest()
             }
+        }
+
+        fun renderLevelLast(event: RenderLevelStageEvent.AfterTranslucentBlocks) {
+            val pose = event.poseStack
+            val cam = event.levelRenderState.cameraRenderState
+            val camPos = cam.pos
+            pose.translate(-camPos.x, -camPos.y, -camPos.z)
+
             if (Config.Client.renderNetworkDebugInfo.get() && queryUpdateData.isNotEmpty()) {
                 val iterator = queryUpdateData.object2IntEntrySet().fastIterator()
                 val font = Minecraft.getInstance().font
@@ -185,12 +190,13 @@ object DebugHelper {
                     val size = next.key.size
                     pose.stack {
                         pose.translate(position.x(), position.y() + 0.6f, position.z())
-                        pose.mulPose(Minecraft.getInstance().entityRenderDispatcher.cameraOrientation())
+                        pose.mulPose(cam.orientation)
                         pose.scale(0.0125f, -0.0125f, 0.0125f)
                         val text = byteSize(size)
+
                         font.drawInBatch(
                             text, -(font.width(text) / 2).toFloat(), 0f, -2130706433, false, pose.last().pose(),
-                            fontBufferSource, Font.DisplayMode.SEE_THROUGH, 1056964608, LightTexture.FULL_BRIGHT
+                            fontBufferSource, Font.DisplayMode.SEE_THROUGH, 1056964608, LightCoordsUtil.FULL_BRIGHT
                         )
                     }
                 }
@@ -198,8 +204,8 @@ object DebugHelper {
             }
         }
 
-        fun getLayer() = object : LayeredDraw.Layer {
-            override fun render(guiGraphics: GuiGraphics, deltaTracker: DeltaTracker) {
+        fun getLayer() = object : GuiLayer {
+            override fun render(guiGraphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
                 if (Minecraft.getInstance().gui.debugOverlay.showDebugScreen()) return
                 if (!Config.Client.renderDebugLayer.get()) return
                 val drawHelper = DrawHelper(guiGraphics)

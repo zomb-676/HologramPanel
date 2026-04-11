@@ -6,7 +6,7 @@ import com.github.zomb_676.hologrampanel.api.ComponentProvider
 import com.github.zomb_676.hologrampanel.interaction.context.EntityHologramContext
 import com.github.zomb_676.hologrampanel.widget.DisplayType
 import com.github.zomb_676.hologrampanel.widget.dynamic.HologramWidgetBuilder
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.TooltipFlag
@@ -34,6 +34,6 @@ data object ItemEntityTooltipProvider : ComponentProvider<EntityHologramContext,
 
     override fun targetClass(): Class<ItemEntity> = ItemEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("item_entity_tooltip")
+    override fun location(): Identifier = HologramPanel.rl("item_entity_tooltip")
 
 }

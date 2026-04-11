@@ -12,6 +12,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
+import net.minecraft.world.level.storage.ValueInput
+import net.minecraft.world.level.storage.ValueOutput
 import net.neoforged.neoforge.capabilities.BlockCapability
 import java.util.*
 
@@ -43,9 +45,20 @@ class IHologramStorage(val pos: BlockPos) {
         }
     }
 
+    fun writeToOutput(vo: ValueOutput) {
+        vo.store("hologram_storage", CODEC, this)
+    }
+
     fun readFromNbt(nbt: CompoundTag) {
         if (nbt.contains("hologram_storage")) {
-            val storage = readFromNBT(nbt.getCompound("hologram_storage"))
+            val storage = readFromNBT(nbt.getCompound("hologram_storage").orElseThrow())
+            this.prototype = storage.prototype
+            this.locateType = storage.locateType
+        }
+    }
+
+    fun readFromInput(vi: ValueInput) {
+        vi.read("hologram_storage", CODEC).ifPresent { storage ->
             this.prototype = storage.prototype
             this.locateType = storage.locateType
         }

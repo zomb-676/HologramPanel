@@ -2,7 +2,6 @@ package com.github.zomb_676.hologrampanel.util
 
 import com.github.zomb_676.hologrampanel.Config
 import com.github.zomb_676.hologrampanel.compat.ModInstalled
-import com.github.zomb_676.hologrampanel.compat.rei.ReiPlugin
 import net.minecraft.world.item.ItemStack
 
 /**
@@ -20,7 +19,8 @@ interface SearchBackend {
             override fun isAvailable(): Boolean = ModInstalled.reiInstalled
             override fun getSearchBackend(): SearchBackend? {
                 if (!isAvailable()) return null
-                return ReiPlugin.getSearchEngine()
+                return null
+//                return ReiPlugin.getSearchEngine()
             }
         },
         JEI {

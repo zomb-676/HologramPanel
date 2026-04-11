@@ -6,9 +6,11 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.capabilities.Capabilities
-import net.neoforged.neoforge.energy.IEnergyStorage
-import net.neoforged.neoforge.fluids.capability.IFluidHandler
-import net.neoforged.neoforge.items.IItemHandler
+import net.neoforged.neoforge.transfer.ResourceHandler
+import net.neoforged.neoforge.transfer.access.ItemAccess
+import net.neoforged.neoforge.transfer.energy.EnergyHandler
+import net.neoforged.neoforge.transfer.fluid.FluidResource
+import net.neoforged.neoforge.transfer.item.ItemResource
 
 /**
  * get the handle form [TransSource], like getCapability
@@ -37,49 +39,49 @@ sealed interface TransHandle<in S : Any, out H : Any> {
         return path.storeTest(handle, store)
     }
 
-    object EntityItemTransHandle : TransHandle<Entity, IItemHandler> {
-        override fun getHandle(source: Entity): IItemHandler? = source.getCapability(Capabilities.ItemHandler.ENTITY_AUTOMATION, null)
+    object EntityItemTransHandle : TransHandle<Entity, ResourceHandler<ItemResource>> {
+        override fun getHandle(source: Entity): ResourceHandler<ItemResource>? = source.getCapability(Capabilities.Item.ENTITY_AUTOMATION, null)
     }
 
-    object BlockItemTransHandle : TransHandle<BlockEntity, IItemHandler> {
-        override fun getHandle(source: BlockEntity): IItemHandler? {
+    object BlockItemTransHandle : TransHandle<BlockEntity, ResourceHandler<ItemResource>> {
+        override fun getHandle(source: BlockEntity): ResourceHandler<ItemResource>? {
             val level = source.level ?: return null
-            return level.getCapability(Capabilities.ItemHandler.BLOCK, source.blockPos, source.blockState, source, null)
+            return level.getCapability(Capabilities.Item.BLOCK, source.blockPos, source.blockState, source, null)
         }
     }
 
-    object ItemItemTransHandle : TransHandle<ItemStack, IItemHandler> {
-        override fun getHandle(source: ItemStack): IItemHandler? = source.getCapability(Capabilities.ItemHandler.ITEM)
+    object ItemItemTransHandle : TransHandle<ItemStack, ResourceHandler<ItemResource>> {
+        override fun getHandle(source: ItemStack): ResourceHandler<ItemResource>? = ItemAccess.forStack(source).getCapability(Capabilities.Item.ITEM)
     }
 
-    object EntityFluidTransHandle : TransHandle<Entity, IFluidHandler> {
-        override fun getHandle(source: Entity): IFluidHandler? = source.getCapability(Capabilities.FluidHandler.ENTITY, null)
+    object EntityFluidTransHandle : TransHandle<Entity, ResourceHandler<FluidResource>> {
+        override fun getHandle(source: Entity): ResourceHandler<FluidResource>? = source.getCapability(Capabilities.Fluid.ENTITY, null)
     }
 
-    object BlockFluidTransHandle : TransHandle<BlockEntity, IFluidHandler> {
-        override fun getHandle(source: BlockEntity): IFluidHandler? {
+    object BlockFluidTransHandle : TransHandle<BlockEntity, ResourceHandler<FluidResource>> {
+        override fun getHandle(source: BlockEntity): ResourceHandler<FluidResource>? {
             val level = source.level ?: return null
-            return level.getCapability(Capabilities.FluidHandler.BLOCK, source.blockPos, source.blockState, source, null)
+            return level.getCapability(Capabilities.Fluid.BLOCK, source.blockPos, source.blockState, source, null)
         }
     }
 
-    object ItemFluidTransHandle : TransHandle<ItemStack, IFluidHandler> {
-        override fun getHandle(source: ItemStack): IFluidHandler? = source.getCapability(Capabilities.FluidHandler.ITEM)
+    object ItemFluidTransHandle : TransHandle<ItemStack, ResourceHandler<FluidResource>> {
+        override fun getHandle(source: ItemStack): ResourceHandler<FluidResource>? = ItemAccess.forStack(source).getCapability(Capabilities.Fluid.ITEM)
     }
 
-    object EntityEnergyTransHandle : TransHandle<Entity, IEnergyStorage> {
-        override fun getHandle(source: Entity): IEnergyStorage? = source.getCapability(Capabilities.EnergyStorage.ENTITY, null)
+    object EntityEnergyTransHandle : TransHandle<Entity, EnergyHandler> {
+        override fun getHandle(source: Entity): EnergyHandler? = source.getCapability(Capabilities.Energy.ENTITY, null)
     }
 
-    object BlockEnergyTransHandle : TransHandle<BlockEntity, IEnergyStorage> {
-        override fun getHandle(source: BlockEntity): IEnergyStorage? {
+    object BlockEnergyTransHandle : TransHandle<BlockEntity, EnergyHandler> {
+        override fun getHandle(source: BlockEntity): EnergyHandler? {
             val level = source.level ?: return null
-            return level.getCapability(Capabilities.EnergyStorage.BLOCK, source.blockPos, source.blockState, source, null)
+            return level.getCapability(Capabilities.Energy.BLOCK, source.blockPos, source.blockState, source, null)
         }
     }
 
-    object ItemEnergyTransHandle : TransHandle<ItemStack, IEnergyStorage> {
-        override fun getHandle(source: ItemStack): IEnergyStorage? = source.getCapability(Capabilities.EnergyStorage.ITEM)
+    object ItemEnergyTransHandle : TransHandle<ItemStack, EnergyHandler> {
+        override fun getHandle(source: ItemStack): EnergyHandler? = ItemAccess.forStack(source).getCapability(Capabilities.Energy.ITEM)
     }
 
     class ChainTransHandle<S : Any, H : Any, R : Any, H2 : Any>(

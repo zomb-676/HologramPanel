@@ -3,7 +3,8 @@ package com.github.zomb_676.hologrampanel.util.packed
 import com.github.zomb_676.hologrampanel.render.HologramStyle
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import org.joml.Matrix3x2fStack
 import org.joml.Vector2f
 
 /**
@@ -26,16 +27,16 @@ value class ScreenPosition private constructor(@PublishedApi internal val data: 
     /**
      * translate fraction part and return integer part
      */
-    fun equivalentSmooth(poseStack: PoseStack): AlignedScreenPosition {
+    fun equivalentSmooth(poseStack: Matrix3x2fStack): AlignedScreenPosition {
         val screenX = x
         val screenY = y
         val x = screenX.toInt()
         val y = screenY.toInt()
-        poseStack.translate(screenX - x, screenY - y, 0f)
+        poseStack.translate(screenX - x, screenY - y)
         return AlignedScreenPosition.of(x, y)
     }
 
-    fun equivalentSmooth(guiGraphics: GuiGraphics) =
+    fun equivalentSmooth(guiGraphics: GuiGraphicsExtractor) =
         equivalentSmooth(guiGraphics.pose())
 
     fun equivalentSmooth(hologramStyle: HologramStyle) =

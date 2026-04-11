@@ -11,7 +11,9 @@ import com.github.zomb_676.hologrampanel.util.packed.Size
 import com.github.zomb_676.hologrampanel.widget.element.IRenderElement
 import net.minecraft.client.Minecraft
 import net.minecraft.client.player.LocalPlayer
+import org.joml.Matrix3x2f
 import org.joml.Matrix4f
+import org.joml.Vector3f
 import org.joml.Vector4f
 
 /**
@@ -29,7 +31,7 @@ class InteractiveEntry internal constructor(
     val interactive: HologramInteractive,
     val context: HologramContext,
     val interactiveSize: Size,
-    val poseMatrix: Matrix4f,
+    val poseMatrix: Matrix3x2f,
     val parent: InteractiveEntry? = null
 ) {
 
@@ -39,12 +41,12 @@ class InteractiveEntry internal constructor(
 
     val mouseX: Int
     val mouseY: Int
-    val inverseMatrix: Matrix4f = poseMatrix.invert()
+    val inverseMatrix: Matrix3x2f = poseMatrix.invert()
 
     init {
         require(interactive is RebuildValue<*>)
         val (mouseX, mouseY) = MousePositionManager
-        val vector = Vector4f(mouseX, mouseY, 0f, 1f)
+        val vector = Vector3f(mouseX, mouseY, 1f)
         inverseMatrix.transform(vector)
         this.mouseX = vector.x.toInt()
         this.mouseY = vector.y.toInt()

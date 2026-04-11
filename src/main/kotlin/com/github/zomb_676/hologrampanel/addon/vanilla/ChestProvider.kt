@@ -4,7 +4,7 @@ import com.github.zomb_676.hologrampanel.HologramPanel
 import com.github.zomb_676.hologrampanel.addon.universial.UniversalContainerBlockProvider
 import com.github.zomb_676.hologrampanel.api.ServerDataProvider
 import com.github.zomb_676.hologrampanel.interaction.context.BlockHologramContext
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.ChestBlock
 import net.minecraft.world.level.block.entity.ChestBlockEntity
 import net.minecraft.world.level.block.state.properties.ChestType
@@ -13,9 +13,9 @@ object ChestProvider : ServerDataProvider<BlockHologramContext, ChestBlockEntity
 
     override fun targetClass(): Class<ChestBlockEntity> = ChestBlockEntity::class.java
 
-    override fun location(): ResourceLocation = HologramPanel.rl("chest_provider")
+    override fun location(): Identifier = HologramPanel.rl("chest_provider")
 
-    override fun replaceProvider(target: ResourceLocation): Boolean = UniversalContainerBlockProvider.location() == target
+    override fun replaceProvider(target: Identifier): Boolean = UniversalContainerBlockProvider.location() == target
 
     override fun considerShare(): Boolean = true
 

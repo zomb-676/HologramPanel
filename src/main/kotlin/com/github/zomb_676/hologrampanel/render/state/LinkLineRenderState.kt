@@ -1,7 +1,11 @@
-package com.github.zomb_676.hologrampanel.render
+package com.github.zomb_676.hologrampanel.render.state
 
-import com.mojang.blaze3d.vertex.BufferBuilder
-import org.joml.Matrix4f
+import com.mojang.blaze3d.pipeline.RenderPipeline
+import com.mojang.blaze3d.vertex.VertexConsumer
+import net.minecraft.client.gui.navigation.ScreenRectangle
+import net.minecraft.client.gui.render.TextureSetup
+import net.minecraft.client.renderer.state.gui.GuiElementRenderState
+import org.joml.Matrix3x2f
 import org.joml.Vector2d
 import org.joml.Vector2f
 import kotlin.math.*
@@ -9,13 +13,24 @@ import kotlin.math.*
 /**
  * code calculate different required degree by different edge-case, no interesting
  */
-object LinkLineRender {
-    fun fillThreeSegmentConnectionLine(
-        begin: Vector2d, end: Vector2d, radius: Double, lineLength: Double, builder: BufferBuilder, matrix: Matrix4f,
-        lineColor: Int = -1,
-        halfLineWidth: Float = 0.8f,
-        segment: Int = 50
-    ) {
+data class LinkLineRenderState(
+    val pipeline: RenderPipeline,
+    val textureSetup: TextureSetup,
+    val pose: Matrix3x2f,
+    val begin: Vector2d,
+    val end: Vector2d,
+    val radius: Double,
+    val lineLength: Double,
+    val scissorArea: ScreenRectangle?,
+    val lineColor: Int = -1,
+    val halfLineWidth: Float = 0.8f,
+    val segment: Int = 50,
+    val bounds: ScreenRectangle? = ScreenAreaUtil.getBounds(begin.x, begin.y, end.x, end.y, pose, scissorArea)
+): GuiElementRenderState {
+    /**
+     * Three segment connection line
+     */
+    override fun buildVertices(vertexConsumer: VertexConsumer) {
         val beginPoint = Vector2d(begin.x + lineLength, begin.y)
         val endPoint = Vector2d(end.x - lineLength, end.y)
 
@@ -34,10 +49,10 @@ object LinkLineRender {
             val endX = end.x.toFloat()
             val endY = end.y.toFloat()
             val offset = Vector2f(endY - beginY, beginX - endX).normalize().mul(halfLineWidth)
-            builder.addVertex(matrix, beginX - offset.x, beginY - offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, beginX + offset.x, beginY + offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, endX + offset.x, endY + offset.y, 1f).setColor(lineColor)
-            builder.addVertex(matrix, endX - offset.x, endY - offset.y, 1f).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, beginX - offset.x, beginY - offset.y).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, beginX + offset.x, beginY + offset.y).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, endX + offset.x, endY + offset.y).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, endX - offset.x, endY - offset.y).setColor(lineColor)
             return
         }
 
@@ -46,13 +61,13 @@ object LinkLineRender {
         if (beginPoint.y < endPoint.y) {
             beginCircle = Vector2d(beginPoint.x, beginPoint.y + radius)
             endCircle = Vector2d(endPoint.x, endPoint.y - radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat()).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat()).setColor(lineColor)
         } else {
             beginCircle = Vector2d(beginPoint.x, beginPoint.y - radius)
             endCircle = Vector2d(endPoint.x, endPoint.y + radius)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, begin.x.toFloat(), (begin.y + halfLineWidth).toFloat()).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, begin.x.toFloat(), (begin.y - halfLineWidth).toFloat()).setColor(lineColor)
         }
 
         val sign = if (beginPoint.y < endPoint.y) 1 else -1
@@ -60,41 +75,45 @@ object LinkLineRender {
             val the = theta * 2 / segment * it
             val sin = sin(the)
             val cos = cos(the)
-            builder.addVertex(
-                matrix, (beginCircle.x + sin * (radius + halfLineWidth)).toFloat(),
+            vertexConsumer.addVertexWith2DPose(
+                pose, (beginCircle.x + sin * (radius + halfLineWidth)).toFloat(),
                 (beginCircle.y - cos * sign * (radius + halfLineWidth)).toFloat(),
-                1f
             ).setColor(lineColor)
-            builder.addVertex(
-                matrix, (beginCircle.x + sin * (radius - halfLineWidth)).toFloat(),
+            vertexConsumer.addVertexWith2DPose(
+                pose, (beginCircle.x + sin * (radius - halfLineWidth)).toFloat(),
                 (beginCircle.y - cos * sign * (radius - halfLineWidth)).toFloat(),
-                1f
             ).setColor(lineColor)
         }
         for (it in segment downTo 0) {
             val the = theta * 2 / segment * it
             val sin = sin(the)
             val cos = cos(the)
-            builder.addVertex(
-                matrix, (endCircle.x - sin * (radius - halfLineWidth)).toFloat(),
+            vertexConsumer.addVertexWith2DPose(
+                pose, (endCircle.x - sin * (radius - halfLineWidth)).toFloat(),
                 (endCircle.y + cos * sign * (radius - halfLineWidth)).toFloat(),
-                1f
             ).setColor(lineColor)
-            builder.addVertex(
-                matrix, (endCircle.x - sin * (radius + halfLineWidth)).toFloat(),
+            vertexConsumer.addVertexWith2DPose(
+                pose, (endCircle.x - sin * (radius + halfLineWidth)).toFloat(),
                 (endCircle.y + cos * sign * (radius + halfLineWidth)).toFloat(),
-                1f
             ).setColor(lineColor)
         }
 
         if (beginPoint.y < endPoint.y) {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, end.x.toFloat(), (end.y - halfLineWidth).toFloat()).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, end.x.toFloat(), (end.y + halfLineWidth).toFloat()).setColor(lineColor)
         } else {
-            builder.addVertex(matrix, end.x.toFloat(), (end.y + halfLineWidth).toFloat(), 1f).setColor(lineColor)
-            builder.addVertex(matrix, end.x.toFloat(), (end.y - halfLineWidth).toFloat(), 1f).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, end.x.toFloat(), (end.y + halfLineWidth).toFloat()).setColor(lineColor)
+            vertexConsumer.addVertexWith2DPose(pose, end.x.toFloat(), (end.y - halfLineWidth).toFloat()).setColor(lineColor)
         }
     }
+
+    override fun pipeline(): RenderPipeline = pipeline
+
+    override fun textureSetup(): TextureSetup = textureSetup
+
+    override fun scissorArea(): ScreenRectangle? = scissorArea
+
+    override fun bounds(): ScreenRectangle? = bounds
 
     private fun calculateTheta(begin: Vector2d, end: Vector2d, radius: Double): Double? {
         val a = abs(begin.x - end.x)
